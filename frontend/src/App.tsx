@@ -1,11 +1,7 @@
+import Dashboard from "./pages/Dashboard/Dashboard";
+
 function App() {
-  return (
-    <div className="min-h-screen bg-blue-100 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-blue-700">
-        Tailwind CSS is working! 🎉
-      </h1>
-    </div>
-  )
+  return <Dashboard />;
 }
 
-export default App
+export default App;
