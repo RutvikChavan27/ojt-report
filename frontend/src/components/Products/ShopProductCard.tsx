@@ -1,13 +1,14 @@
-import { useState } from "react";
 import { FiHeart, FiStar } from "react-icons/fi";
 import type { Product } from "../../lib/api";
+import { useWishlist } from "../../store/WishlistContext";
 
 type ShopProductCardProps = {
   product: Product;
 };
 
 function ShopProductCard({ product }: ShopProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isWishlisted: checkWishlisted, toggle } = useWishlist();
+  const isWishlisted = checkWishlisted(product.id);
 
   const discountPercent = Math.round(
     (1 - product.price / product.originalPrice) * 100
@@ -32,7 +33,7 @@ function ShopProductCard({ product }: ShopProductCardProps) {
           type="button"
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={isWishlisted}
-          onClick={() => setIsWishlisted((liked) => !liked)}
+          onClick={() => toggle(product)}
           className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
         >
           <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />

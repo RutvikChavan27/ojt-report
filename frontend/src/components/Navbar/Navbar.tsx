@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { FiHeart, FiShoppingBag, FiUser } from "react-icons/fi";
 import AuthModal from "../common/AuthModal";
+import WishlistPanel from "../common/WishlistPanel";
 import CategoryList from "../common/CategoryList";
 import Logo from "../common/Logo";
+import { useWishlist } from "../../store/WishlistContext";
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },
@@ -16,7 +18,8 @@ type NavbarProps = {
 };
 
 function Navbar({ activeCategory, onCategoryChange, onGoHome }: NavbarProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const { count } = useWishlist();
+  const [showWishlist, setShowWishlist] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
 
   return (
@@ -54,16 +57,16 @@ function Navbar({ activeCategory, onCategoryChange, onGoHome }: NavbarProps) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            aria-label={isLiked ? "Unlike" : "Like"}
-            aria-pressed={isLiked}
-            onClick={() => setIsLiked((liked) => !liked)}
-            className={`hidden h-10 w-10 items-center justify-center rounded-full border transition sm:flex ${
-              isLiked
-                ? "border-black-200 bg-gray-200 text-gray-500"
-                : "border-gray-200 text-gray-900 hover:border-gray-400"
-            }`}
+            aria-label="Wishlist"
+            onClick={() => setShowWishlist(true)}
+            className="relative hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400 sm:flex"
           >
-            <FiHeart size={16} fill={isLiked ? "currentColor" : "none"} />
+            <FiHeart size={16} />
+            {count > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] font-bold text-white">
+                {count}
+              </span>
+            )}
           </button>
 
           <button
@@ -87,6 +90,7 @@ function Navbar({ activeCategory, onCategoryChange, onGoHome }: NavbarProps) {
         </div>
       </div>
 
+      {showWishlist && <WishlistPanel onClose={() => setShowWishlist(false)} />}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </header>
   );

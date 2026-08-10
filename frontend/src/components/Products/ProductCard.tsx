@@ -1,11 +1,15 @@
-import { FiPlus } from "react-icons/fi";
+import { FiHeart, FiPlus } from "react-icons/fi";
 import type { Product } from "../../lib/api";
+import { useWishlist } from "../../store/WishlistContext";
 
 type ProductCardProps = {
   product: Product;
 };
 
 function ProductCard({ product }: ProductCardProps) {
+  const { isWishlisted: checkWishlisted, toggle } = useWishlist();
+  const isWishlisted = checkWishlisted(product.id);
+
   return (
     <div className="group">
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100">
@@ -14,6 +18,16 @@ function ProductCard({ product }: ProductCardProps) {
           alt={product.name}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
+
+        <button
+          type="button"
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={isWishlisted}
+          onClick={() => toggle(product)}
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
+        >
+          <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
+        </button>
 
         <button
           type="button"
