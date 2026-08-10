@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS products (
   brand TEXT NOT NULL,
   color TEXT NOT NULL,
   variant_count INTEGER,
+  sizes TEXT[] NOT NULL DEFAULT '{}',
   gender gender NOT NULL,
   "order" INTEGER NOT NULL DEFAULT 0,
   search_vector tsvector GENERATED ALWAYS AS (
@@ -28,6 +29,8 @@ CREATE TABLE IF NOT EXISTS products (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sizes TEXT[] NOT NULL DEFAULT '{}';
 
 CREATE INDEX IF NOT EXISTS products_gender_order_idx ON products (gender, "order");
 CREATE INDEX IF NOT EXISTS products_search_vector_idx ON products USING GIN (search_vector);

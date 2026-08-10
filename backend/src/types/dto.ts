@@ -13,6 +13,7 @@ export type ProductDTO = {
   brand: string;
   color: string;
   variantCount?: number;
+  sizes: string[];
   gender: Gender;
 };
 

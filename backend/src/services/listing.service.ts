@@ -16,6 +16,7 @@ export async function findProducts(gender?: Gender): Promise<ProductDTO[]> {
     brand: row.brand,
     color: row.color,
     ...(row.variant_count != null ? { variantCount: row.variant_count } : {}),
+    sizes: row.sizes,
     gender: row.gender,
   }));
 }

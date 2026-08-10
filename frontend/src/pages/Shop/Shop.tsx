@@ -4,13 +4,8 @@ import ShopProductCard from "../../components/Products/ShopProductCard";
 import { fetchProducts, type Product } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 
-const SIZES = [
-  { label: "XS", count: 102 },
-  { label: "S", count: 179 },
-  { label: "M", count: 178 },
-  { label: "L", count: 152 },
-  { label: "XL", count: 143 },
-];
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL"];
+const RATING_THRESHOLDS = [4, 3, 2, 1];
 
 // Counts how many products share each value of the given field, e.g. how
 // many products per brand — drives the "(n)" counts next to each checkbox.
@@ -21,6 +16,27 @@ function countByField(products: Product[], field: "category" | "brand" | "color"
     counts.set(value, (counts.get(value) ?? 0) + 1);
   });
   return counts;
+}
+
+// Same idea as countByField, but for the sizes array (a product can match
+// several sizes at once instead of a single value).
+function countBySizes(products: Product[]) {
+  const counts = new Map<string, number>();
+  products.forEach((product) => {
+    product.sizes.forEach((size) => {
+      counts.set(size, (counts.get(size) ?? 0) + 1);
+    });
+  });
+  return new Map(
+    [...counts.entries()].sort(
+      (a, b) => SIZE_ORDER.indexOf(a[0]) - SIZE_ORDER.indexOf(b[0]),
+    ),
+  );
+}
+
+// How many products have at least `threshold` stars — used for the "4★ & up" rows.
+function countByMinRating(products: Product[], threshold: number) {
+  return products.filter((product) => product.rating >= threshold).length;
 }
 
 type FilterSectionProps = {
@@ -98,6 +114,10 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
+  const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set());
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minRating, setMinRating] = useState<number | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   // Fetches every product once (both genders) so the "Men (n)"/"Women (n)"
@@ -117,6 +137,10 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
     setSelectedCategories(new Set());
     setSelectedBrands(new Set());
     setSelectedColors(new Set());
+    setSelectedSizes(new Set());
+    setMinPrice("");
+    setMaxPrice("");
+    setMinRating(null);
   }, [activeCategory]);
 
   useEffect(() => {
@@ -130,21 +154,48 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
   const categoryCounts = useMemo(() => countByField(allProducts, "category"), [allProducts]);
   const brandCounts = useMemo(() => countByField(allProducts, "brand"), [allProducts]);
   const colorCounts = useMemo(() => countByField(allProducts, "color"), [allProducts]);
+  const sizeCounts = useMemo(() => countBySizes(allProducts), [allProducts]);
+  const ratingCounts = useMemo(
+    () =>
+      RATING_THRESHOLDS.map((threshold) => ({
+        threshold,
+        count: countByMinRating(allProducts, threshold),
+      })),
+    [allProducts],
+  );
+
+  const parsedMinPrice = minPrice.trim() === "" ? null : Number(minPrice);
+  const parsedMaxPrice = maxPrice.trim() === "" ? null : Number(maxPrice);
 
   const products = allProducts.filter(
     (product) =>
       (selectedCategories.size === 0 || selectedCategories.has(product.category)) &&
       (selectedBrands.size === 0 || selectedBrands.has(product.brand)) &&
-      (selectedColors.size === 0 || selectedColors.has(product.color))
+      (selectedColors.size === 0 || selectedColors.has(product.color)) &&
+      (selectedSizes.size === 0 ||
+        product.sizes.some((size) => selectedSizes.has(size))) &&
+      (parsedMinPrice === null || product.price >= parsedMinPrice) &&
+      (parsedMaxPrice === null || product.price <= parsedMaxPrice) &&
+      (minRating === null || product.rating >= minRating)
   );
 
   const activeFilterCount =
-    1 + selectedCategories.size + selectedBrands.size + selectedColors.size;
+    1 +
+    selectedCategories.size +
+    selectedBrands.size +
+    selectedColors.size +
+    selectedSizes.size +
+    (parsedMinPrice !== null || parsedMaxPrice !== null ? 1 : 0) +
+    (minRating !== null ? 1 : 0);
 
   const clearAll = () => {
     setSelectedCategories(new Set());
     setSelectedBrands(new Set());
     setSelectedColors(new Set());
+    setSelectedSizes(new Set());
+    setMinPrice("");
+    setMaxPrice("");
+    setMinRating(null);
   };
 
   return (
@@ -206,28 +257,37 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
               </FilterSection>
 
               <FilterSection title="Sizes">
-                {SIZES.map((size) => (
-                  <label
-                    key={size.label}
-                    className="flex items-center justify-between gap-2 text-sm text-gray-400"
-                  >
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        disabled
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      {size.label}
-                    </span>
-                    <span>({size.count})</span>
-                  </label>
-                ))}
-                <button
-                  type="button"
-                  className="text-sm font-semibold text-gray-900 underline"
-                >
-                  View all
-                </button>
+                <CheckboxFilterList
+                  counts={sizeCounts}
+                  selected={selectedSizes}
+                  onToggle={(value) =>
+                    setSelectedSizes((current) => toggleInSet(current, value))
+                  }
+                />
+              </FilterSection>
+
+              <FilterSection title="Price">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(event) => setMinPrice(event.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-900"
+                  />
+                  <span className="text-gray-400">–</span>
+                  <input
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(event) => setMaxPrice(event.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-900"
+                  />
+                </div>
               </FilterSection>
 
               <FilterSection title="Brand">
@@ -248,6 +308,31 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
                     setSelectedColors((current) => toggleInSet(current, value))
                   }
                 />
+              </FilterSection>
+
+              <FilterSection title="Rating">
+                {ratingCounts.map(({ threshold, count }) => (
+                  <label
+                    key={threshold}
+                    className="flex items-center justify-between gap-2 text-sm text-gray-700"
+                  >
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="minRating"
+                        checked={minRating === threshold}
+                        onChange={() =>
+                          setMinRating((current) =>
+                            current === threshold ? null : threshold,
+                          )
+                        }
+                        className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900"
+                      />
+                      {threshold}★ & up
+                    </span>
+                    <span className="text-gray-400">({count})</span>
+                  </label>
+                ))}
               </FilterSection>
             </div>
           </aside>
