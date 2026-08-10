@@ -2,22 +2,8 @@ import { useEffect, useState } from "react";
 import { FiArrowRight, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import SearchBar from "../common/SearchBar";
 import ImageCarousel from "../common/ImageCarousel";
-import heroLook1 from "../../assets/hero-look-1.jpg";
-import heroLook1b from "../../assets/hero-look-1b.jpg";
-import heroLook1c from "../../assets/hero-look-1c.jpg";
-import heroLook2 from "../../assets/hero-look-2.jpg";
-import heroLook2b from "../../assets/hero-look-2b.jpg";
-import heroLook2c from "../../assets/hero-look-2c.jpg";
-import heroLook3 from "../../assets/hero-look-3.jpg";
-import heroLook3b from "../../assets/hero-look-3b.jpg";
-import heroLookWomen1 from "../../assets/hero-look-women-1.jpg";
-import heroLookWomen2 from "../../assets/hero-look-women-2.jpg";
-import heroLookWomen3 from "../../assets/hero-look-women-3.jpg";
-import heroLookWomen4 from "../../assets/hero-look-women-4.jpg";
-import heroLookWomen5 from "../../assets/hero-look-women-5.jpg";
-import heroLookWomen6 from "../../assets/hero-look-women-6.jpg";
-import heroLookWomen7 from "../../assets/hero-look-women-7.jpg";
-import heroLookWomen8 from "../../assets/hero-look-women-8.jpg";
+import { fetchHeroLooks } from "../../lib/api";
+import { useApi } from "../../hooks/useApi";
 
 type HeroProps = {
   searchQuery: string;
@@ -25,37 +11,6 @@ type HeroProps = {
   activeCategory: string;
   onGoToShopClick: () => void;
 };
-
-const MEN_LOOKS = [
-  { src: heroLook1, alt: "Model wearing cream trousers and white sneakers" },
-  { src: heroLook1b, alt: "Model seated wearing khaki trousers and sneakers" },
-  { src: heroLook1c, alt: "Model wearing ripped denim jeans and sneakers" },
-  {
-    src: heroLook2,
-    alt: "Model wearing a graphic t-shirt with visible tattoos",
-  },
-  { src: heroLook2b, alt: "Model wearing a white graphic print t-shirt" },
-  { src: heroLook2c, alt: "Model wearing a graphic t-shirt with a backpack" },
-  {
-    src: heroLook3,
-    alt: "Model wearing a matching grey gingham co-ord set with white sneakers",
-  },
-  {
-    src: heroLook3b,
-    alt: "Model wearing a plaid shirt-jacket over a mustard turtleneck",
-  },
-];
-
-const WOMEN_LOOKS = [
-  { src: heroLookWomen1, alt: "Model wearing women's look 1" },
-  { src: heroLookWomen2, alt: "Model wearing women's look 2" },
-  { src: heroLookWomen3, alt: "Model wearing women's look 3" },
-  { src: heroLookWomen4, alt: "Model wearing women's look 4" },
-  { src: heroLookWomen5, alt: "Model wearing women's look 5" },
-  { src: heroLookWomen6, alt: "Model wearing women's look 6" },
-  { src: heroLookWomen7, alt: "Model wearing women's look 7" },
-  { src: heroLookWomen8, alt: "Model wearing women's look 8" },
-];
 
 const LOOKS_PAGE_SIZE = 4;
 
@@ -67,9 +22,14 @@ function Hero({
 }: HeroProps) {
   const [lookPage, setLookPage] = useState(0);
 
-  const allLooks = activeCategory === "Women" ? WOMEN_LOOKS : MEN_LOOKS;
-  const looksPageCount = Math.ceil(allLooks.length / LOOKS_PAGE_SIZE);
+  const { data, loading, error } = useApi(
+    () => fetchHeroLooks(activeCategory),
+    [activeCategory],
+  );
+  const allLooks = data ?? [];
+  const looksPageCount = Math.max(1, Math.ceil(allLooks.length / LOOKS_PAGE_SIZE));
 
+  // Reset to the first page whenever the category (and therefore the set) changes.
   useEffect(() => {
     setLookPage(0);
   }, [activeCategory]);
@@ -148,14 +108,27 @@ function Hero({
             </button>
 
             <div className="flex flex-1 gap-3 sm:gap-4">
-              {visibleLooks.map((look) => (
-                <ImageCarousel
-                  key={look.src}
-                  slides={[look]}
-                  activeIndex={0}
-                  sizeClassName="aspect-[3/4] w-full max-w-64 flex-1"
-                />
-              ))}
+              {error ? (
+                <p className="py-10 text-sm text-gray-500">
+                  Couldn’t load the lookbook. {error}
+                </p>
+              ) : loading ? (
+                Array.from({ length: LOOKS_PAGE_SIZE }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="aspect-[3/4] w-full max-w-64 flex-1 animate-pulse rounded-3xl bg-gray-200"
+                  />
+                ))
+              ) : (
+                visibleLooks.map((look) => (
+                  <ImageCarousel
+                    key={look.src}
+                    slides={[look]}
+                    activeIndex={0}
+                    sizeClassName="aspect-[3/4] w-full max-w-64 flex-1"
+                  />
+                ))
+              )}
             </div>
 
             <button

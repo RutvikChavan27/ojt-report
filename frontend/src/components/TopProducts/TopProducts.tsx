@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import ProductCard from "../Products/ProductCard";
-import { MEN_PRODUCTS, WOMEN_PRODUCTS } from "../../data/products";
+import { fetchProducts } from "../../lib/api";
+import { useApi } from "../../hooks/useApi";
 
 const PAGE_SIZE = 4;
 
@@ -16,8 +17,12 @@ const normalize = (value: string) => value.toLowerCase().replace(/[\s-]+/g, "");
 function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
   const [page, setPage] = useState(0);
 
-  const allProducts = activeCategory === "Women" ? WOMEN_PRODUCTS : MEN_PRODUCTS;
-  const pageCount = Math.ceil(allProducts.length / PAGE_SIZE);
+  const { data, loading, error } = useApi(
+    () => fetchProducts(activeCategory),
+    [activeCategory],
+  );
+  const allProducts = data ?? [];
+  const pageCount = Math.max(1, Math.ceil(allProducts.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage(0);
@@ -32,7 +37,7 @@ function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
         (product) =>
           normalize(product.name).includes(normalizedQuery) ||
           normalize(product.category).includes(normalizedQuery) ||
-          product.price.toString().includes(query)
+          product.price.toString().includes(query),
       )
     : allProducts.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
@@ -56,7 +61,21 @@ function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
           </h2>
         </div>
 
-        {products.length > 0 ? (
+        {error ? (
+          <p className="mt-10 text-sm text-gray-500">
+            Couldn’t load products. {error}
+          </p>
+        ) : loading ? (
+          <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+              <div key={index}>
+                <div className="aspect-[3/4] animate-pulse rounded-2xl bg-gray-200" />
+                <div className="mt-3 h-3 w-1/2 animate-pulse rounded bg-gray-200" />
+                <div className="mt-2 h-3 w-3/4 animate-pulse rounded bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        ) : products.length > 0 ? (
           <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -72,7 +91,7 @@ function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
           <button
             type="button"
             aria-label="Previous page"
-            disabled={isSearching}
+            disabled={isSearching || loading || !!error}
             onClick={goToPrevious}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -82,7 +101,7 @@ function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
           <button
             type="button"
             aria-label="Next page"
-            disabled={isSearching}
+            disabled={isSearching || loading || !!error}
             onClick={goToNext}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
           >
