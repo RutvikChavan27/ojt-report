@@ -64,15 +64,13 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
                   )}
                 </div>
 
-                {product.price !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => remove(product.id)}
-                    className="block w-full border-t border-gray-100 py-2.5 text-center text-xs font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
-                  >
-                    MOVE TO CART
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => remove(product.id)}
+                  className="block w-full border-t border-gray-100 py-2.5 text-center text-xs font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
+                >
+                  MOVE TO CART
+                </button>
               </div>
             ))}
           </div>
