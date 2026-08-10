@@ -108,9 +108,10 @@ function toggleInSet(set: Set<string>, value: string) {
 type ShopProps = {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
+  onSelectProduct: (product: Product) => void;
 };
 
-function Shop({ activeCategory, onCategoryChange }: ShopProps) {
+function Shop({ activeCategory, onCategoryChange, onSelectProduct }: ShopProps) {
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
@@ -354,7 +355,11 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
             ) : products.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
                 {products.map((product) => (
-                  <ShopProductCard key={product.id} product={product} />
+                  <ShopProductCard
+                    key={product.id}
+                    product={product}
+                    onSelectProduct={onSelectProduct}
+                  />
                 ))}
               </div>
             ) : (

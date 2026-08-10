@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import ProductCard from "../Products/ProductCard";
-import { fetchProducts, fetchSearchResults } from "../../lib/api";
+import { fetchProducts, fetchSearchResults, type Product } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 
 const PAGE_SIZE = 4;
@@ -10,9 +10,10 @@ const SEARCH_DEBOUNCE_MS = 300;
 type TopProductsProps = {
   searchQuery: string;
   activeCategory: string;
+  onSelectProduct?: (product: Product) => void;
 };
 
-function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
+function TopProducts({ searchQuery, activeCategory, onSelectProduct }: TopProductsProps) {
   const [page, setPage] = useState(0);
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery.trim());
 
@@ -95,7 +96,11 @@ function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
         ) : products.length > 0 ? (
           <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                onSelectProduct={onSelectProduct}
+              />
             ))}
           </div>
         ) : (

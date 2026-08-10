@@ -1,0 +1,193 @@
+import { useState } from "react";
+import { FiArrowLeft, FiHeart, FiShield, FiStar } from "react-icons/fi";
+import { FaFacebookF, FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
+import type { Product } from "../../lib/api";
+import { useWishlist } from "../../store/WishlistContext";
+
+type ProductDetailProps = {
+  product: Product;
+  onBack: () => void;
+};
+
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL"];
+const QUANTITY_OPTIONS = [1, 2, 3, 4, 5];
+
+function ProductDetail({ product, onBack }: ProductDetailProps) {
+  const { isWishlisted: checkWishlisted, toggle } = useWishlist();
+  const wishlisted = checkWishlisted(product.id);
+
+  const orderedSizes = [...product.sizes].sort(
+    (a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b),
+  );
+  const [selectedSize, setSelectedSize] = useState<string | null>(
+    orderedSizes[0] ?? null,
+  );
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+
+  const discountPercent = Math.round(
+    (1 - product.price / product.originalPrice) * 100,
+  );
+
+  const handleAddToCart = () => {
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  return (
+    <section className="pb-20 pt-8">
+      <div className="mx-auto w-full px-6 sm:px-10 lg:px-16">
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-6 flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-900"
+        >
+          <FiArrowLeft size={16} />
+          Back
+        </button>
+
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div className="aspect-[3/4] w-full overflow-hidden rounded-3xl bg-gray-100">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-gray-500">{product.brand}</p>
+            <h1 className="mt-1 text-2xl font-black leading-snug tracking-tight text-gray-900 sm:text-3xl">
+              {product.name}
+            </h1>
+            <p className="mt-1 text-sm text-gray-400">{product.category}</p>
+
+            <div className="mt-4 flex items-center gap-3">
+              <span className="text-2xl font-bold text-gray-900">
+                ${product.price}
+              </span>
+              <span className="text-base text-gray-400 line-through">
+                ${product.originalPrice}
+              </span>
+              <span className="text-sm font-bold text-gray-900">
+                {discountPercent}% OFF
+              </span>
+            </div>
+
+            <div className="mt-3 flex items-center gap-1.5 text-sm text-gray-600">
+              <FiStar size={14} fill="currentColor" className="text-gray-900" />
+              <span className="font-semibold text-gray-900">{product.rating}</span>
+            </div>
+
+            {orderedSizes.length > 0 && (
+              <div className="mt-6">
+                <p className="text-sm font-bold text-gray-900">Select Size</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {orderedSizes.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setSelectedSize(size)}
+                      aria-pressed={selectedSize === size}
+                      className={`flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 text-sm font-semibold transition ${
+                        selectedSize === size
+                          ? "border-gray-900 bg-gray-900 text-white"
+                          : "border-gray-300 text-gray-900 hover:border-gray-900"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center gap-3">
+              <label htmlFor="quantity" className="text-sm font-bold text-gray-900">
+                Quantity
+              </label>
+              <select
+                id="quantity"
+                value={quantity}
+                onChange={(event) => setQuantity(Number(event.target.value))}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-900"
+              >
+                {QUANTITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="flex-1 rounded-full bg-gray-900 py-3.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-black"
+              >
+                {added ? "Added" : "Add to Cart"}
+              </button>
+              <button
+                type="button"
+                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                aria-pressed={wishlisted}
+                onClick={() => toggle(product)}
+                className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border transition ${
+                  wishlisted
+                    ? "border-gray-900 bg-gray-900 text-white"
+                    : "border-gray-300 text-gray-900 hover:border-gray-900"
+                }`}
+              >
+                <FiHeart size={18} fill={wishlisted ? "currentColor" : "none"} />
+              </button>
+            </div>
+
+            <div className="mt-6 flex items-center gap-3">
+              <span className="text-sm font-semibold text-gray-900">Share</span>
+              <a
+                href="#"
+                aria-label="Share on WhatsApp"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900"
+              >
+                <FaWhatsapp size={15} />
+              </a>
+              <a
+                href="#"
+                aria-label="Share on Facebook"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900"
+              >
+                <FaFacebookF size={13} />
+              </a>
+              <a
+                href="#"
+                aria-label="Share on Twitter"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900"
+              >
+                <FaTwitter size={15} />
+              </a>
+              <a
+                href="#"
+                aria-label="Share on Instagram"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900"
+              >
+                <FaInstagram size={15} />
+              </a>
+            </div>
+
+            <div className="mt-8 flex items-start gap-3 rounded-2xl border border-gray-200 p-4">
+              <FiShield size={20} className="mt-0.5 flex-shrink-0 text-gray-900" />
+              <p className="text-sm leading-6 text-gray-600">
+                <span className="font-semibold text-gray-900">Free shipping</span>{" "}
+                on this item, plus easy 30-day returns or exchanges. No questions
+                asked.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default ProductDetail;

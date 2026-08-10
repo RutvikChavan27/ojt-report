@@ -4,9 +4,10 @@ import { useWishlist } from "../../store/WishlistContext";
 
 type ShopProductCardProps = {
   product: Product;
+  onSelectProduct?: (product: Product) => void;
 };
 
-function ShopProductCard({ product }: ShopProductCardProps) {
+function ShopProductCard({ product, onSelectProduct }: ShopProductCardProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
   const isWishlisted = checkWishlisted(product.id);
 
@@ -17,7 +18,12 @@ function ShopProductCard({ product }: ShopProductCardProps) {
 
   return (
     <div className="group">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+      <button
+        type="button"
+        onClick={() => onSelectProduct?.(product)}
+        aria-label={`View ${product.name}`}
+        className="relative block aspect-[3/4] w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 text-left"
+      >
         <img
           src={product.image}
           alt={product.name}
@@ -29,16 +35,27 @@ function ShopProductCard({ product }: ShopProductCardProps) {
           {product.rating}
         </span>
 
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={0}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={isWishlisted}
-          onClick={() => toggle(product)}
+          onClick={(event) => {
+            event.stopPropagation();
+            toggle(product);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.stopPropagation();
+              event.preventDefault();
+              toggle(product);
+            }
+          }}
           className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
         >
           <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
-        </button>
-      </div>
+        </span>
+      </button>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-400">
         <span>{product.category}</span>
