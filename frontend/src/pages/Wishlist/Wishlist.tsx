@@ -54,19 +54,25 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
                   <p className="text-sm font-bold leading-snug text-gray-900">
                     {product.name}
                   </p>
-                  <p className="mt-1 text-xs text-gray-400">{product.category}</p>
-                  <p className="mt-1.5 text-sm font-semibold text-gray-900">
-                    ${product.price}
-                  </p>
+                  {product.category && (
+                    <p className="mt-1 text-xs text-gray-400">{product.category}</p>
+                  )}
+                  {product.price !== undefined && (
+                    <p className="mt-1.5 text-sm font-semibold text-gray-900">
+                      ${product.price}
+                    </p>
+                  )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => remove(product.id)}
-                  className="block w-full border-t border-gray-100 py-3 text-center text-sm font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
-                >
-                  MOVE TO CART
-                </button>
+                {product.price !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => remove(product.id)}
+                    className="block w-full border-t border-gray-100 py-3 text-center text-sm font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
+                  >
+                    MOVE TO CART
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
-import { FiArrowRight, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiChevronLeft,
+  FiChevronRight,
+  FiHeart,
+} from "react-icons/fi";
 import SearchBar from "../common/SearchBar";
 import ImageCarousel from "../common/ImageCarousel";
 import { fetchHeroLooks } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { useWishlist } from "../../store/WishlistContext";
 
 type HeroProps = {
   searchQuery: string;
@@ -21,6 +27,7 @@ function Hero({
   onGoToShopClick,
 }: HeroProps) {
   const [lookPage, setLookPage] = useState(0);
+  const { isWishlisted, toggle } = useWishlist();
 
   const { data, loading, error } = useApi(
     () => fetchHeroLooks(activeCategory),
@@ -120,14 +127,30 @@ function Hero({
                   />
                 ))
               ) : (
-                visibleLooks.map((look) => (
-                  <ImageCarousel
-                    key={look.src}
-                    slides={[look]}
-                    activeIndex={0}
-                    sizeClassName="aspect-[3/4] w-full max-w-64 flex-1"
-                  />
-                ))
+                visibleLooks.map((look) => {
+                  const liked = isWishlisted(look.src);
+                  return (
+                    <ImageCarousel
+                      key={look.src}
+                      slides={[look]}
+                      activeIndex={0}
+                      sizeClassName="aspect-[3/4] w-full max-w-64 flex-1"
+                      overlay={
+                        <button
+                          type="button"
+                          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+                          aria-pressed={liked}
+                          onClick={() =>
+                            toggle({ id: look.src, name: look.alt, image: look.src })
+                          }
+                          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
+                        >
+                          <FiHeart size={15} fill={liked ? "currentColor" : "none"} />
+                        </button>
+                      }
+                    />
+                  );
+                })
               )}
             </div>
 

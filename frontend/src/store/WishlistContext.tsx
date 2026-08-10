@@ -1,26 +1,37 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type { Product } from "../lib/api";
+
+/**
+ * Anything likeable: a real Product (has category/price) or a lookbook photo
+ * (image + name only). category/price are optional so both shapes fit.
+ */
+export type WishlistItem = {
+  id: string;
+  name: string;
+  image: string;
+  category?: string;
+  price?: number;
+};
 
 type WishlistContextValue = {
-  items: Product[];
+  items: WishlistItem[];
   count: number;
   isWishlisted: (id: string) => boolean;
-  toggle: (product: Product) => void;
+  toggle: (item: WishlistItem) => void;
   remove: (id: string) => void;
 };
 
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<Map<string, Product>>(new Map());
+  const [items, setItems] = useState<Map<string, WishlistItem>>(new Map());
 
-  const toggle = (product: Product) => {
+  const toggle = (item: WishlistItem) => {
     setItems((current) => {
       const next = new Map(current);
-      if (next.has(product.id)) {
-        next.delete(product.id);
+      if (next.has(item.id)) {
+        next.delete(item.id);
       } else {
-        next.set(product.id, product);
+        next.set(item.id, item);
       }
       return next;
     });
