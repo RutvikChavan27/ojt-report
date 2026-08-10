@@ -28,13 +28,13 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
             </button>
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
+          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {items.map((product) => (
               <div
                 key={product.id}
                 className="overflow-hidden rounded-2xl border border-gray-200"
               >
-                <div className="relative aspect-[4/3] w-full bg-gray-100">
+                <div className="relative aspect-[3/4] w-full bg-gray-100">
                   <img
                     src={product.image}
                     alt={product.name}
@@ -44,13 +44,13 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
                     type="button"
                     aria-label={`Remove ${product.name} from wishlist`}
                     onClick={() => remove(product.id)}
-                    className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
                   >
-                    <FiX size={15} />
+                    <FiX size={13} />
                   </button>
                 </div>
 
-                <div className="px-4 pb-4 pt-3">
+                <div className="px-3 pb-3 pt-2.5">
                   <p className="text-sm font-bold leading-snug text-gray-900">
                     {product.name}
                   </p>
@@ -58,7 +58,7 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
                     <p className="mt-1 text-xs text-gray-400">{product.category}</p>
                   )}
                   {product.price !== undefined && (
-                    <p className="mt-1.5 text-sm font-semibold text-gray-900">
+                    <p className="mt-1 text-sm font-semibold text-gray-900">
                       ${product.price}
                     </p>
                   )}
@@ -68,7 +68,7 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
                   <button
                     type="button"
                     onClick={() => remove(product.id)}
-                    className="block w-full border-t border-gray-100 py-3 text-center text-sm font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
+                    className="block w-full border-t border-gray-100 py-2.5 text-center text-xs font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
                   >
                     MOVE TO CART
                   </button>
