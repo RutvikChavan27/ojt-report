@@ -1,9 +1,21 @@
-import type { Product } from "../data/products";
-
 /** Base URL of the backend API. Override with VITE_API_URL in a .env file. */
 const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ??
   "http://localhost:5000";
+
+export type Product = {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  rating: number;
+  image: string;
+  brand: string;
+  color: string;
+  variantCount?: number;
+  gender: string;
+};
 
 export type HeroLook = { src: string; alt: string };
 export type Category = { label: string; image: string };

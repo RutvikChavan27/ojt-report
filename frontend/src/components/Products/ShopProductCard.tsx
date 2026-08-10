@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiHeart, FiStar } from "react-icons/fi";
-import type { Product } from "../../data/products";
+import type { Product } from "../../lib/api";
 
 type ShopProductCardProps = {
   product: Product;

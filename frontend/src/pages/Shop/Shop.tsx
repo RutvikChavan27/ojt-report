@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { FiChevronDown, FiChevronUp, FiArrowUp } from "react-icons/fi";
 import ShopProductCard from "../../components/Products/ShopProductCard";
-import { MEN_PRODUCTS, WOMEN_PRODUCTS, type Product } from "../../data/products";
+import { fetchProducts, type Product } from "../../lib/api";
+import { useApi } from "../../hooks/useApi";
 
 const SIZES = [
   { label: "XS", count: 102 },
@@ -99,6 +100,19 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
   const [showBackToTop, setShowBackToTop] = useState(false);
 
+  // Fetches every product once (both genders) so the "Men (n)"/"Women (n)"
+  // counts stay accurate regardless of which gender is currently selected.
+  const { data, loading, error } = useApi(() => fetchProducts(""), []);
+  const everyProduct = data ?? [];
+  const menProducts = useMemo(
+    () => everyProduct.filter((product) => product.gender === "Men"),
+    [everyProduct],
+  );
+  const womenProducts = useMemo(
+    () => everyProduct.filter((product) => product.gender === "Women"),
+    [everyProduct],
+  );
+
   useEffect(() => {
     setSelectedCategories(new Set());
     setSelectedBrands(new Set());
@@ -111,7 +125,7 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const allProducts = activeCategory === "Women" ? WOMEN_PRODUCTS : MEN_PRODUCTS;
+  const allProducts = activeCategory === "Women" ? womenProducts : menProducts;
 
   const categoryCounts = useMemo(() => countByField(allProducts, "category"), [allProducts]);
   const brandCounts = useMemo(() => countByField(allProducts, "brand"), [allProducts]);
@@ -164,7 +178,7 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
                     />
                     Men
                   </span>
-                  <span className="text-gray-400">({MEN_PRODUCTS.length})</span>
+                  <span className="text-gray-400">({menProducts.length})</span>
                 </label>
 
                 <label className="flex items-center justify-between gap-2 text-sm text-gray-700">
@@ -177,7 +191,7 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
                     />
                     Women
                   </span>
-                  <span className="text-gray-400">({WOMEN_PRODUCTS.length})</span>
+                  <span className="text-gray-400">({womenProducts.length})</span>
                 </label>
               </FilterSection>
 
@@ -240,7 +254,19 @@ function Shop({ activeCategory, onCategoryChange }: ShopProps) {
 
           {/* Product grid */}
           <div>
-            {products.length > 0 ? (
+            {error ? (
+              <p className="text-sm text-gray-500">Couldn’t load products. {error}</p>
+            ) : loading ? (
+              <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index}>
+                    <div className="aspect-[3/4] animate-pulse rounded-2xl bg-gray-200" />
+                    <div className="mt-3 h-3 w-1/2 animate-pulse rounded bg-gray-200" />
+                    <div className="mt-2 h-3 w-3/4 animate-pulse rounded bg-gray-200" />
+                  </div>
+                ))}
+              </div>
+            ) : products.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
                 {products.map((product) => (
                   <ShopProductCard key={product.id} product={product} />
