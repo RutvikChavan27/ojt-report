@@ -52,3 +52,14 @@ export async function fetchHeroLooks(gender: string): Promise<HeroLook[]> {
   );
   return data.map((look) => ({ ...look, src: resolveImage(look.src) }));
 }
+
+/** Full-text product search (backend ranks matches with Postgres tsvector/ts_rank). */
+export async function fetchSearchResults(
+  query: string,
+  gender: string,
+): Promise<Product[]> {
+  const data = await getJson<Product[]>(
+    `/api/search?q=${encodeURIComponent(query)}&gender=${encodeURIComponent(gender)}`,
+  );
+  return data.map(withImage);
+}

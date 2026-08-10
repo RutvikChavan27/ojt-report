@@ -1,17 +1,29 @@
-import { Category } from "../models/category.model";
-import { HeroLook } from "../models/heroLook.model";
+import { query } from "../config/database";
 import type { CategoryDTO, Gender, HeroLookDTO } from "../types/dto";
+
+type CategoryRow = { label: string; image: string };
+type HeroLookRow = { src: string; alt: string };
 
 /** Fetches the "Shop by category" tiles for a gender, in authored order. */
 export async function findCategories(gender?: Gender): Promise<CategoryDTO[]> {
-  const filter = gender ? { gender } : {};
-  const docs = await Category.find(filter).sort({ order: 1 }).lean();
-  return docs.map((doc) => ({ label: doc.label, image: doc.image }));
+  const { rows } = gender
+    ? await query<CategoryRow>(
+        'SELECT label, image FROM categories WHERE gender = $1 ORDER BY "order" ASC',
+        [gender]
+      )
+    : await query<CategoryRow>('SELECT label, image FROM categories ORDER BY "order" ASC');
+
+  return rows.map((row) => ({ label: row.label, image: row.image }));
 }
 
 /** Fetches the hero lookbook images for a gender, in authored order. */
 export async function findHeroLooks(gender?: Gender): Promise<HeroLookDTO[]> {
-  const filter = gender ? { gender } : {};
-  const docs = await HeroLook.find(filter).sort({ order: 1 }).lean();
-  return docs.map((doc) => ({ src: doc.src, alt: doc.alt }));
+  const { rows } = gender
+    ? await query<HeroLookRow>(
+        'SELECT src, alt FROM hero_looks WHERE gender = $1 ORDER BY "order" ASC',
+        [gender]
+      )
+    : await query<HeroLookRow>('SELECT src, alt FROM hero_looks ORDER BY "order" ASC');
+
+  return rows.map((row) => ({ src: row.src, alt: row.alt }));
 }

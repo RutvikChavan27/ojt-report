@@ -7,7 +7,9 @@ import path from "node:path";
  */
 export const config = {
   port: Number(process.env.PORT ?? 5000),
-  mongoUri: process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/thread",
+  databaseUrl:
+    process.env.DATABASE_URL ??
+    "postgresql://postgres:postgres@127.0.0.1:5432/thread",
   clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
   /** Folder on disk where listing/category/hero images live and are served from. */
   imagesDir: path.resolve(process.cwd(), "uploads", "images"),

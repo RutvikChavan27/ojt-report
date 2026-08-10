@@ -1,5 +1,5 @@
 /**
- * Seeds MongoDB with all of the Dashboard's previously-static data:
+ * Seeds PostgreSQL with all of the Dashboard's previously-static data:
  * products (TopProducts), category tiles (ShopByCategory) and hero looks (Hero).
  *
  * Run with:  npm run seed
@@ -8,10 +8,7 @@
  * The matching files must exist under backend/uploads/images (see README).
  */
 import { config } from "../../config/env";
-import { connectDatabase, disconnectDatabase } from "../../config/database";
-import { Product } from "../../models/product.model";
-import { Category } from "../../models/category.model";
-import { HeroLook } from "../../models/heroLook.model";
+import { connectDatabase, disconnectDatabase, query } from "../../config/database";
 
 const img = (file: string) => `${config.imagesRoute}/${file}`;
 
@@ -90,22 +87,54 @@ function withMeta<T>(rows: T[], gender: "Men" | "Women"): (T & { gender: string;
   return rows.map((row, index) => ({ ...row, gender, order: index }));
 }
 
+/** Builds a parameterised multi-row INSERT for a fixed set of columns. */
+function insertRows(
+  table: string,
+  columns: string[],
+  rows: Record<string, unknown>[]
+): { text: string; values: unknown[] } {
+  const values: unknown[] = [];
+  const tuples = rows.map((row) => {
+    const placeholders = columns.map((col) => {
+      values.push(row[col] ?? null);
+      return `$${values.length}`;
+    });
+    return `(${placeholders.join(", ")})`;
+  });
+
+  const quotedColumns = columns.map((col) => `"${col}"`).join(", ");
+  return {
+    text: `INSERT INTO ${table} (${quotedColumns}) VALUES ${tuples.join(", ")}`,
+    values,
+  };
+}
+
 async function seed(): Promise<void> {
-  await connectDatabase(config.mongoUri);
+  await connectDatabase(config.databaseUrl);
 
-  await Promise.all([
-    Product.deleteMany({}),
-    Category.deleteMany({}),
-    HeroLook.deleteMany({}),
-  ]);
+  await query('TRUNCATE TABLE products, categories, hero_looks RESTART IDENTITY');
 
-  const products = [...withMeta(MEN_PRODUCTS, "Men"), ...withMeta(WOMEN_PRODUCTS, "Women")];
+  const products = [...withMeta(MEN_PRODUCTS, "Men"), ...withMeta(WOMEN_PRODUCTS, "Women")].map(
+    (p) => ({ ...p, variant_count: "variantCount" in p ? p.variantCount : null, original_price: p.originalPrice })
+  );
   const categories = [...withMeta(MEN_CATEGORIES, "Men"), ...withMeta(WOMEN_CATEGORIES, "Women")];
   const heroLooks = [...withMeta(MEN_LOOKS, "Men"), ...withMeta(WOMEN_LOOKS, "Women")];
 
-  await Product.insertMany(products);
-  await Category.insertMany(categories);
-  await HeroLook.insertMany(heroLooks);
+  const productsInsert = insertRows(
+    "products",
+    ["slug", "name", "category", "price", "original_price", "rating", "image", "brand", "color", "variant_count", "gender", "order"],
+    products
+  );
+  const categoriesInsert = insertRows(
+    "categories",
+    ["label", "image", "gender", "order"],
+    categories
+  );
+  const heroLooksInsert = insertRows("hero_looks", ["src", "alt", "gender", "order"], heroLooks);
+
+  await query(productsInsert.text, productsInsert.values);
+  await query(categoriesInsert.text, categoriesInsert.values);
+  await query(heroLooksInsert.text, heroLooksInsert.values);
 
   console.log(`[seed] inserted ${products.length} products`);
   console.log(`[seed] inserted ${categories.length} categories`);

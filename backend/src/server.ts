@@ -3,7 +3,7 @@ import { config } from "./config/env";
 import { connectDatabase } from "./config/database";
 
 async function start(): Promise<void> {
-  await connectDatabase(config.mongoUri);
+  await connectDatabase(config.databaseUrl);
 
   const app = createApp();
   app.listen(config.port, () => {

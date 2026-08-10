@@ -1,12 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Thread store API (Express + MongoDB)",
+  "description": "Thread store API (Express + PostgreSQL)",
   "type": "module",
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
+    "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seeds/seedListings.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -17,12 +18,13 @@
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^8.9.5"
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^24.13.3",
+    "@types/pg": "^8.11.10",
     "tsx": "^4.19.2",
     "typescript": "~6.0.2"
   }

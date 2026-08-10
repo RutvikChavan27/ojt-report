@@ -1,45 +1,62 @@
 import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import ProductCard from "../Products/ProductCard";
-import { fetchProducts } from "../../lib/api";
+import { fetchProducts, fetchSearchResults } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 
 const PAGE_SIZE = 4;
+const SEARCH_DEBOUNCE_MS = 300;
 
 type TopProductsProps = {
   searchQuery: string;
   activeCategory: string;
 };
 
-// Strips spaces/hyphens so "tshirt" still matches "T-Shirt" or "T Shirt".
-const normalize = (value: string) => value.toLowerCase().replace(/[\s-]+/g, "");
-
 function TopProducts({ searchQuery, activeCategory }: TopProductsProps) {
   const [page, setPage] = useState(0);
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery.trim());
 
-  const { data, loading, error } = useApi(
-    () => fetchProducts(activeCategory),
-    [activeCategory],
+  useEffect(() => {
+    const timeout = setTimeout(
+      () => setDebouncedQuery(searchQuery.trim()),
+      SEARCH_DEBOUNCE_MS,
+    );
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const isSearching = debouncedQuery.length > 0;
+
+  const {
+    data: browseData,
+    loading: browseLoading,
+    error: browseError,
+  } = useApi(() => fetchProducts(activeCategory), [activeCategory]);
+
+  const {
+    data: searchData,
+    loading: searchLoading,
+    error: searchError,
+  } = useApi(
+    () =>
+      isSearching
+        ? fetchSearchResults(debouncedQuery, activeCategory)
+        : Promise.resolve([]),
+    [isSearching, debouncedQuery, activeCategory],
   );
-  const allProducts = data ?? [];
+
+  const allProducts = browseData ?? [];
   const pageCount = Math.max(1, Math.ceil(allProducts.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage(0);
   }, [activeCategory]);
 
-  const query = searchQuery.trim();
-  const isSearching = query.length > 0;
-  const normalizedQuery = normalize(query);
-
   const products = isSearching
-    ? allProducts.filter(
-        (product) =>
-          normalize(product.name).includes(normalizedQuery) ||
-          normalize(product.category).includes(normalizedQuery) ||
-          product.price.toString().includes(query),
-      )
+    ? (searchData ?? [])
     : allProducts.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+
+  const loading = isSearching ? searchLoading : browseLoading;
+  const error = isSearching ? searchError : browseError;
 
   const goToPrevious = () =>
     setPage((current) => (current - 1 + pageCount) % pageCount);
