@@ -11,6 +11,9 @@ type ProductDetailProps = {
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL"];
 const QUANTITY_OPTIONS = [1, 2, 3, 4, 5];
+// This product only has one real photo — these thumbnails all point at it.
+// Purely a layout match; there's no actual multi-angle gallery behind it.
+const THUMBNAIL_COUNT = 5;
 
 function ProductDetail({ product, onBack }: ProductDetailProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
@@ -22,6 +25,7 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(
     orderedSizes[0] ?? null,
   );
+  const [activeThumbnail, setActiveThumbnail] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -46,16 +50,41 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
           Back
         </button>
 
-        <div className="grid gap-10 lg:grid-cols-2">
-          <div className="aspect-[3/4] w-full overflow-hidden rounded-3xl bg-gray-100">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-full w-full object-cover"
-            />
+        <div className="flex flex-col gap-10 lg:flex-row">
+          <div className="flex gap-3 lg:w-1/2">
+            <div className="hidden w-20 flex-shrink-0 flex-col gap-3 sm:flex">
+              {Array.from({ length: THUMBNAIL_COUNT }).map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveThumbnail(index)}
+                  aria-label={`View photo ${index + 1}`}
+                  aria-pressed={activeThumbnail === index}
+                  className={`aspect-square overflow-hidden rounded-xl border-2 bg-gray-100 transition ${
+                    activeThumbnail === index
+                      ? "border-gray-900"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                >
+                  <img
+                    src={product.image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="aspect-[3/4] w-full flex-1 overflow-hidden rounded-3xl bg-gray-100">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
 
-          <div>
+          <div className="lg:max-w-md">
             <p className="text-sm font-semibold text-gray-500">{product.brand}</p>
             <h1 className="mt-1 text-2xl font-black leading-snug tracking-tight text-gray-900 sm:text-3xl">
               {product.name}
