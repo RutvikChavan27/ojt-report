@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FiHeart, FiShoppingBag, FiUser } from "react-icons/fi";
 import AuthModal from "../common/AuthModal";
-import WishlistPanel from "../common/WishlistPanel";
 import CategoryList from "../common/CategoryList";
 import Logo from "../common/Logo";
 import { useWishlist } from "../../store/WishlistContext";
@@ -15,11 +14,16 @@ type NavbarProps = {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
   onGoHome: () => void;
+  onOpenWishlist: () => void;
 };
 
-function Navbar({ activeCategory, onCategoryChange, onGoHome }: NavbarProps) {
+function Navbar({
+  activeCategory,
+  onCategoryChange,
+  onGoHome,
+  onOpenWishlist,
+}: NavbarProps) {
   const { count } = useWishlist();
-  const [showWishlist, setShowWishlist] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
 
   return (
@@ -58,7 +62,7 @@ function Navbar({ activeCategory, onCategoryChange, onGoHome }: NavbarProps) {
           <button
             type="button"
             aria-label="Wishlist"
-            onClick={() => setShowWishlist(true)}
+            onClick={onOpenWishlist}
             className="relative hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400 sm:flex"
           >
             <FiHeart size={16} />
@@ -90,7 +94,6 @@ function Navbar({ activeCategory, onCategoryChange, onGoHome }: NavbarProps) {
         </div>
       </div>
 
-      {showWishlist && <WishlistPanel onClose={() => setShowWishlist(false)} />}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </header>
   );
