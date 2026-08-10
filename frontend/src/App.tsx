@@ -33,6 +33,8 @@ function App() {
         onCategoryChange={setActiveCategory}
         onGoHome={() => goTo("home")}
         onOpenWishlist={() => goTo("wishlist")}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       <main>

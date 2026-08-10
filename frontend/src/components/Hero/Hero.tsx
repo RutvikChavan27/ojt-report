@@ -130,25 +130,41 @@ function Hero({
                 visibleLooks.map((look) => {
                   const liked = isWishlisted(look.src);
                   return (
-                    <ImageCarousel
+                    <button
                       key={look.src}
-                      slides={[look]}
-                      activeIndex={0}
-                      sizeClassName="aspect-[3/4] w-full max-w-64 flex-1"
-                      overlay={
-                        <button
-                          type="button"
-                          aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
-                          aria-pressed={liked}
-                          onClick={() =>
-                            toggle({ id: look.src, name: look.alt, image: look.src })
-                          }
-                          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
-                        >
-                          <FiHeart size={15} fill={liked ? "currentColor" : "none"} />
-                        </button>
-                      }
-                    />
+                      type="button"
+                      onClick={onGoToShopClick}
+                      aria-label={`Shop the look: ${look.alt}`}
+                      className="aspect-[3/4] w-full max-w-64 flex-1 text-left"
+                    >
+                      <ImageCarousel
+                        slides={[look]}
+                        activeIndex={0}
+                        sizeClassName="h-full w-full"
+                        overlay={
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+                            aria-pressed={liked}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggle({ id: look.src, name: look.alt, image: look.src });
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.stopPropagation();
+                                event.preventDefault();
+                                toggle({ id: look.src, name: look.alt, image: look.src });
+                              }
+                            }}
+                            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm transition hover:scale-105"
+                          >
+                            <FiHeart size={15} fill={liked ? "currentColor" : "none"} />
+                          </span>
+                        }
+                      />
+                    </button>
                   );
                 })
               )}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FiHeart, FiShoppingBag, FiUser } from "react-icons/fi";
+import { useEffect, useRef, useState } from "react";
+import { FiHeart, FiSearch, FiShoppingBag, FiUser, FiX } from "react-icons/fi";
 import AuthModal from "../common/AuthModal";
 import CategoryList from "../common/CategoryList";
 import Logo from "../common/Logo";
@@ -15,6 +15,8 @@ type NavbarProps = {
   onCategoryChange: (category: string) => void;
   onGoHome: () => void;
   onOpenWishlist: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 };
 
 function Navbar({
@@ -22,9 +24,22 @@ function Navbar({
   onCategoryChange,
   onGoHome,
   onOpenWishlist,
+  searchQuery,
+  onSearchChange,
 }: NavbarProps) {
   const { count } = useWishlist();
   const [showAuth, setShowAuth] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (showSearch) searchInputRef.current?.focus();
+  }, [showSearch]);
+
+  const closeSearch = () => {
+    setShowSearch(false);
+    onSearchChange("");
+  };
 
   return (
     <header className="relative z-50">
@@ -59,6 +74,30 @@ function Navbar({
 
         {/* Right: status, cart, profile */}
         <div className="flex items-center gap-3">
+          <div className="hidden items-center sm:flex">
+            {showSearch && (
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(event) => onSearchChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") closeSearch();
+                }}
+                placeholder="Search products"
+                className="mr-2 w-44 flex-shrink-0 animate-[modal-in_0.15s_ease-out] rounded-full border border-gray-200 bg-transparent px-4 py-2 text-sm text-gray-900 outline-none focus:border-gray-400 lg:w-64"
+              />
+            )}
+            <button
+              type="button"
+              aria-label={showSearch ? "Close search" : "Search"}
+              onClick={() => (showSearch ? closeSearch() : setShowSearch(true))}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400"
+            >
+              {showSearch ? <FiX size={16} /> : <FiSearch size={16} />}
+            </button>
+          </div>
+
           <button
             type="button"
             aria-label="Wishlist"
