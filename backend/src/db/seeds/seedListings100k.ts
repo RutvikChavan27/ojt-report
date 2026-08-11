@@ -168,20 +168,6 @@ function loadPhotosByCategory(): Map<string, string[]> {
     for (const file of files) add(category, img(file));
   }
 
-  // The bulk of the variety: keyword-searched photos, ~24 per category.
-  const catalogPath = path.join(config.imagesDir, "catalog", "manifest.json");
-  if (fs.existsSync(catalogPath)) {
-    const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf-8")) as {
-      file: string;
-      slug: string;
-    }[];
-    for (const entry of catalog) add(entry.slug, entry.file);
-  } else {
-    console.warn(
-      "[seed] no catalog manifest — run `npm run images:catalog` for per-category photos",
-    );
-  }
-
   // Product-shot photos from the product API, where it had any.
   const apiPath = path.join(config.imagesDir, "api", "manifest.json");
   if (fs.existsSync(apiPath)) {
@@ -229,6 +215,8 @@ const LOCAL_CATEGORY_PHOTOS: Record<string, string[]> = {
   "mens-trousers": ["hero-look-1.jpg", "hero-look-1b.jpg"],
   "mens-knitwear": ["hero-look-3c.jpg", "product-zip-crewneck-2.jpg"],
   "mens-shorts": ["hero-look-1b.jpg"],
+  "mens-blazers": ["hero-look-3b.jpg", "hero-look-3.jpg"],
+  "mens-tracksuits": ["product-fleece-hoodie.jpg", "product-zip-crewneck.jpg"],
 
   "womens-tops": [
     "product-women-wrap-blouse.jpg",
@@ -256,6 +244,8 @@ const LOCAL_CATEGORY_PHOTOS: Record<string, string[]> = {
     "category-women-knitwear.jpg",
   ],
   "womens-coords": ["category-women-coords.jpg"],
+  "womens-croptops": ["product-women-crop-top.jpg", "category-women-tops.jpg"],
+  "womens-trousers": ["category-women-loungewear.jpg", "product-women-wide-jeans.jpg"],
 };
 
 /**

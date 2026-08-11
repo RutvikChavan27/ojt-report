@@ -60,8 +60,8 @@ function CategoryListings({
         </button>
 
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">
-            {categoryLabel.toUpperCase()}
+          <h1 className="text-base font-bold tracking-tight text-gray-900">
+            {categoryLabel}
           </h1>
           {!loading && !error && (
             <p className="text-sm text-gray-500">
@@ -74,7 +74,7 @@ function CategoryListings({
         {error ? (
           <p className="mt-10 text-sm text-gray-500">Couldn’t load listings. {error}</p>
         ) : loading ? (
-          <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
             {Array.from({ length: PER_PAGE }).map((_, index) => (
               <div key={index}>
                 <div className="aspect-[3/4] animate-pulse rounded-2xl bg-gray-200" />
@@ -98,7 +98,7 @@ function CategoryListings({
           </div>
         ) : (
           <>
-            <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-6 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
               {listings.map((listing) => (
                 <ListingCard
                   key={listing.id}
