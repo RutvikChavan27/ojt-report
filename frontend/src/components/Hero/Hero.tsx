@@ -8,7 +8,6 @@ import {
 import ImageCarousel from "../common/ImageCarousel";
 import {
   fetchHeroLooks,
-  fetchListings,
   fetchProducts,
   type HeroLook,
   type Product,
@@ -39,13 +38,6 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
     () => fetchProducts(activeCategory),
     [activeCategory],
   );
-
-  // perPage 1 because only the total is wanted, not the rows.
-  const { data: listingPage } = useApi(
-    () => fetchListings({ audience: activeCategory, perPage: 1 }),
-    [activeCategory],
-  );
-  const liveCount = listingPage?.total;
 
   /**
    * Opens the linked product, leading with the look photo that was clicked so
@@ -87,6 +79,18 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
   return (
     <section id="home">
       <div className="mx-auto w-full px-6 pb-14 sm:px-10 lg:px-16">
+        {/* Promo strip. The artwork is 1440x100, so it only reads at full
+            width — in the 230px sidebar it would be 16px tall. Eases in on
+            load, then drifts a few pixels; a light sweeps across it. */}
+        <div className="group relative mb-10 animate-[banner-in_0.6s_ease-out] overflow-hidden rounded-2xl motion-reduce:animate-none">
+          <img
+            src="/steal-worthy-deals.jpg"
+            alt="Steal worthy deals"
+            className="block w-full animate-[banner-float_5s_ease-in-out_infinite] object-cover motion-reduce:animate-none"
+          />
+          <span className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+        </div>
+
         <div className="grid items-start gap-6 lg:grid-cols-[230px_1fr] lg:gap-12">
           {/* Sidebar: heading, CTA. The top padding matches the strip's offset
               below, so the heading starts level with the photos instead of
@@ -108,16 +112,6 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
                   Live This Week
                 </span>
               </div>
-
-              {/* Real count rather than a hardcoded season, so the hero says
-                  something true about the marketplace. */}
-              <p className="mt-4 text-sm text-gray-500">
-                {liveCount === undefined
-                  ? "Preloved pieces"
-                  : `${liveCount.toLocaleString("en-IN")} preloved pieces`}
-                <br />
-                ready for a second life
-              </p>
 
               <button
                 type="button"
