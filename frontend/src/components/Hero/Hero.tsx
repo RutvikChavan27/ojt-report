@@ -83,10 +83,14 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
             width — in the 230px sidebar it would be 16px tall. Eases in on
             load, then drifts a few pixels; a light sweeps across it. */}
         <div className="group relative mb-10 animate-[banner-in_0.6s_ease-out] overflow-hidden rounded-2xl motion-reduce:animate-none">
+          {/* The artwork's colours are baked into the JPEG, so they are
+              neutralised here instead: grayscale drops it to the site's
+              monochrome palette, and multiply lets the page background show
+              through the light areas rather than sitting on its own panel. */}
           <img
             src="/steal-worthy-deals.jpg"
             alt="Steal worthy deals"
-            className="block w-full animate-[banner-float_5s_ease-in-out_infinite] object-cover motion-reduce:animate-none"
+            className="block w-full animate-[banner-float_5s_ease-in-out_infinite] object-cover opacity-90 mix-blend-multiply grayscale motion-reduce:animate-none"
           />
           <span className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
         </div>
