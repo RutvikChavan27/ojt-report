@@ -21,6 +21,7 @@ const MEN_PRODUCTS = [
   { slug: "knit-sweater", name: "Textured Knit Sweater", category: "Crewneck Sweater", price: 109, originalPrice: 219, rating: 4.8, images: [img("product-blurred-print-tee-2.jpg")], brand: "Thread Studio", color: "White", sizes: ["S", "M", "L"] },
   { slug: "graphic-print-tee", name: "Graphic Print Tee", category: "Oversized T Shirt", price: 79, originalPrice: 159, rating: 4.2, variantCount: 4, images: [img("product-zip-crewneck-2.jpg")], brand: "Thread Essentials", color: "Yellow", sizes: ["XS", "S", "M", "L"] },
   { slug: "fleece-hoodie", name: "Folded Fleece Hoodie", category: "Pullover Hoodie", price: 119, originalPrice: 229, rating: 4.6, images: [img("product-fleece-hoodie.jpg")], brand: "Thread Studio", color: "Navy", sizes: ["M", "L", "XL"] },
+  { slug: "plaid-shirt-jacket", name: "Plaid Shirt-Jacket", category: "Shirt Jacket", price: 129, originalPrice: 249, rating: 4.7, images: [img("hero-look-3b.jpg")], brand: "Thread Studio", color: "Brown", sizes: ["S", "M", "L", "XL"] },
 ];
 
 const WOMEN_PRODUCTS = [
@@ -60,30 +61,42 @@ const WOMEN_CATEGORIES = [
   { label: "Outerwear", image: img("category-women-outerwear.jpg") },
 ];
 
-// `productSlug` is the "shop the look" target — clicking the photo opens that
-// product. These pairings are hand-picked to be the closest match the current
-// catalogue allows; adjust freely as real lookbook photography lands.
-const MEN_LOOKS = [
-  { src: img("hero-look-1.jpg"), alt: "Model wearing cream trousers and white sneakers", productSlug: "slim-fit-tee" },
-  { src: img("hero-look-1b.jpg"), alt: "Model seated wearing khaki trousers and sneakers", productSlug: "henley-tee" },
-  { src: img("hero-look-1c.jpg"), alt: "Model wearing ripped denim jeans and sneakers", productSlug: "dotted-chambray-shirt" },
-  { src: img("hero-look-2.jpg"), alt: "Model wearing a graphic t-shirt with visible tattoos", productSlug: "graphic-print-tee" },
-  { src: img("hero-look-2b.jpg"), alt: "Model wearing a white graphic print t-shirt", productSlug: "graphic-print-tee" },
-  { src: img("hero-look-2c.jpg"), alt: "Model wearing a graphic t-shirt with a backpack", productSlug: "graphic-print-tee" },
-  { src: img("hero-look-3.jpg"), alt: "Model wearing a matching grey gingham co-ord set with white sneakers", productSlug: "seersucker-shirt" },
-  { src: img("hero-look-3b.jpg"), alt: "Model wearing a plaid shirt-jacket over a mustard turtleneck", productSlug: "knit-sweater" },
+/**
+ * The "New Collection" strip shows one product per garment type. Each entry is
+ * built *from* the product it links to, so the photo on the strip is always the
+ * same photo the product page opens with — they cannot drift apart.
+ *
+ * To change what the strip features, edit the slug lists below.
+ */
+const MEN_LOOK_SLUGS = [
+  "seersucker-shirt", // Shirt
+  "slim-fit-tee", // T-Shirt
+  "fleece-hoodie", // Hoodie
+  "plaid-shirt-jacket", // Jacket
 ];
 
-const WOMEN_LOOKS = [
-  { src: img("hero-look-women-1.jpg"), alt: "Model wearing women's look 1", productSlug: "wrap-blouse" },
-  { src: img("hero-look-women-2.jpg"), alt: "Model wearing women's look 2", productSlug: "crop-top" },
-  { src: img("hero-look-women-3.jpg"), alt: "Model wearing women's look 3", productSlug: "tie-dye-tee" },
-  { src: img("hero-look-women-4.jpg"), alt: "Model wearing women's look 4", productSlug: "wide-jeans" },
-  { src: img("hero-look-women-5.jpg"), alt: "Model wearing women's look 5", productSlug: "midi-skirt" },
-  { src: img("hero-look-women-6.jpg"), alt: "Model wearing women's look 6", productSlug: "cardigan" },
-  { src: img("hero-look-women-7.jpg"), alt: "Model wearing women's look 7", productSlug: "slip-dress" },
-  { src: img("hero-look-women-8.jpg"), alt: "Model wearing women's look 8", productSlug: "puffer-jacket" },
+const WOMEN_LOOK_SLUGS = [
+  "midi-skirt", // Skirt
+  "crop-top", // Crop Top
+  "cardigan", // stands in for a hoodie — no hoodie photo exists for women yet
+  "slip-dress", // stands in for a sleeveless top — likewise no photo yet
 ];
+
+type SeedProduct = { slug: string; name: string; images: string[] };
+
+/** Builds a strip entry from a product, failing loudly on an unknown slug. */
+function lookFromProduct(products: SeedProduct[], slug: string) {
+  const product = products.find((candidate) => candidate.slug === slug);
+  if (!product) {
+    throw new Error(`[seed] New Collection references unknown product: ${slug}`);
+  }
+  return { src: product.images[0], alt: product.name, productSlug: product.slug };
+}
+
+const MEN_LOOKS = MEN_LOOK_SLUGS.map((slug) => lookFromProduct(MEN_PRODUCTS, slug));
+const WOMEN_LOOKS = WOMEN_LOOK_SLUGS.map((slug) =>
+  lookFromProduct(WOMEN_PRODUCTS, slug),
+);
 
 /** Adds gender + order to each row so lists come back in the authored sequence. */
 function withMeta<T>(rows: T[], gender: "Men" | "Women"): (T & { gender: string; order: number })[] {

@@ -118,16 +118,18 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
             </div>
           </div>
 
-          {/* Lookbook images: 4 at a time, arrow brings in the next 4 */}
+          {/* Collection strip: one product per garment type, 4 at a time. */}
           <div className="flex items-center gap-3 lg:mt-[80px]">
-            <button
-              type="button"
-              aria-label="Previous looks"
-              onClick={goToPrevious}
-              className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 hover:text-gray-900 sm:flex"
-            >
-              <FiChevronLeft size={18} />
-            </button>
+            {looksPageCount > 1 && (
+              <button
+                type="button"
+                aria-label="Previous looks"
+                onClick={goToPrevious}
+                className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 hover:text-gray-900 sm:flex"
+              >
+                <FiChevronLeft size={18} />
+              </button>
+            )}
 
             <div className="flex flex-1 gap-3 sm:gap-4">
               {error ? (
@@ -185,14 +187,16 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
               )}
             </div>
 
-            <button
-              type="button"
-              aria-label="Next looks"
-              onClick={goToNext}
-              className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 hover:text-gray-900 sm:flex"
-            >
-              <FiChevronRight size={18} />
-            </button>
+            {looksPageCount > 1 && (
+              <button
+                type="button"
+                aria-label="Next looks"
+                onClick={goToNext}
+                className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 hover:text-gray-900 sm:flex"
+              >
+                <FiChevronRight size={18} />
+              </button>
+            )}
           </div>
         </div>
       </div>
