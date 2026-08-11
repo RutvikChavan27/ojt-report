@@ -13,6 +13,8 @@
  * statement per row, which is the difference between minutes and seconds here.
  * ANALYZE runs at the end so the planner has real statistics to work from.
  */
+import fs from "node:fs";
+import path from "node:path";
 import { config } from "../../config/env";
 import { connectDatabase, disconnectDatabase, query } from "../../config/database";
 
@@ -131,11 +133,47 @@ const FITS = ["Relaxed fit", "Slim fit", "Regular fit", "Oversized fit"];
 const FABRICS = ["100% cotton", "cotton blend", "linen blend", "denim", "merino wool", "fleece-lined"];
 
 /**
- * Seed photos are drawn from the existing image pool. At a hundred thousand
- * listings the same photo necessarily recurs — real photography would come from
- * seller uploads, which is a separate feature.
+ * Photos fetched by `npm run images:fetch` come tagged with the category they
+ * depict, so a dress listing can be given a photo of a dress. Categories with no
+ * tagged photo fall back to the untagged local pool below.
+ *
+ * At a hundred thousand listings photos necessarily repeat: the tagged set is
+ * about a hundred images. The brief does not ask for unique photography — real
+ * photos arrive through seller upload, which is its own feature.
  */
-const PHOTO_POOL = [
+type ImageManifestEntry = {
+  file: string;
+  audience: "Men" | "Women";
+  categories: string[];
+};
+
+function loadPhotosByCategory(): Map<string, string[]> {
+  const manifestPath = path.join(config.imagesDir, "api", "manifest.json");
+  const byCategory = new Map<string, string[]>();
+
+  if (!fs.existsSync(manifestPath)) {
+    console.warn(
+      "[seed] no image manifest found — run `npm run images:fetch` for category-matched photos",
+    );
+    return byCategory;
+  }
+
+  const manifest = JSON.parse(
+    fs.readFileSync(manifestPath, "utf-8"),
+  ) as ImageManifestEntry[];
+
+  for (const entry of manifest) {
+    for (const category of entry.categories) {
+      const existing = byCategory.get(category) ?? [];
+      existing.push(entry.file);
+      byCategory.set(category, existing);
+    }
+  }
+  return byCategory;
+}
+
+/** Untagged local files, used for categories the API had nothing for. */
+const FALLBACK_PHOTO_POOL = [
   "product-seersucker-shirt.jpg", "product-seersucker-shirt-2.jpg",
   "product-slim-fit-tee.jpg", "product-slim-fit-tee-2.jpg",
   "product-blurred-print-tee.jpg", "product-blurred-print-tee-2.jpg",
@@ -239,7 +277,24 @@ async function seed(): Promise<void> {
   await connectDatabase(config.databaseUrl);
   const startedAt = Date.now();
 
-  console.log(`[seed] generating ${total.toLocaleString()} listings…`);
+  const photosByCategory = loadPhotosByCategory();
+  const taggedCount = new Set(
+    [...photosByCategory.values()].flat(),
+  ).size;
+
+  /**
+   * Prefers a photo tagged with this listing's category; falls back to the
+   * untagged pool when the API had nothing for it.
+   */
+  const photoFor = (categorySlug: string): string => {
+    const tagged = photosByCategory.get(categorySlug);
+    if (tagged && tagged.length > 0) return pick(tagged);
+    return img(pick(FALLBACK_PHOTO_POOL));
+  };
+
+  console.log(
+    `[seed] generating ${total.toLocaleString()} listings (${taggedCount} category-matched photos available)…`,
+  );
 
   await query(
     "TRUNCATE TABLE listing_photos, saved_searches, listings, listing_categories, oauth_identities, users RESTART IDENTITY CASCADE",
@@ -328,10 +383,10 @@ async function seed(): Promise<void> {
       soldAt,
     ]);
 
-    // 1-4 photos each, first one primary.
+    // 1-4 photos each, first one primary, all showing this garment's category.
     const photoCount = pickInt(1, 4);
     for (let p = 0; p < photoCount; p++) {
-      photoRows.push([i, img(pick(PHOTO_POOL)), p === 0, p]);
+      photoRows.push([i, photoFor(category.slug), p === 0, p]);
     }
   }
 

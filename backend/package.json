@@ -10,6 +10,7 @@
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seeds/seedListings.ts",
     "seed:listings": "tsx src/db/seeds/seedListings100k.ts",
+    "images:fetch": "tsx src/scripts/fetchListingImages.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
