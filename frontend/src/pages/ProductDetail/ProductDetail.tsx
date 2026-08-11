@@ -12,6 +12,17 @@ type ProductDetailProps = {
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL"];
 const QUANTITY_OPTIONS = [1, 2, 3, 4, 5];
 
+// When a product has only one real photo, these fill the 4-tile grid with
+// genuine crops/zooms of that same photo (wide + 3 detail close-ups) instead
+// of faking extra angles. Real multi-photo products skip this and use their
+// actual distinct images unscaled.
+const SINGLE_PHOTO_CROPS = [
+  { scale: 1, origin: "center" },
+  { scale: 2.2, origin: "top" },
+  { scale: 2.2, origin: "bottom" },
+  { scale: 1.6, origin: "center" },
+];
+
 function ProductDetail({ product, onBack }: ProductDetailProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
   const wishlisted = checkWishlisted(product.id);
@@ -28,6 +39,11 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
   const discountPercent = Math.round(
     (1 - product.price / product.originalPrice) * 100,
   );
+
+  const galleryTiles =
+    product.images.length > 1
+      ? product.images.slice(0, 4).map((src) => ({ src, scale: 1, origin: "center" }))
+      : SINGLE_PHOTO_CROPS.map((crop) => ({ src: product.image, ...crop }));
 
   const handleAddToCart = () => {
     setAdded(true);
@@ -47,31 +63,20 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
         </button>
 
         <div className="flex flex-col gap-10 lg:flex-row">
-          <div className="lg:w-1/2">
-            {product.images.length > 1 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {product.images.map((src, index) => (
-                  <div
-                    key={src}
-                    className="aspect-square overflow-hidden rounded-2xl bg-gray-100"
-                  >
-                    <img
-                      src={src}
-                      alt={`${product.name} photo ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="aspect-[3/4] w-full overflow-hidden rounded-3xl bg-gray-100">
+          <div className="grid grid-cols-2 gap-3 lg:w-1/2">
+            {galleryTiles.map((tile, index) => (
+              <div
+                key={index}
+                className="aspect-square overflow-hidden rounded-2xl bg-gray-100"
+              >
                 <img
-                  src={product.image}
-                  alt={product.name}
+                  src={tile.src}
+                  alt={`${product.name} detail ${index + 1}`}
                   className="h-full w-full object-cover"
+                  style={{ transform: `scale(${tile.scale})`, transformOrigin: tile.origin }}
                 />
               </div>
-            )}
+            ))}
           </div>
 
           <div className="lg:max-w-md">
