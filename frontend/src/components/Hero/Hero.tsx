@@ -8,6 +8,7 @@ import {
 import ImageCarousel from "../common/ImageCarousel";
 import {
   fetchHeroLooks,
+  fetchListings,
   fetchProducts,
   type HeroLook,
   type Product,
@@ -38,6 +39,13 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
     () => fetchProducts(activeCategory),
     [activeCategory],
   );
+
+  // perPage 1 because only the total is wanted, not the rows.
+  const { data: listingPage } = useApi(
+    () => fetchListings({ audience: activeCategory, perPage: 1 }),
+    [activeCategory],
+  );
+  const liveCount = listingPage?.total;
 
   /**
    * Opens the linked product, leading with the look photo that was clicked so
@@ -99,10 +107,14 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
                 </span>
               </div>
 
+              {/* Real count rather than a hardcoded season, so the hero says
+                  something true about the marketplace. */}
               <p className="mt-4 text-sm text-gray-500">
-                Summer
+                {liveCount === undefined
+                  ? "Preloved pieces"
+                  : `${liveCount.toLocaleString("en-IN")} preloved pieces`}
                 <br />
-                2024
+                ready for a second life
               </p>
 
               <button
@@ -131,7 +143,9 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
               </button>
             )}
 
-            <div className="flex flex-1 gap-3 sm:gap-4">
+            {/* Two-up on phones — four across a 440px screen left each tile
+                87px wide. Four across only once there is room for it. */}
+            <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               {error ? (
                 <p className="py-10 text-sm text-gray-500">
                   Couldn’t load the lookbook. {error}
@@ -140,7 +154,7 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
                 Array.from({ length: LOOKS_PAGE_SIZE }).map((_, index) => (
                   <div
                     key={index}
-                    className="aspect-[3/4] w-full max-w-64 flex-1 animate-pulse rounded-3xl bg-gray-200"
+                    className="aspect-[3/4] w-full animate-pulse rounded-3xl bg-gray-200"
                   />
                 ))
               ) : (
@@ -152,7 +166,7 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
                       type="button"
                       onClick={() => openLook(look)}
                       aria-label={`Shop the look: ${look.alt}`}
-                      className="aspect-[3/4] w-full max-w-64 flex-1 text-left"
+                      className="aspect-[3/4] w-full text-left"
                     >
                       <ImageCarousel
                         slides={[look]}
