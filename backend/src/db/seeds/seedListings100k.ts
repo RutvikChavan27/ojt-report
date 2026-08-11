@@ -73,10 +73,13 @@ const MEN_CATEGORIES = [
   { slug: "mens-trousers", label: "Trousers & Chinos" },
   { slug: "mens-knitwear", label: "Knitwear" },
   { slug: "mens-shorts", label: "Shorts" },
+  { slug: "mens-blazers", label: "Blazers" },
+  { slug: "mens-tracksuits", label: "Tracksuits" },
 ] as const;
 
 const WOMEN_CATEGORIES = [
   { slug: "womens-tops", label: "Tops" },
+  { slug: "womens-croptops", label: "Crop Tops" },
   { slug: "womens-dresses", label: "Dresses" },
   { slug: "womens-skirts", label: "Skirts" },
   { slug: "womens-jeans", label: "Jeans" },
@@ -84,6 +87,7 @@ const WOMEN_CATEGORIES = [
   { slug: "womens-jackets", label: "Jackets & Coats" },
   { slug: "womens-knitwear", label: "Knitwear" },
   { slug: "womens-coords", label: "Co-ords" },
+  { slug: "womens-trousers", label: "Trousers" },
 ] as const;
 
 /** Garment nouns per category, used to build believable titles. */
@@ -96,7 +100,10 @@ const GARMENTS: Record<string, readonly string[]> = {
   "mens-trousers": ["Chinos", "Pleated Trousers", "Cargo Trousers", "Linen Trousers"],
   "mens-knitwear": ["Merino Jumper", "Cable Knit Sweater", "Cardigan", "Lambswool Jumper"],
   "mens-shorts": ["Chino Shorts", "Denim Shorts", "Cargo Shorts", "Jersey Shorts"],
-  "womens-tops": ["Ribbed Tank Top", "Silk Blouse", "Wrap Top", "Cropped Tee", "Peplum Top"],
+  "mens-blazers": ["Wool Blazer", "Linen Blazer", "Checked Blazer", "Single-Breasted Blazer"],
+  "mens-tracksuits": ["Track Jacket", "Track Pants", "Jersey Tracksuit", "Zip Track Top"],
+  "womens-tops": ["Ribbed Tank Top", "Silk Blouse", "Wrap Top", "Peplum Top", "Puff Sleeve Top"],
+  "womens-croptops": ["Ribbed Crop Top", "Cotton Crop Top", "Halter Crop Top", "Knit Crop Top", "Cami Crop Top"],
   "womens-dresses": ["Midi Dress", "Slip Dress", "Wrap Dress", "Shirt Dress", "Floral Sundress"],
   "womens-skirts": ["Pleated Midi Skirt", "Denim Mini Skirt", "A-Line Skirt", "Wrap Skirt"],
   "womens-jeans": ["High-Waist Jeans", "Wide-Leg Jeans", "Mom Jeans", "Skinny Jeans"],
@@ -104,6 +111,7 @@ const GARMENTS: Record<string, readonly string[]> = {
   "womens-jackets": ["Denim Jacket", "Puffer Jacket", "Blazer", "Trench Coat", "Shacket"],
   "womens-knitwear": ["Cable Knit Jumper", "Cardigan", "Merino Sweater", "Knit Vest"],
   "womens-coords": ["Linen Co-ord Set", "Knit Co-ord Set", "Satin Co-ord Set", "Cotton Co-ord Set"],
+  "womens-trousers": ["Tailored Trousers", "Wide-Leg Trousers", "Pleated Trousers", "Linen Trousers"],
 };
 
 const BRANDS = [
@@ -149,32 +157,42 @@ type ImageManifestEntry = {
 
 function loadPhotosByCategory(): Map<string, string[]> {
   const byCategory = new Map<string, string[]>();
+  const add = (category: string, file: string) => {
+    const existing = byCategory.get(category) ?? [];
+    existing.push(file);
+    byCategory.set(category, existing);
+  };
 
-  // Start from the locally curated assignments…
+  // Locally curated assignments, from filenames and original alt text.
   for (const [category, files] of Object.entries(LOCAL_CATEGORY_PHOTOS)) {
-    byCategory.set(category, files.map(img));
+    for (const file of files) add(category, img(file));
   }
 
-  // …then add anything the API supplied for the same categories.
-  const manifestPath = path.join(config.imagesDir, "api", "manifest.json");
-  if (!fs.existsSync(manifestPath)) {
+  // The bulk of the variety: keyword-searched photos, ~24 per category.
+  const catalogPath = path.join(config.imagesDir, "catalog", "manifest.json");
+  if (fs.existsSync(catalogPath)) {
+    const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf-8")) as {
+      file: string;
+      slug: string;
+    }[];
+    for (const entry of catalog) add(entry.slug, entry.file);
+  } else {
     console.warn(
-      "[seed] no image manifest found — run `npm run images:fetch` for more photos",
+      "[seed] no catalog manifest — run `npm run images:catalog` for per-category photos",
     );
-    return byCategory;
   }
 
-  const manifest = JSON.parse(
-    fs.readFileSync(manifestPath, "utf-8"),
-  ) as ImageManifestEntry[];
-
-  for (const entry of manifest) {
-    for (const category of entry.categories) {
-      const existing = byCategory.get(category) ?? [];
-      existing.push(entry.file);
-      byCategory.set(category, existing);
+  // Product-shot photos from the product API, where it had any.
+  const apiPath = path.join(config.imagesDir, "api", "manifest.json");
+  if (fs.existsSync(apiPath)) {
+    const manifest = JSON.parse(
+      fs.readFileSync(apiPath, "utf-8"),
+    ) as ImageManifestEntry[];
+    for (const entry of manifest) {
+      for (const category of entry.categories) add(category, entry.file);
     }
   }
+
   return byCategory;
 }
 
