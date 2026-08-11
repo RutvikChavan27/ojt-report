@@ -13,25 +13,25 @@ import { connectDatabase, disconnectDatabase, query } from "../../config/databas
 const img = (file: string) => `${config.imagesRoute}/${file}`;
 
 const MEN_PRODUCTS = [
-  { slug: "seersucker-shirt", name: "Embroidered Seersucker Shirt", category: "V-Neck T Shirt", price: 99, originalPrice: 199, rating: 4.6, image: img("product-seersucker-shirt.jpg"), brand: "Thread Studio", color: "Blue", sizes: ["S", "M", "L", "XL"] },
-  { slug: "slim-fit-tee", name: "Basic Slim Fit T-Shirt", category: "Cotton T Shirt", price: 99, originalPrice: 179, rating: 4.3, variantCount: 3, image: img("product-slim-fit-tee.jpg"), brand: "Thread Essentials", color: "White", sizes: ["XS", "S", "M", "L", "XL"] },
-  { slug: "henley-tee", name: "Blurred Print T-Shirt", category: "Henley T Shirt", price: 99, originalPrice: 189, rating: 4.5, variantCount: 3, image: img("product-blurred-print-tee.jpg"), brand: "Thread Studio", color: "Beige", sizes: ["S", "M", "L"] },
-  { slug: "zip-crewneck", name: "Full Sleeve Zipper", category: "Crewneck T Shirt", price: 99, originalPrice: 199, rating: 4.7, variantCount: 2, image: img("product-zip-crewneck.jpg"), brand: "Thread Essentials", color: "White", sizes: ["S", "M", "L", "XL"] },
-  { slug: "dotted-chambray-shirt", name: "Dotted Chambray Shirt", category: "Button-Up Shirt", price: 89, originalPrice: 169, rating: 4.4, image: img("product-seersucker-shirt-2.jpg"), brand: "Thread Denim Co.", color: "Blue", sizes: ["M", "L", "XL"] },
-  { slug: "knit-sweater", name: "Textured Knit Sweater", category: "Crewneck Sweater", price: 109, originalPrice: 219, rating: 4.8, image: img("product-blurred-print-tee-2.jpg"), brand: "Thread Studio", color: "White", sizes: ["S", "M", "L"] },
-  { slug: "graphic-print-tee", name: "Graphic Print Tee", category: "Oversized T Shirt", price: 79, originalPrice: 159, rating: 4.2, variantCount: 4, image: img("product-zip-crewneck-2.jpg"), brand: "Thread Essentials", color: "Yellow", sizes: ["XS", "S", "M", "L"] },
-  { slug: "fleece-hoodie", name: "Folded Fleece Hoodie", category: "Pullover Hoodie", price: 119, originalPrice: 229, rating: 4.6, image: img("product-fleece-hoodie.jpg"), brand: "Thread Studio", color: "Navy", sizes: ["M", "L", "XL"] },
+  { slug: "seersucker-shirt", name: "Embroidered Seersucker Shirt", category: "V-Neck T Shirt", price: 99, originalPrice: 199, rating: 4.6, images: [img("product-seersucker-shirt.jpg")], brand: "Thread Studio", color: "Blue", sizes: ["S", "M", "L", "XL"] },
+  { slug: "slim-fit-tee", name: "Basic Slim Fit T-Shirt", category: "Cotton T Shirt", price: 99, originalPrice: 179, rating: 4.3, variantCount: 3, images: [img("product-slim-fit-tee.jpg")], brand: "Thread Essentials", color: "White", sizes: ["XS", "S", "M", "L", "XL"] },
+  { slug: "henley-tee", name: "Blurred Print T-Shirt", category: "Henley T Shirt", price: 99, originalPrice: 189, rating: 4.5, variantCount: 3, images: [img("product-blurred-print-tee.jpg")], brand: "Thread Studio", color: "Beige", sizes: ["S", "M", "L"] },
+  { slug: "zip-crewneck", name: "Full Sleeve Zipper", category: "Crewneck T Shirt", price: 99, originalPrice: 199, rating: 4.7, variantCount: 2, images: [img("product-zip-crewneck.jpg")], brand: "Thread Essentials", color: "White", sizes: ["S", "M", "L", "XL"] },
+  { slug: "dotted-chambray-shirt", name: "Dotted Chambray Shirt", category: "Button-Up Shirt", price: 89, originalPrice: 169, rating: 4.4, images: [img("product-seersucker-shirt-2.jpg")], brand: "Thread Denim Co.", color: "Blue", sizes: ["M", "L", "XL"] },
+  { slug: "knit-sweater", name: "Textured Knit Sweater", category: "Crewneck Sweater", price: 109, originalPrice: 219, rating: 4.8, images: [img("product-blurred-print-tee-2.jpg")], brand: "Thread Studio", color: "White", sizes: ["S", "M", "L"] },
+  { slug: "graphic-print-tee", name: "Graphic Print Tee", category: "Oversized T Shirt", price: 79, originalPrice: 159, rating: 4.2, variantCount: 4, images: [img("product-zip-crewneck-2.jpg")], brand: "Thread Essentials", color: "Yellow", sizes: ["XS", "S", "M", "L"] },
+  { slug: "fleece-hoodie", name: "Folded Fleece Hoodie", category: "Pullover Hoodie", price: 119, originalPrice: 229, rating: 4.6, images: [img("product-fleece-hoodie.jpg")], brand: "Thread Studio", color: "Navy", sizes: ["M", "L", "XL"] },
 ];
 
 const WOMEN_PRODUCTS = [
-  { slug: "wrap-blouse", name: "Floral Wrap Blouse", category: "Wrap Top", price: 99, originalPrice: 189, rating: 4.5, image: img("product-women-wrap-blouse.jpg"), brand: "Thread Studio", color: "Cream", sizes: ["XS", "S", "M", "L"] },
-  { slug: "crop-top", name: "Ribbed Crop Top", category: "Crop Top", price: 99, originalPrice: 179, rating: 4.3, variantCount: 3, image: img("product-women-crop-top.jpg"), brand: "Thread Essentials", color: "Cream", sizes: ["XS", "S", "M"] },
-  { slug: "tie-dye-tee", name: "Tie-Dye Oversized Tee", category: "Graphic Tee", price: 99, originalPrice: 189, rating: 4.6, variantCount: 3, image: img("product-women-tie-dye-tee.jpg"), brand: "Thread Essentials", color: "Black", sizes: ["S", "M", "L", "XL"] },
-  { slug: "wide-jeans", name: "High-Waist Wide Jeans", category: "Wide-Leg Jeans", price: 99, originalPrice: 199, rating: 4.7, variantCount: 2, image: img("product-women-wide-jeans.jpg"), brand: "Thread Denim Co.", color: "Blue", sizes: ["S", "M", "L"] },
-  { slug: "midi-skirt", name: "Pleated Midi Skirt", category: "Midi Skirt", price: 89, originalPrice: 169, rating: 4.4, image: img("product-women-midi-skirt.jpg"), brand: "Thread Studio", color: "Rust", sizes: ["XS", "S", "M", "L"] },
-  { slug: "cardigan", name: "Cable Knit Cardigan", category: "Cardigan", price: 109, originalPrice: 219, rating: 4.8, image: img("product-women-cardigan.jpg"), brand: "Thread Studio", color: "Brown", sizes: ["S", "M", "L", "XL"] },
-  { slug: "slip-dress", name: "Satin Slip Dress", category: "Slip Dress", price: 79, originalPrice: 159, rating: 4.5, variantCount: 4, image: img("product-women-slip-dress.jpg"), brand: "Thread Studio", color: "Red", sizes: ["XS", "S", "M"] },
-  { slug: "puffer-jacket", name: "Cropped Puffer Jacket", category: "Puffer Jacket", price: 119, originalPrice: 229, rating: 4.6, image: img("product-women-puffer-jacket.jpg"), brand: "Thread Essentials", color: "Yellow", sizes: ["S", "M", "L", "XL"] },
+  { slug: "wrap-blouse", name: "Floral Wrap Blouse", category: "Wrap Top", price: 99, originalPrice: 189, rating: 4.5, images: [img("product-women-wrap-blouse.jpg")], brand: "Thread Studio", color: "Cream", sizes: ["XS", "S", "M", "L"] },
+  { slug: "crop-top", name: "Ribbed Crop Top", category: "Crop Top", price: 99, originalPrice: 179, rating: 4.3, variantCount: 3, images: [img("product-women-crop-top.jpg")], brand: "Thread Essentials", color: "Cream", sizes: ["XS", "S", "M"] },
+  { slug: "tie-dye-tee", name: "Tie-Dye Oversized Tee", category: "Graphic Tee", price: 99, originalPrice: 189, rating: 4.6, variantCount: 3, images: [img("product-women-tie-dye-tee.jpg")], brand: "Thread Essentials", color: "Black", sizes: ["S", "M", "L", "XL"] },
+  { slug: "wide-jeans", name: "High-Waist Wide Jeans", category: "Wide-Leg Jeans", price: 99, originalPrice: 199, rating: 4.7, variantCount: 2, images: [img("product-women-wide-jeans.jpg")], brand: "Thread Denim Co.", color: "Blue", sizes: ["S", "M", "L"] },
+  { slug: "midi-skirt", name: "Pleated Midi Skirt", category: "Midi Skirt", price: 89, originalPrice: 169, rating: 4.4, images: [img("product-women-midi-skirt.jpg")], brand: "Thread Studio", color: "Rust", sizes: ["XS", "S", "M", "L"] },
+  { slug: "cardigan", name: "Cable Knit Cardigan", category: "Cardigan", price: 109, originalPrice: 219, rating: 4.8, images: [img("product-women-cardigan.jpg")], brand: "Thread Studio", color: "Brown", sizes: ["S", "M", "L", "XL"] },
+  { slug: "slip-dress", name: "Satin Slip Dress", category: "Slip Dress", price: 79, originalPrice: 159, rating: 4.5, variantCount: 4, images: [img("product-women-slip-dress.jpg")], brand: "Thread Studio", color: "Red", sizes: ["XS", "S", "M"] },
+  { slug: "puffer-jacket", name: "Cropped Puffer Jacket", category: "Puffer Jacket", price: 119, originalPrice: 229, rating: 4.6, images: [img("product-women-puffer-jacket.jpg")], brand: "Thread Essentials", color: "Yellow", sizes: ["S", "M", "L", "XL"] },
 ];
 
 const MEN_CATEGORIES = [
@@ -122,7 +122,7 @@ async function seed(): Promise<void> {
 
   const productsInsert = insertRows(
     "products",
-    ["slug", "name", "category", "price", "original_price", "rating", "image", "brand", "color", "variant_count", "sizes", "gender", "order"],
+    ["slug", "name", "category", "price", "original_price", "rating", "images", "brand", "color", "variant_count", "sizes", "gender", "order"],
     products
   );
   const categoriesInsert = insertRows(

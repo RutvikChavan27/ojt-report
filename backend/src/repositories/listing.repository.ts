@@ -8,7 +8,7 @@ export type ProductRow = {
   price: string;
   original_price: string;
   rating: string;
-  image: string;
+  images: string[];
   brand: string;
   color: string;
   variant_count: number | null;
@@ -20,12 +20,12 @@ export type ProductRow = {
 export async function findProductRows(gender?: Gender): Promise<ProductRow[]> {
   const { rows } = gender
     ? await query<ProductRow>(
-        `SELECT slug, name, category, price, original_price, rating, image, brand, color, variant_count, sizes, gender
+        `SELECT slug, name, category, price, original_price, rating, images, brand, color, variant_count, sizes, gender
          FROM products WHERE gender = $1 ORDER BY "order" ASC`,
         [gender]
       )
     : await query<ProductRow>(
-        `SELECT slug, name, category, price, original_price, rating, image, brand, color, variant_count, sizes, gender
+        `SELECT slug, name, category, price, original_price, rating, images, brand, color, variant_count, sizes, gender
          FROM products ORDER BY "order" ASC`
       );
 

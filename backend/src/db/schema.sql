@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS products (
   price NUMERIC(10, 2) NOT NULL,
   original_price NUMERIC(10, 2) NOT NULL,
   rating NUMERIC(2, 1) NOT NULL,
-  image TEXT NOT NULL,
+  images TEXT[] NOT NULL DEFAULT '{}',
   brand TEXT NOT NULL,
   color TEXT NOT NULL,
   variant_count INTEGER,
@@ -31,6 +31,20 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sizes TEXT[] NOT NULL DEFAULT '{}';
+
+-- Migrate the old single `image` column into `images` (safe to re-run: a no-op
+-- once `image` has already been dropped, on this DB or a fresh one).
+ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT[] NOT NULL DEFAULT '{}';
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'products' AND column_name = 'image'
+  ) THEN
+    UPDATE products SET images = ARRAY[image]
+    WHERE array_length(images, 1) IS NULL AND image IS NOT NULL;
+    ALTER TABLE products DROP COLUMN image;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS products_gender_order_idx ON products (gender, "order");
 CREATE INDEX IF NOT EXISTS products_search_vector_idx ON products USING GIN (search_vector);

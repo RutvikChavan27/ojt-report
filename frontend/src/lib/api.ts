@@ -10,7 +10,10 @@ export type Product = {
   price: number;
   originalPrice: number;
   rating: number;
+  /** Cover photo — same as images[0]. */
   image: string;
+  /** Every photo for this product, in display order. */
+  images: string[];
   brand: string;
   color: string;
   variantCount?: number;
@@ -37,9 +40,10 @@ async function getJson<T>(path: string): Promise<T> {
   return body.data;
 }
 
-const withImage = <T extends { image: string }>(item: T): T => ({
+const withImage = <T extends { image: string; images?: string[] }>(item: T): T => ({
   ...item,
   image: resolveImage(item.image),
+  ...(item.images ? { images: item.images.map(resolveImage) } : {}),
 });
 
 /** GET products for a gender, with image paths resolved to absolute URLs. */

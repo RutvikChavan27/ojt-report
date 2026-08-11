@@ -5,7 +5,7 @@
  */
 export const SEARCH_PRODUCTS_SQL = `
   SELECT
-    slug, name, category, price, original_price, rating, image, brand, color,
+    slug, name, category, price, original_price, rating, images, brand, color,
     variant_count, sizes, gender,
     ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank
   FROM products

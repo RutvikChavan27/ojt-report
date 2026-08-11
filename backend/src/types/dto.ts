@@ -9,7 +9,10 @@ export type ProductDTO = {
   price: number;
   originalPrice: number;
   rating: number;
+  /** Cover photo — always images[0]. Kept for callers that only need one thumbnail. */
   image: string;
+  /** Every photo for this product, in display order. */
+  images: string[];
   brand: string;
   color: string;
   variantCount?: number;
