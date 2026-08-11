@@ -33,13 +33,18 @@ async function ensureDatabaseExists(): Promise<void> {
   }
 }
 
+/** Applied in order; later files may depend on earlier ones. */
+const SCHEMA_FILES = ["schema.sql", "marketplace.sql"];
+
 async function applySchema(): Promise<void> {
-  const schema = fs.readFileSync(path.resolve(__dirname, "schema.sql"), "utf-8");
   const client = new Client({ connectionString: config.databaseUrl });
   await client.connect();
   try {
-    await client.query(schema);
-    console.log("[migrate] schema applied");
+    for (const file of SCHEMA_FILES) {
+      const sql = fs.readFileSync(path.resolve(__dirname, file), "utf-8");
+      await client.query(sql);
+      console.log(`[migrate] applied ${file}`);
+    }
   } finally {
     await client.end();
   }

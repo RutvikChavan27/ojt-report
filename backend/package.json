@@ -9,6 +9,7 @@
     "start": "tsx src/server.ts",
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seeds/seedListings.ts",
+    "seed:listings": "tsx src/db/seeds/seedListings100k.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
