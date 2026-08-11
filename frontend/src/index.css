@@ -9,6 +9,28 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* Logo badge rocks gently, forever. */
+@keyframes logo-sway {
+  0%,
+  100% {
+    rotate: -7deg;
+  }
+  50% {
+    rotate: 7deg;
+  }
+}
+
+/* Light sweeps across the logo badge, pausing between passes. */
+@keyframes logo-shine {
+  0% {
+    translate: -150% 0;
+  }
+  45%,
+  100% {
+    translate: 150% 0;
+  }
+}
+
 @keyframes modal-in {
   from {
     opacity: 0;
