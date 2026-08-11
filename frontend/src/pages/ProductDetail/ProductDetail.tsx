@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiArrowLeft, FiHeart, FiShield, FiStar } from "react-icons/fi";
+import { FiArrowLeft, FiChevronRight, FiHeart, FiShield, FiStar } from "react-icons/fi";
 import { FaFacebookF, FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
 import type { Product } from "../../lib/api";
 import { useWishlist } from "../../store/WishlistContext";
@@ -35,6 +35,7 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
   );
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const discountPercent = Math.round(
     (1 - product.price / product.originalPrice) * 100,
@@ -44,6 +45,9 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
     product.images.length > 1
       ? product.images.slice(0, 4).map((src) => ({ src, scale: 1, origin: "center" }))
       : SINGLE_PHOTO_CROPS.map((crop) => ({ src: product.image, ...crop }));
+  const activeTile = galleryTiles[activeImageIndex] ?? galleryTiles[0];
+  const goToNextImage = () =>
+    setActiveImageIndex((index) => (index + 1) % galleryTiles.length);
 
   const handleAddToCart = () => {
     setAdded(true);
@@ -63,20 +67,49 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
         </button>
 
         <div className="mx-auto flex max-w-5xl flex-col gap-10 lg:flex-row">
-          <div className="grid grid-cols-2 gap-3 lg:w-1/2">
-            {galleryTiles.map((tile, index) => (
-              <div
-                key={index}
-                className="aspect-square overflow-hidden rounded-2xl bg-gray-100"
-              >
-                <img
-                  src={tile.src}
-                  alt={`${product.name} detail ${index + 1}`}
-                  className="h-full w-full object-cover"
-                  style={{ transform: `scale(${tile.scale})`, transformOrigin: tile.origin }}
-                />
-              </div>
-            ))}
+          <div className="flex gap-3 lg:w-1/2">
+            <div className="flex w-16 flex-shrink-0 flex-col gap-3 sm:w-20">
+              {galleryTiles.map((tile, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveImageIndex(index)}
+                  aria-label={`View photo ${index + 1}`}
+                  aria-pressed={activeImageIndex === index}
+                  className={`aspect-[4/5] overflow-hidden rounded-xl border-2 bg-gray-100 transition ${
+                    activeImageIndex === index
+                      ? "border-gray-900"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                >
+                  <img
+                    src={tile.src}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    style={{ transform: `scale(${tile.scale})`, transformOrigin: tile.origin }}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="relative aspect-[3/4] w-full flex-1 overflow-hidden rounded-3xl bg-gray-100">
+              <img
+                src={activeTile.src}
+                alt={product.name}
+                className="h-full w-full object-cover"
+                style={{ transform: `scale(${activeTile.scale})`, transformOrigin: activeTile.origin }}
+              />
+              {galleryTiles.length > 1 && (
+                <button
+                  type="button"
+                  aria-label="Next photo"
+                  onClick={goToNextImage}
+                  className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-900 shadow-md transition hover:scale-105"
+                >
+                  <FiChevronRight size={18} />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="lg:max-w-md">
