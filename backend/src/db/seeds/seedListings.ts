@@ -68,11 +68,17 @@ const WOMEN_CATEGORIES = [
  *
  * To change what the strip features, edit the slug lists below.
  */
+// First four are the headline garment types (they fill the first slide); the
+// rest flow onto the next slide of the strip.
 const MEN_LOOK_SLUGS = [
   "seersucker-shirt", // Shirt
   "slim-fit-tee", // T-Shirt
   "fleece-hoodie", // Hoodie
   "plaid-shirt-jacket", // Jacket
+  "henley-tee",
+  "zip-crewneck",
+  "dotted-chambray-shirt",
+  "knit-sweater",
 ];
 
 const WOMEN_LOOK_SLUGS = [
@@ -80,6 +86,10 @@ const WOMEN_LOOK_SLUGS = [
   "crop-top", // Crop Top
   "cardigan", // stands in for a hoodie — no hoodie photo exists for women yet
   "slip-dress", // stands in for a sleeveless top — likewise no photo yet
+  "wrap-blouse",
+  "tie-dye-tee",
+  "wide-jeans",
+  "puffer-jacket",
 ];
 
 type SeedProduct = { slug: string; name: string; images: string[] };

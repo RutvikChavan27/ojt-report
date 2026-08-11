@@ -79,7 +79,7 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
   return (
     <section id="home">
       <div className="mx-auto w-full px-6 pb-14 sm:px-10 lg:px-16">
-        <div className="grid items-start gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="grid items-start gap-6 lg:grid-cols-[230px_1fr] lg:gap-12">
           {/* Sidebar: heading, CTA */}
           <div className="flex flex-col gap-6">
             <div>
