@@ -22,6 +22,14 @@ const MEN_PRODUCTS = [
   { slug: "graphic-print-tee", name: "Graphic Print Tee", category: "Oversized T Shirt", price: 79, originalPrice: 159, rating: 4.2, variantCount: 4, images: [img("product-zip-crewneck-2.jpg")], brand: "Thread Essentials", color: "Yellow", sizes: ["XS", "S", "M", "L"] },
   { slug: "fleece-hoodie", name: "Folded Fleece Hoodie", category: "Pullover Hoodie", price: 119, originalPrice: 229, rating: 4.6, images: [img("product-fleece-hoodie.jpg")], brand: "Thread Studio", color: "Navy", sizes: ["M", "L", "XL"] },
   { slug: "plaid-shirt-jacket", name: "Plaid Shirt-Jacket", category: "Shirt Jacket", price: 129, originalPrice: 249, rating: 4.7, images: [img("hero-look-3b.jpg")], brand: "Thread Studio", color: "Brown", sizes: ["S", "M", "L", "XL"] },
+  { slug: "relaxed-cotton-tee", name: "Relaxed Cotton Tee", category: "Cotton T Shirt", price: 69, originalPrice: 139, rating: 4.2, images: [img("product-slim-fit-tee-2.jpg")], brand: "Thread Essentials", color: "White", sizes: ["XS", "S", "M", "L"] },
+  { slug: "cream-tapered-trousers", name: "Cream Tapered Trousers", category: "Trousers", price: 109, originalPrice: 209, rating: 4.5, images: [img("hero-look-1.jpg")], brand: "Thread Studio", color: "Cream", sizes: ["S", "M", "L", "XL"] },
+  { slug: "khaki-chino-trousers", name: "Khaki Chino Trousers", category: "Trousers", price: 99, originalPrice: 189, rating: 4.4, images: [img("hero-look-1b.jpg")], brand: "Thread Essentials", color: "Khaki", sizes: ["S", "M", "L", "XL"] },
+  { slug: "ripped-slim-jeans", name: "Ripped Slim Jeans", category: "Slim Jeans", price: 119, originalPrice: 229, rating: 4.6, variantCount: 2, images: [img("hero-look-1c.jpg")], brand: "Thread Denim Co.", color: "Blue", sizes: ["S", "M", "L"] },
+  { slug: "vintage-graphic-tee", name: "Vintage Graphic Tee", category: "Graphic Tee", price: 79, originalPrice: 159, rating: 4.3, images: [img("hero-look-2.jpg")], brand: "Thread Studio", color: "Black", sizes: ["S", "M", "L", "XL"] },
+  { slug: "white-graphic-tee", name: "White Graphic Print Tee", category: "Graphic Tee", price: 75, originalPrice: 149, rating: 4.4, variantCount: 3, images: [img("hero-look-2b.jpg")], brand: "Thread Essentials", color: "White", sizes: ["XS", "S", "M", "L"] },
+  { slug: "street-graphic-tee", name: "Street Graphic Tee", category: "Graphic Tee", price: 82, originalPrice: 165, rating: 4.5, images: [img("hero-look-2c.jpg")], brand: "Thread Essentials", color: "Grey", sizes: ["S", "M", "L", "XL"] },
+  { slug: "gingham-coord-set", name: "Grey Gingham Co-ord Set", category: "Co-ords", price: 149, originalPrice: 289, rating: 4.8, images: [img("hero-look-3.jpg")], brand: "Thread Studio", color: "Grey", sizes: ["S", "M", "L"] },
 ];
 
 const WOMEN_PRODUCTS = [
@@ -33,6 +41,17 @@ const WOMEN_PRODUCTS = [
   { slug: "cardigan", name: "Cable Knit Cardigan", category: "Cardigan", price: 109, originalPrice: 219, rating: 4.8, images: [img("product-women-cardigan.jpg")], brand: "Thread Studio", color: "Brown", sizes: ["S", "M", "L", "XL"] },
   { slug: "slip-dress", name: "Satin Slip Dress", category: "Slip Dress", price: 79, originalPrice: 159, rating: 4.5, variantCount: 4, images: [img("product-women-slip-dress.jpg")], brand: "Thread Studio", color: "Red", sizes: ["XS", "S", "M"] },
   { slug: "puffer-jacket", name: "Cropped Puffer Jacket", category: "Puffer Jacket", price: 119, originalPrice: 229, rating: 4.6, images: [img("product-women-puffer-jacket.jpg")], brand: "Thread Essentials", color: "Yellow", sizes: ["S", "M", "L", "XL"] },
+  { slug: "ribbed-tank-top", name: "Ribbed Tank Top", category: "Sleeveless Top", price: 59, originalPrice: 119, rating: 4.4, variantCount: 3, images: [img("category-women-tops.jpg")], brand: "Thread Essentials", color: "White", sizes: ["XS", "S", "M", "L"] },
+  { slug: "floral-midi-dress", name: "Floral Midi Dress", category: "Midi Dress", price: 129, originalPrice: 249, rating: 4.7, images: [img("category-women-dresses.jpg")], brand: "Thread Studio", color: "Cream", sizes: ["XS", "S", "M", "L"] },
+  { slug: "pleated-sleeve-blouse", name: "Pleated Sleeve Blouse", category: "Blouse", price: 95, originalPrice: 185, rating: 4.5, images: [img("category-women-blouses.jpg")], brand: "Thread Studio", color: "Pink", sizes: ["XS", "S", "M", "L"] },
+  { slug: "straight-leg-denim", name: "Straight Leg Denim", category: "Straight Jeans", price: 109, originalPrice: 209, rating: 4.6, variantCount: 2, images: [img("category-women-denim.jpg")], brand: "Thread Denim Co.", color: "Blue", sizes: ["S", "M", "L", "XL"] },
+  { slug: "aline-mini-skirt", name: "A-Line Mini Skirt", category: "Mini Skirt", price: 79, originalPrice: 155, rating: 4.3, images: [img("category-women-skirts.jpg")], brand: "Thread Studio", color: "Black", sizes: ["XS", "S", "M"] },
+  { slug: "soft-knit-pullover", name: "Soft Knit Pullover", category: "Knitwear", price: 115, originalPrice: 225, rating: 4.7, images: [img("category-women-knitwear.jpg")], brand: "Thread Studio", color: "Beige", sizes: ["S", "M", "L", "XL"] },
+  { slug: "longline-trench-coat", name: "Longline Trench Coat", category: "Outerwear", price: 179, originalPrice: 349, rating: 4.8, images: [img("category-women-outerwear.jpg")], brand: "Thread Studio", color: "Camel", sizes: ["S", "M", "L"] },
+  { slug: "lounge-jogger-set", name: "Lounge Jogger Set", category: "Loungewear", price: 99, originalPrice: 195, rating: 4.5, variantCount: 2, images: [img("category-women-loungewear.jpg")], brand: "Thread Essentials", color: "Grey", sizes: ["XS", "S", "M", "L"] },
+  { slug: "active-seamless-leggings", name: "Active Seamless Leggings", category: "Activewear", price: 89, originalPrice: 175, rating: 4.6, variantCount: 4, images: [img("category-women-activewear.jpg")], brand: "Thread Essentials", color: "Black", sizes: ["XS", "S", "M", "L"] },
+  { slug: "linen-coord-set", name: "Linen Co-ord Set", category: "Co-ords", price: 139, originalPrice: 269, rating: 4.7, images: [img("category-women-coords.jpg")], brand: "Thread Studio", color: "Sand", sizes: ["S", "M", "L"] },
+  { slug: "canvas-sneakers", name: "Canvas Sneakers", category: "Footwear", price: 89, originalPrice: 169, rating: 4.4, images: [img("category-women-footwear.jpg")], brand: "Thread Essentials", color: "White", sizes: ["S", "M", "L"] },
 ];
 
 const MEN_CATEGORIES = [
@@ -84,15 +103,38 @@ const MEN_LOOK_SLUGS = [
 const WOMEN_LOOK_SLUGS = [
   "midi-skirt", // Skirt
   "crop-top", // Crop Top
-  "cardigan", // stands in for a hoodie — no hoodie photo exists for women yet
-  "slip-dress", // stands in for a sleeveless top — likewise no photo yet
-  "wrap-blouse",
-  "tie-dye-tee",
-  "wide-jeans",
-  "puffer-jacket",
+  "cardigan", // stands in for a hoodie — no women's hoodie photo exists yet
+  "ribbed-tank-top", // Sleeveless Top
+  "floral-midi-dress",
+  "longline-trench-coat",
+  "straight-leg-denim",
+  "linen-coord-set",
 ];
 
 type SeedProduct = { slug: string; name: string; images: string[] };
+
+/**
+ * Every product must own its photos outright — a repeated image makes two
+ * different products look like the same item. Fails the seed rather than
+ * letting a duplicate reach the catalogue.
+ */
+function assertNoSharedPhotos(products: SeedProduct[]): void {
+  const owner = new Map<string, string>();
+  for (const product of products) {
+    if (product.images.length === 0) {
+      throw new Error(`[seed] ${product.slug} has no photos`);
+    }
+    for (const src of product.images) {
+      const existing = owner.get(src);
+      if (existing) {
+        throw new Error(
+          `[seed] ${src} is used by both "${existing}" and "${product.slug}" — every product needs its own photo`,
+        );
+      }
+      owner.set(src, product.slug);
+    }
+  }
+}
 
 /** Builds a strip entry from a product, failing loudly on an unknown slug. */
 function lookFromProduct(products: SeedProduct[], slug: string) {
@@ -102,6 +144,8 @@ function lookFromProduct(products: SeedProduct[], slug: string) {
   }
   return { src: product.images[0], alt: product.name, productSlug: product.slug };
 }
+
+assertNoSharedPhotos([...MEN_PRODUCTS, ...WOMEN_PRODUCTS]);
 
 const MEN_LOOKS = MEN_LOOK_SLUGS.map((slug) => lookFromProduct(MEN_PRODUCTS, slug));
 const WOMEN_LOOKS = WOMEN_LOOK_SLUGS.map((slug) =>

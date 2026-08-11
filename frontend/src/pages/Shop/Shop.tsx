@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { FiChevronDown, FiChevronUp, FiArrowUp } from "react-icons/fi";
+import {
+  FiArrowUp,
+  FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
+  FiChevronUp,
+} from "react-icons/fi";
 import ShopProductCard from "../../components/Products/ShopProductCard";
 import { fetchProducts, type Product } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL"];
 const RATING_THRESHOLDS = [4, 3, 2, 1];
+const PAGE_SIZE = 10;
 
 // Counts how many products share each value of the given field, e.g. how
 // many products per brand — drives the "(n)" counts next to each checkbox.
@@ -119,6 +126,7 @@ function Shop({ activeCategory, onCategoryChange, onSelectProduct }: ShopProps) 
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minRating, setMinRating] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   // Fetches every product once (both genders) so the "Men (n)"/"Women (n)"
@@ -142,7 +150,21 @@ function Shop({ activeCategory, onCategoryChange, onSelectProduct }: ShopProps) 
     setMinPrice("");
     setMaxPrice("");
     setMinRating(null);
+    setPage(0);
   }, [activeCategory]);
+
+  // Any narrowing of the results should land the shopper back on page one.
+  useEffect(() => {
+    setPage(0);
+  }, [
+    selectedCategories,
+    selectedBrands,
+    selectedColors,
+    selectedSizes,
+    minPrice,
+    maxPrice,
+    minRating,
+  ]);
 
   useEffect(() => {
     const handleScroll = () => setShowBackToTop(window.scrollY > 400);
@@ -178,6 +200,14 @@ function Shop({ activeCategory, onCategoryChange, onSelectProduct }: ShopProps) 
       (parsedMinPrice === null || product.price >= parsedMinPrice) &&
       (parsedMaxPrice === null || product.price <= parsedMaxPrice) &&
       (minRating === null || product.rating >= minRating)
+  );
+
+  const pageCount = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  // Guards against sitting on a page that no longer exists after filtering.
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleProducts = products.slice(
+    currentPage * PAGE_SIZE,
+    currentPage * PAGE_SIZE + PAGE_SIZE,
   );
 
   const activeFilterCount =
@@ -353,15 +383,64 @@ function Shop({ activeCategory, onCategoryChange, onSelectProduct }: ShopProps) 
                 ))}
               </div>
             ) : products.length > 0 ? (
-              <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
-                {products.map((product) => (
-                  <ShopProductCard
-                    key={product.id}
-                    product={product}
-                    onSelectProduct={onSelectProduct}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3">
+                  {visibleProducts.map((product) => (
+                    <ShopProductCard
+                      key={product.id}
+                      product={product}
+                      onSelectProduct={onSelectProduct}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Previous page"
+                    disabled={currentPage === 0}
+                    onClick={() => setPage((current) => Math.max(0, current - 1))}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <FiChevronLeft size={16} />
+                  </button>
+
+                  {Array.from({ length: pageCount }).map((_, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      aria-label={`Page ${index + 1}`}
+                      aria-current={currentPage === index ? "page" : undefined}
+                      onClick={() => setPage(index)}
+                      className={`h-9 min-w-9 rounded-full px-3 text-sm font-semibold transition ${
+                        currentPage === index
+                          ? "bg-gray-900 text-white"
+                          : "border border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900"
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    aria-label="Next page"
+                    disabled={currentPage >= pageCount - 1}
+                    onClick={() =>
+                      setPage((current) => Math.min(pageCount - 1, current + 1))
+                    }
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <FiChevronRight size={16} />
+                  </button>
+                </div>
+
+                <p className="mt-4 text-center text-xs text-gray-400">
+                  Showing {currentPage * PAGE_SIZE + 1}–
+                  {currentPage * PAGE_SIZE + visibleProducts.length} of{" "}
+                  {products.length}
+                </p>
+              </>
             ) : (
               <p className="text-sm text-gray-500">
                 No products match the selected filters.
