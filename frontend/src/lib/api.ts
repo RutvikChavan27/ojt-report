@@ -21,6 +21,47 @@ export type Product = {
   gender: string;
 };
 
+/** A marketplace listing as shown in a results grid. */
+export type Listing = {
+  id: string;
+  title: string;
+  category: string;
+  categoryLabel: string;
+  audience: string;
+  brand: string | null;
+  size: string | null;
+  colour: string | null;
+  condition: string;
+  price: number;
+  city: string;
+  postedAt: string;
+  image: string;
+};
+
+/** A listing on its own page. */
+export type ListingDetail = Listing & {
+  description: string;
+  images: string[];
+  sellerName: string;
+  viewCount: number;
+};
+
+export type ListingPage = {
+  items: Listing[];
+  total: number;
+  page: number;
+  perPage: number;
+  hasMore: boolean;
+};
+
+export type ListingCategory = {
+  slug: string;
+  label: string;
+  audience: string;
+  total: number;
+  image: string;
+};
+
 export type HeroLook = {
   src: string;
   alt: string;
@@ -73,6 +114,42 @@ export async function fetchHeroLooks(gender: string): Promise<HeroLook[]> {
     `/api/hero-looks?gender=${encodeURIComponent(gender)}`,
   );
   return data.map((look) => ({ ...look, src: resolveImage(look.src) }));
+}
+
+/** GET one page of marketplace listings, optionally narrowed by category. */
+export async function fetchListings(options: {
+  category?: string;
+  audience?: string;
+  page?: number;
+  perPage?: number;
+}): Promise<ListingPage> {
+  const params = new URLSearchParams();
+  if (options.category) params.set("category", options.category);
+  if (options.audience) params.set("audience", options.audience);
+  params.set("page", String(options.page ?? 1));
+  params.set("perPage", String(options.perPage ?? 24));
+
+  const data = await getJson<ListingPage>(`/api/listings?${params.toString()}`);
+  return { ...data, items: data.items.map(withImage) };
+}
+
+/** GET a single listing with all of its photos. */
+export async function fetchListing(id: string): Promise<ListingDetail> {
+  const data = await getJson<ListingDetail>(`/api/listings/${encodeURIComponent(id)}`);
+  return {
+    ...data,
+    image: resolveImage(data.image),
+    images: data.images.map(resolveImage),
+  };
+}
+
+/** GET browsable categories with live listing counts. */
+export async function fetchListingCategories(
+  audience?: string,
+): Promise<ListingCategory[]> {
+  const params = audience ? `?audience=${encodeURIComponent(audience)}` : "";
+  const data = await getJson<ListingCategory[]>(`/api/listing-categories${params}`);
+  return data.map(withImage);
 }
 
 /** Full-text product search (backend ranks matches with Postgres tsvector/ts_rank). */

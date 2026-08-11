@@ -3,8 +3,18 @@ import { getProducts } from "../controllers/listing.controller";
 import { getCategories, getHeroLooks } from "../controllers/catalog.controller";
 import { getDashboardData } from "../controllers/dashboard.controller";
 import { getSearchResults } from "../controllers/search.controller";
+import {
+  getListingById,
+  getListingCategories,
+  getListings,
+} from "../controllers/marketplace.controller";
 
 const router = Router();
+
+// Marketplace listings (the 100k searchable table).
+router.get("/listings", getListings);
+router.get("/listings/:id", getListingById);
+router.get("/listing-categories", getListingCategories);
 
 // Individual resources (also used by the Shop page / reusable elsewhere)
 router.get("/products", getProducts);

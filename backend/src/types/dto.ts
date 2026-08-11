@@ -32,6 +32,52 @@ export type HeroLookDTO = {
   productSlug: string | null;
 };
 
+/** A marketplace listing as it appears in a results grid. */
+export type ListingDTO = {
+  id: string;
+  title: string;
+  /** Category slug, e.g. "womens-dresses". */
+  category: string;
+  /** Human label for that slug, e.g. "Dresses". */
+  categoryLabel: string;
+  audience: string;
+  brand: string | null;
+  size: string | null;
+  colour: string | null;
+  condition: string;
+  price: number;
+  city: string;
+  postedAt: string;
+  /** Primary photo, already resolved to a servable path. */
+  image: string;
+};
+
+/** A listing on its own page: everything above plus body copy and all photos. */
+export type ListingDetailDTO = ListingDTO & {
+  description: string;
+  images: string[];
+  sellerName: string;
+  viewCount: number;
+};
+
+/** One page of listings plus enough context to render paging controls. */
+export type ListingPageDTO = {
+  items: ListingDTO[];
+  total: number;
+  page: number;
+  perPage: number;
+  hasMore: boolean;
+};
+
+/** A browsable category with how many active listings it holds. */
+export type ListingCategoryDTO = {
+  slug: string;
+  label: string;
+  audience: string;
+  total: number;
+  image: string;
+};
+
 export type DashboardDTO = {
   heroLooks: HeroLookDTO[];
   products: ProductDTO[];

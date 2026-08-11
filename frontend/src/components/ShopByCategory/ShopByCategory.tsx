@@ -1,13 +1,16 @@
-import { fetchCategories } from "../../lib/api";
+import { fetchListingCategories, type ListingCategory } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 
 type ShopByCategoryProps = {
   activeCategory: string;
+  onSelectCategory?: (category: ListingCategory) => void;
 };
 
-function ShopByCategory({ activeCategory }: ShopByCategoryProps) {
+function ShopByCategory({ activeCategory, onSelectCategory }: ShopByCategoryProps) {
+  // Marketplace categories rather than the storefront's, because these are what
+  // the tiles now open: a real, countable set of listings.
   const { data, loading, error } = useApi(
-    () => fetchCategories(activeCategory),
+    () => fetchListingCategories(activeCategory),
     [activeCategory],
   );
   const categories = data ?? [];
@@ -44,10 +47,12 @@ function ShopByCategory({ activeCategory }: ShopByCategoryProps) {
         ) : (
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-5">
             {categories.map((category) => (
-              <a
-                key={category.label}
-                href="#new"
-                className="group relative aspect-[4/5] overflow-hidden"
+              <button
+                key={category.slug}
+                type="button"
+                onClick={() => onSelectCategory?.(category)}
+                aria-label={`Browse ${category.label}`}
+                className="group relative aspect-[4/5] overflow-hidden text-left"
               >
                 <img
                   src={category.image}
@@ -58,7 +63,10 @@ function ShopByCategory({ activeCategory }: ShopByCategoryProps) {
                 <span className="absolute bottom-4 left-4 text-lg font-bold text-white">
                   {category.label}
                 </span>
-              </a>
+                <span className="absolute bottom-4 right-4 text-xs font-semibold text-white/80">
+                  {category.total.toLocaleString("en-IN")}
+                </span>
+              </button>
             ))}
           </div>
         )}

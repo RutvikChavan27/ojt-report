@@ -1,13 +1,14 @@
 import Hero from "../../components/Hero/Hero";
 import TopProducts from "../../components/TopProducts/TopProducts";
 import ShopByCategory from "../../components/ShopByCategory/ShopByCategory";
-import type { Product } from "../../lib/api";
+import type { ListingCategory, Product } from "../../lib/api";
 
 type DashboardProps = {
   searchQuery: string;
   activeCategory: string;
   onGoToShopClick: () => void;
   onSelectProduct: (product: Product) => void;
+  onSelectCategory?: (category: ListingCategory) => void;
 };
 
 function Dashboard({
@@ -15,6 +16,7 @@ function Dashboard({
   activeCategory,
   onGoToShopClick,
   onSelectProduct,
+  onSelectCategory,
 }: DashboardProps) {
   return (
     <>
@@ -28,7 +30,10 @@ function Dashboard({
         activeCategory={activeCategory}
         onSelectProduct={onSelectProduct}
       />
-      <ShopByCategory activeCategory={activeCategory} />
+      <ShopByCategory
+        activeCategory={activeCategory}
+        onSelectCategory={onSelectCategory}
+      />
     </>
   );
 }
