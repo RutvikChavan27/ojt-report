@@ -28,6 +28,8 @@ export type CategoryDTO = {
 export type HeroLookDTO = {
   src: string;
   alt: string;
+  /** Slug of the product this look links through to, when one is set. */
+  productSlug: string | null;
 };
 
 export type DashboardDTO = {

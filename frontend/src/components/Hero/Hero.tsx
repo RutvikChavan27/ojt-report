@@ -5,27 +5,20 @@ import {
   FiChevronRight,
   FiHeart,
 } from "react-icons/fi";
-import SearchBar from "../common/SearchBar";
 import ImageCarousel from "../common/ImageCarousel";
-import { fetchHeroLooks } from "../../lib/api";
+import { fetchHeroLooks, fetchProducts, type Product } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { useWishlist } from "../../store/WishlistContext";
 
 type HeroProps = {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
   activeCategory: string;
   onGoToShopClick: () => void;
+  onSelectProduct?: (product: Product) => void;
 };
 
 const LOOKS_PAGE_SIZE = 4;
 
-function Hero({
-  searchQuery,
-  onSearchChange,
-  activeCategory,
-  onGoToShopClick,
-}: HeroProps) {
+function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
   const [lookPage, setLookPage] = useState(0);
   const { isWishlisted, toggle } = useWishlist();
 
@@ -34,6 +27,25 @@ function Hero({
     [activeCategory],
   );
   const allLooks = data ?? [];
+
+  // Needed to turn a look's productSlug into the full product the detail page wants.
+  const { data: productData } = useApi(
+    () => fetchProducts(activeCategory),
+    [activeCategory],
+  );
+
+  /** Opens the linked product when there is one, otherwise falls back to the shop. */
+  const openLook = (productSlug: string | null) => {
+    const product = productSlug
+      ? productData?.find((candidate) => candidate.id === productSlug)
+      : undefined;
+
+    if (product && onSelectProduct) {
+      onSelectProduct(product);
+      return;
+    }
+    onGoToShopClick();
+  };
   const looksPageCount = Math.max(1, Math.ceil(allLooks.length / LOOKS_PAGE_SIZE));
 
   // Reset to the first page whenever the category (and therefore the set) changes.
@@ -55,18 +67,8 @@ function Hero({
     <section id="home">
       <div className="mx-auto w-full px-6 pb-14 sm:px-10 lg:px-16">
         <div className="grid items-start gap-6 lg:grid-cols-[280px_1fr]">
-          {/* Sidebar: categories, search, heading, CTA */}
+          {/* Sidebar: heading, CTA */}
           <div className="flex flex-col gap-6">
-            <SearchBar
-              value={searchQuery}
-              onChange={onSearchChange}
-              onSubmit={() =>
-                document
-                  .getElementById("new")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-            />
-
             <div>
               <h1 className="text-4xl font-black leading-[0.95] tracking-tight text-gray-900 sm:text-5xl">
                 NEW
@@ -133,7 +135,7 @@ function Hero({
                     <button
                       key={look.src}
                       type="button"
-                      onClick={onGoToShopClick}
+                      onClick={() => openLook(look.productSlug)}
                       aria-label={`Shop the look: ${look.alt}`}
                       className="aspect-[3/4] w-full max-w-64 flex-1 text-left"
                     >

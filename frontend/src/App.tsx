@@ -41,7 +41,6 @@ function App() {
         {page === "home" ? (
           <Dashboard
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
             activeCategory={activeCategory}
             onGoToShopClick={() => goTo("shop")}
             onSelectProduct={onSelectProduct}
@@ -59,7 +58,6 @@ function App() {
         ) : (
           <Dashboard
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
             activeCategory={activeCategory}
             onGoToShopClick={() => goTo("shop")}
             onSelectProduct={onSelectProduct}

@@ -5,7 +5,6 @@ import type { Product } from "../../lib/api";
 
 type DashboardProps = {
   searchQuery: string;
-  onSearchChange: (value: string) => void;
   activeCategory: string;
   onGoToShopClick: () => void;
   onSelectProduct: (product: Product) => void;
@@ -13,7 +12,6 @@ type DashboardProps = {
 
 function Dashboard({
   searchQuery,
-  onSearchChange,
   activeCategory,
   onGoToShopClick,
   onSelectProduct,
@@ -21,10 +19,9 @@ function Dashboard({
   return (
     <>
       <Hero
-        searchQuery={searchQuery}
-        onSearchChange={onSearchChange}
         activeCategory={activeCategory}
         onGoToShopClick={onGoToShopClick}
+        onSelectProduct={onSelectProduct}
       />
       <TopProducts
         searchQuery={searchQuery}

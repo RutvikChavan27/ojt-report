@@ -65,10 +65,14 @@ CREATE TABLE IF NOT EXISTS hero_looks (
   id SERIAL PRIMARY KEY,
   src TEXT NOT NULL,
   alt TEXT NOT NULL,
+  /** "Shop the look" target — which product this photo links through to. */
+  product_slug TEXT REFERENCES products (slug),
   gender gender NOT NULL,
   "order" INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE hero_looks ADD COLUMN IF NOT EXISTS product_slug TEXT REFERENCES products (slug);
 
 CREATE INDEX IF NOT EXISTS hero_looks_gender_order_idx ON hero_looks (gender, "order");

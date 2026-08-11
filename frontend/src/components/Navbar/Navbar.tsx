@@ -71,8 +71,9 @@ function Navbar({
                 onKeyDown={(event) => {
                   if (event.key === "Escape") closeSearch();
                 }}
-                placeholder="Search products"
-                className="mr-2 w-44 flex-shrink-0 animate-[modal-in_0.15s_ease-out] rounded-full border border-gray-200 bg-transparent px-4 py-2 text-sm text-gray-900 outline-none focus:border-gray-400 lg:w-64"
+                placeholder="What are you looking for?"
+                aria-label="Search products"
+                className="mr-2 w-44 flex-shrink-0 animate-[modal-in_0.15s_ease-out] rounded-full border border-gray-200 bg-transparent px-4 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-400 lg:w-64"
               />
             )}
             <button

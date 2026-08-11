@@ -60,26 +60,29 @@ const WOMEN_CATEGORIES = [
   { label: "Outerwear", image: img("category-women-outerwear.jpg") },
 ];
 
+// `productSlug` is the "shop the look" target — clicking the photo opens that
+// product. These pairings are hand-picked to be the closest match the current
+// catalogue allows; adjust freely as real lookbook photography lands.
 const MEN_LOOKS = [
-  { src: img("hero-look-1.jpg"), alt: "Model wearing cream trousers and white sneakers" },
-  { src: img("hero-look-1b.jpg"), alt: "Model seated wearing khaki trousers and sneakers" },
-  { src: img("hero-look-1c.jpg"), alt: "Model wearing ripped denim jeans and sneakers" },
-  { src: img("hero-look-2.jpg"), alt: "Model wearing a graphic t-shirt with visible tattoos" },
-  { src: img("hero-look-2b.jpg"), alt: "Model wearing a white graphic print t-shirt" },
-  { src: img("hero-look-2c.jpg"), alt: "Model wearing a graphic t-shirt with a backpack" },
-  { src: img("hero-look-3.jpg"), alt: "Model wearing a matching grey gingham co-ord set with white sneakers" },
-  { src: img("hero-look-3b.jpg"), alt: "Model wearing a plaid shirt-jacket over a mustard turtleneck" },
+  { src: img("hero-look-1.jpg"), alt: "Model wearing cream trousers and white sneakers", productSlug: "slim-fit-tee" },
+  { src: img("hero-look-1b.jpg"), alt: "Model seated wearing khaki trousers and sneakers", productSlug: "henley-tee" },
+  { src: img("hero-look-1c.jpg"), alt: "Model wearing ripped denim jeans and sneakers", productSlug: "dotted-chambray-shirt" },
+  { src: img("hero-look-2.jpg"), alt: "Model wearing a graphic t-shirt with visible tattoos", productSlug: "graphic-print-tee" },
+  { src: img("hero-look-2b.jpg"), alt: "Model wearing a white graphic print t-shirt", productSlug: "graphic-print-tee" },
+  { src: img("hero-look-2c.jpg"), alt: "Model wearing a graphic t-shirt with a backpack", productSlug: "graphic-print-tee" },
+  { src: img("hero-look-3.jpg"), alt: "Model wearing a matching grey gingham co-ord set with white sneakers", productSlug: "seersucker-shirt" },
+  { src: img("hero-look-3b.jpg"), alt: "Model wearing a plaid shirt-jacket over a mustard turtleneck", productSlug: "knit-sweater" },
 ];
 
 const WOMEN_LOOKS = [
-  { src: img("hero-look-women-1.jpg"), alt: "Model wearing women's look 1" },
-  { src: img("hero-look-women-2.jpg"), alt: "Model wearing women's look 2" },
-  { src: img("hero-look-women-3.jpg"), alt: "Model wearing women's look 3" },
-  { src: img("hero-look-women-4.jpg"), alt: "Model wearing women's look 4" },
-  { src: img("hero-look-women-5.jpg"), alt: "Model wearing women's look 5" },
-  { src: img("hero-look-women-6.jpg"), alt: "Model wearing women's look 6" },
-  { src: img("hero-look-women-7.jpg"), alt: "Model wearing women's look 7" },
-  { src: img("hero-look-women-8.jpg"), alt: "Model wearing women's look 8" },
+  { src: img("hero-look-women-1.jpg"), alt: "Model wearing women's look 1", productSlug: "wrap-blouse" },
+  { src: img("hero-look-women-2.jpg"), alt: "Model wearing women's look 2", productSlug: "crop-top" },
+  { src: img("hero-look-women-3.jpg"), alt: "Model wearing women's look 3", productSlug: "tie-dye-tee" },
+  { src: img("hero-look-women-4.jpg"), alt: "Model wearing women's look 4", productSlug: "wide-jeans" },
+  { src: img("hero-look-women-5.jpg"), alt: "Model wearing women's look 5", productSlug: "midi-skirt" },
+  { src: img("hero-look-women-6.jpg"), alt: "Model wearing women's look 6", productSlug: "cardigan" },
+  { src: img("hero-look-women-7.jpg"), alt: "Model wearing women's look 7", productSlug: "slip-dress" },
+  { src: img("hero-look-women-8.jpg"), alt: "Model wearing women's look 8", productSlug: "puffer-jacket" },
 ];
 
 /** Adds gender + order to each row so lists come back in the authored sequence. */
@@ -130,7 +133,11 @@ async function seed(): Promise<void> {
     ["label", "image", "gender", "order"],
     categories
   );
-  const heroLooksInsert = insertRows("hero_looks", ["src", "alt", "gender", "order"], heroLooks);
+  const heroLooksInsert = insertRows(
+    "hero_looks",
+    ["src", "alt", "product_slug", "gender", "order"],
+    heroLooks.map((look) => ({ ...look, product_slug: look.productSlug }))
+  );
 
   await query(productsInsert.text, productsInsert.values);
   await query(categoriesInsert.text, categoriesInsert.values);

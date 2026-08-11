@@ -21,7 +21,12 @@ export type Product = {
   gender: string;
 };
 
-export type HeroLook = { src: string; alt: string };
+export type HeroLook = {
+  src: string;
+  alt: string;
+  /** Product this look links through to ("shop the look"), when set. */
+  productSlug: string | null;
+};
 export type Category = { label: string; image: string };
 
 type ApiEnvelope<T> = { success: boolean; data: T; message?: string };
