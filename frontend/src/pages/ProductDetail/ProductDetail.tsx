@@ -62,7 +62,7 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
           Back
         </button>
 
-        <div className="flex flex-col gap-10 lg:flex-row">
+        <div className="mx-auto flex max-w-5xl flex-col gap-10 lg:flex-row">
           <div className="grid grid-cols-2 gap-3 lg:w-1/2">
             {galleryTiles.map((tile, index) => (
               <div
