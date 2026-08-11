@@ -4,12 +4,14 @@ import AuthModal from "../common/AuthModal";
 import CategoryList from "../common/CategoryList";
 import Logo from "../common/Logo";
 import { useWishlist } from "../../store/WishlistContext";
+import { useCart } from "../../store/CartContext";
 
 type NavbarProps = {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
   onGoHome: () => void;
   onOpenWishlist: () => void;
+  onOpenCart: () => void;
   searchQuery: string;
   onSearchChange: (value: string) => void;
 };
@@ -19,10 +21,12 @@ function Navbar({
   onCategoryChange,
   onGoHome,
   onOpenWishlist,
+  onOpenCart,
   searchQuery,
   onSearchChange,
 }: NavbarProps) {
   const { count } = useWishlist();
+  const { count: cartCount } = useCart();
   const [showAuth, setShowAuth] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -102,12 +106,19 @@ function Navbar({
 
           <button
             type="button"
-            className="flex items-center gap-3 rounded-full bg-gray-900 py-1.5 pl-5 pr-1.5 text-sm font-medium text-white transition hover:bg-black"
+            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
+            onClick={onOpenCart}
+            className="relative flex items-center gap-3 rounded-full bg-gray-900 py-1.5 pl-5 pr-1.5 text-sm font-medium text-white transition hover:bg-black"
           >
             Cart
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-900">
               <FiShoppingBag size={13} />
             </span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-gray-900 ring-1 ring-gray-900">
+                {cartCount}
+              </span>
+            )}
           </button>
 
           <button

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { WishlistProvider } from "./store/WishlistContext";
+import { CartProvider } from "./store/CartContext";
 import "./index.css";
 
 ReactDOM.createRoot(
@@ -9,7 +10,9 @@ ReactDOM.createRoot(
 ).render(
   <React.StrictMode>
     <WishlistProvider>
-      <App />
+      <CartProvider>
+        <App />
+      </CartProvider>
     </WishlistProvider>
   </React.StrictMode>
 );

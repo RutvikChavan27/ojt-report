@@ -3,6 +3,7 @@ import { FiArrowLeft, FiChevronRight, FiHeart, FiShield, FiStar } from "react-ic
 import { FaFacebookF, FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
 import type { Product } from "../../lib/api";
 import { useWishlist } from "../../store/WishlistContext";
+import { useCart } from "../../store/CartContext";
 
 type ProductDetailProps = {
   product: Product;
@@ -25,6 +26,7 @@ const SINGLE_PHOTO_CROPS = [
 
 function ProductDetail({ product, onBack }: ProductDetailProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
+  const { add: addToCart } = useCart();
   const wishlisted = checkWishlisted(product.id);
 
   const orderedSizes = [...product.sizes].sort(
@@ -50,6 +52,17 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
     setActiveImageIndex((index) => (index + 1) % galleryTiles.length);
 
   const handleAddToCart = () => {
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      image: product.image,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      size: selectedSize,
+      category: product.category,
+      currency: "$",
+      quantity,
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };

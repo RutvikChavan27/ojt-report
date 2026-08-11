@@ -7,10 +7,11 @@ import Wishlist from "./pages/Wishlist/Wishlist";
 import ProductDetail from "./pages/ProductDetail/ProductDetail";
 import CategoryListings from "./pages/CategoryListings/CategoryListings";
 import ListingDetail from "./pages/ListingDetail/ListingDetail";
+import Cart from "./pages/Cart/Cart";
 import type { Listing, ListingCategory, Product } from "./lib/api";
 
 /** Views reachable from the navbar; the detail views are pushed on top of one. */
-type MainPage = "home" | "shop" | "wishlist";
+type MainPage = "home" | "shop" | "wishlist" | "cart";
 type Page = MainPage | "product" | "category" | "listing";
 
 function App() {
@@ -26,7 +27,12 @@ function App() {
 
   /** Remembers which navbar view to return to when a detail view is opened. */
   const rememberReturnPage = () => {
-    if (page === "home" || page === "shop" || page === "wishlist") {
+    if (
+      page === "home" ||
+      page === "shop" ||
+      page === "wishlist" ||
+      page === "cart"
+    ) {
       setReturnPage(page);
     }
   };
@@ -72,6 +78,7 @@ function App() {
         onCategoryChange={setActiveCategory}
         onGoHome={() => goTo("home")}
         onOpenWishlist={() => goTo("wishlist")}
+        onOpenCart={() => goTo("cart")}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -87,6 +94,8 @@ function App() {
           />
         ) : page === "wishlist" ? (
           <Wishlist onGoToShopClick={() => goTo("shop")} />
+        ) : page === "cart" ? (
+          <Cart onGoToShopClick={() => goTo("shop")} />
         ) : page === "category" && selectedCategory ? (
           <CategoryListings
             categorySlug={selectedCategory.slug}

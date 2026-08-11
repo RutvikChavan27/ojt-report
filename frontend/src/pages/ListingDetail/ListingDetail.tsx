@@ -9,6 +9,7 @@ import {
 import { fetchListing } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { useWishlist } from "../../store/WishlistContext";
+import { useCart } from "../../store/CartContext";
 
 type ListingDetailProps = {
   listingId: string;
@@ -24,6 +25,7 @@ const QUANTITY_OPTIONS = [1, 2, 3];
  */
 function ListingDetail({ listingId, onBack }: ListingDetailProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
+  const { add: addToCart } = useCart();
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -34,6 +36,18 @@ function ListingDetail({ listingId, onBack }: ListingDetailProps) {
   );
 
   const handleAddToCart = () => {
+    if (!listing) return;
+    addToCart({
+      productId: listing.id,
+      name: listing.title,
+      image: listing.image,
+      price: listing.price,
+      size: listing.size,
+      category: listing.categoryLabel,
+      // Listings are priced in rupees, unlike the storefront's dollars.
+      currency: "₹",
+      quantity,
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };

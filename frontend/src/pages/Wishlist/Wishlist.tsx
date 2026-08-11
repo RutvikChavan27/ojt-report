@@ -1,5 +1,6 @@
 import { FiHeart, FiX } from "react-icons/fi";
-import { useWishlist } from "../../store/WishlistContext";
+import { useWishlist, type WishlistItem } from "../../store/WishlistContext";
+import { useCart } from "../../store/CartContext";
 
 type WishlistProps = {
   onGoToShopClick: () => void;
@@ -7,6 +8,27 @@ type WishlistProps = {
 
 function Wishlist({ onGoToShopClick }: WishlistProps) {
   const { items, remove } = useWishlist();
+  const { add: addToCart } = useCart();
+
+  /**
+   * Adds to the bag and drops from the wishlist — "move", not "copy". Only
+   * items with a price can be bought, which excludes the lookbook photos, so
+   * those are just removed.
+   */
+  const moveToCart = (item: WishlistItem) => {
+    if (item.price !== undefined) {
+      addToCart({
+        productId: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        category: item.category,
+        // Wishlisted marketplace listings are the ones carrying a price here.
+        currency: "₹",
+      });
+    }
+    remove(item.id);
+  };
 
   return (
     <section className="pb-20 pt-8">
@@ -66,7 +88,7 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
 
                 <button
                   type="button"
-                  onClick={() => remove(product.id)}
+                  onClick={() => moveToCart(product)}
                   className="block w-full border-t border-gray-100 py-2.5 text-center text-xs font-bold tracking-wide text-gray-900 transition hover:bg-gray-50"
                 >
                   MOVE TO CART
