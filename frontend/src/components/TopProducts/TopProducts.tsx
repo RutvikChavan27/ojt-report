@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import ProductCard from "../Products/ProductCard";
-import { fetchProducts, fetchSearchResults, type Product } from "../../lib/api";
+import {
+  fetchHeroLooks,
+  fetchProducts,
+  fetchSearchResults,
+  type Product,
+} from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 
 const PAGE_SIZE = 4;
@@ -45,7 +50,21 @@ function TopProducts({ searchQuery, activeCategory, onSelectProduct }: TopProduc
     [isSearching, debouncedQuery, activeCategory],
   );
 
-  const allProducts = browseData ?? [];
+  // The New Collection strip above already features some products; skip those
+  // here so the same photo never appears twice on the page.
+  const { data: heroLookData } = useApi(
+    () => fetchHeroLooks(activeCategory),
+    [activeCategory],
+  );
+  const featuredSlugs = new Set(
+    (heroLookData ?? [])
+      .map((look) => look.productSlug)
+      .filter((slug): slug is string => Boolean(slug)),
+  );
+
+  const allProducts = (browseData ?? []).filter(
+    (product) => !featuredSlugs.has(product.id),
+  );
   const pageCount = Math.max(1, Math.ceil(allProducts.length / PAGE_SIZE));
 
   useEffect(() => {
