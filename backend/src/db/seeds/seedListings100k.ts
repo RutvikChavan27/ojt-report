@@ -63,6 +63,7 @@ const skewedPrice = (min: number, max: number): number => {
   return Math.round((min + skew * (max - min)) / 50) * 50 || min;
 };
 
+// Clothing only — no footwear or accessories.
 const MEN_CATEGORIES = [
   { slug: "mens-shirts", label: "Shirts" },
   { slug: "mens-tshirts", label: "T-Shirts" },
@@ -71,7 +72,7 @@ const MEN_CATEGORIES = [
   { slug: "mens-jeans", label: "Jeans" },
   { slug: "mens-trousers", label: "Trousers & Chinos" },
   { slug: "mens-knitwear", label: "Knitwear" },
-  { slug: "mens-shoes", label: "Shoes" },
+  { slug: "mens-shorts", label: "Shorts" },
 ] as const;
 
 const WOMEN_CATEGORIES = [
@@ -82,7 +83,7 @@ const WOMEN_CATEGORIES = [
   { slug: "womens-hoodies", label: "Hoodies & Sweatshirts" },
   { slug: "womens-jackets", label: "Jackets & Coats" },
   { slug: "womens-knitwear", label: "Knitwear" },
-  { slug: "womens-shoes", label: "Shoes" },
+  { slug: "womens-coords", label: "Co-ords" },
 ] as const;
 
 /** Garment nouns per category, used to build believable titles. */
@@ -94,7 +95,7 @@ const GARMENTS: Record<string, readonly string[]> = {
   "mens-jeans": ["Slim Jeans", "Straight Jeans", "Relaxed Jeans", "Tapered Jeans"],
   "mens-trousers": ["Chinos", "Pleated Trousers", "Cargo Trousers", "Linen Trousers"],
   "mens-knitwear": ["Merino Jumper", "Cable Knit Sweater", "Cardigan", "Lambswool Jumper"],
-  "mens-shoes": ["Canvas Sneakers", "Leather Trainers", "Chelsea Boots", "Loafers"],
+  "mens-shorts": ["Chino Shorts", "Denim Shorts", "Cargo Shorts", "Jersey Shorts"],
   "womens-tops": ["Ribbed Tank Top", "Silk Blouse", "Wrap Top", "Cropped Tee", "Peplum Top"],
   "womens-dresses": ["Midi Dress", "Slip Dress", "Wrap Dress", "Shirt Dress", "Floral Sundress"],
   "womens-skirts": ["Pleated Midi Skirt", "Denim Mini Skirt", "A-Line Skirt", "Wrap Skirt"],
@@ -102,7 +103,7 @@ const GARMENTS: Record<string, readonly string[]> = {
   "womens-hoodies": ["Cropped Hoodie", "Oversized Hoodie", "Zip Sweatshirt", "Fleece Pullover"],
   "womens-jackets": ["Denim Jacket", "Puffer Jacket", "Blazer", "Trench Coat", "Shacket"],
   "womens-knitwear": ["Cable Knit Jumper", "Cardigan", "Merino Sweater", "Knit Vest"],
-  "womens-shoes": ["Canvas Sneakers", "Ankle Boots", "Ballet Flats", "Chunky Loafers"],
+  "womens-coords": ["Linen Co-ord Set", "Knit Co-ord Set", "Satin Co-ord Set", "Cotton Co-ord Set"],
 };
 
 const BRANDS = [
@@ -127,7 +128,6 @@ const CITIES = [
 ];
 
 const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-const SHOE_SIZES = ["UK 5", "UK 6", "UK 7", "UK 8", "UK 9", "UK 10", "UK 11"];
 const CONDITIONS = ["New with tags", "Like new", "Good", "Fair"] as const;
 const FITS = ["Relaxed fit", "Slim fit", "Regular fit", "Oversized fit"];
 const FABRICS = ["100% cotton", "cotton blend", "linen blend", "denim", "merino wool", "fleece-lined"];
@@ -331,7 +331,7 @@ async function seed(): Promise<void> {
     const garment = pick(GARMENTS[category.slug]);
     const brand = pick(BRANDS);
     const colour = pick(COLOURS);
-    const size = category.slug.endsWith("shoes") ? pick(SHOE_SIZES) : pick(CLOTHING_SIZES);
+    const size = pick(CLOTHING_SIZES);
     const condition = pick(CONDITIONS);
 
     // Status is chosen first, then dates are made consistent with it. Deriving

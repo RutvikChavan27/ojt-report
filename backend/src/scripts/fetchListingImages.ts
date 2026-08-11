@@ -30,9 +30,7 @@ const MANIFEST = path.join(OUTPUT_DIR, "manifest.json");
  */
 const SOURCES: { source: string; audience: "Men" | "Women"; categories: string[] }[] = [
   { source: "mens-shirts", audience: "Men", categories: ["mens-shirts"] },
-  { source: "mens-shoes", audience: "Men", categories: ["mens-shoes"] },
   { source: "womens-dresses", audience: "Women", categories: ["womens-dresses"] },
-  { source: "womens-shoes", audience: "Women", categories: ["womens-shoes"] },
   { source: "tops", audience: "Women", categories: ["womens-tops"] },
 ];
 
