@@ -148,12 +148,18 @@ type ImageManifestEntry = {
 };
 
 function loadPhotosByCategory(): Map<string, string[]> {
-  const manifestPath = path.join(config.imagesDir, "api", "manifest.json");
   const byCategory = new Map<string, string[]>();
 
+  // Start from the locally curated assignments…
+  for (const [category, files] of Object.entries(LOCAL_CATEGORY_PHOTOS)) {
+    byCategory.set(category, files.map(img));
+  }
+
+  // …then add anything the API supplied for the same categories.
+  const manifestPath = path.join(config.imagesDir, "api", "manifest.json");
   if (!fs.existsSync(manifestPath)) {
     console.warn(
-      "[seed] no image manifest found — run `npm run images:fetch` for category-matched photos",
+      "[seed] no image manifest found — run `npm run images:fetch` for more photos",
     );
     return byCategory;
   }
@@ -172,30 +178,98 @@ function loadPhotosByCategory(): Map<string, string[]> {
   return byCategory;
 }
 
-/** Untagged local files, used for categories the API had nothing for. */
-const FALLBACK_PHOTO_POOL = [
-  "product-seersucker-shirt.jpg", "product-seersucker-shirt-2.jpg",
-  "product-slim-fit-tee.jpg", "product-slim-fit-tee-2.jpg",
-  "product-blurred-print-tee.jpg", "product-blurred-print-tee-2.jpg",
-  "product-zip-crewneck.jpg", "product-zip-crewneck-2.jpg",
-  "product-fleece-hoodie.jpg",
-  "hero-look-1.jpg", "hero-look-1b.jpg", "hero-look-1c.jpg",
-  "hero-look-2.jpg", "hero-look-2b.jpg", "hero-look-2c.jpg",
-  "hero-look-3.jpg", "hero-look-3b.jpg", "hero-look-3c.jpg",
-  "product-women-wrap-blouse.jpg", "product-women-crop-top.jpg",
-  "product-women-tie-dye-tee.jpg", "product-women-wide-jeans.jpg",
-  "product-women-midi-skirt.jpg", "product-women-cardigan.jpg",
-  "product-women-slip-dress.jpg", "product-women-puffer-jacket.jpg",
-  "category-women-tops.jpg", "category-women-dresses.jpg",
-  "category-women-blouses.jpg", "category-women-denim.jpg",
-  "category-women-skirts.jpg", "category-women-knitwear.jpg",
-  "category-women-loungewear.jpg", "category-women-coords.jpg",
-  "category-women-activewear.jpg", "category-women-outerwear.jpg",
-  "category-women-footwear.jpg",
-  "hero-look-women-1.jpg", "hero-look-women-2.jpg", "hero-look-women-3.jpg",
-  "hero-look-women-4.jpg", "hero-look-women-5.jpg", "hero-look-women-6.jpg",
-  "hero-look-women-7.jpg", "hero-look-women-8.jpg",
-];
+/**
+ * Local files mapped to the categories they depict, going by filename and the
+ * alt text they were originally authored with. Merged with the API manifest, so
+ * a category can draw on both.
+ *
+ * Assignments come from those names rather than from inspecting the pixels, so
+ * a mislabelled file would carry its label through to here.
+ */
+const LOCAL_CATEGORY_PHOTOS: Record<string, string[]> = {
+  "mens-shirts": [
+    "product-seersucker-shirt.jpg",
+    "product-seersucker-shirt-2.jpg",
+    "hero-look-3b.jpg", // plaid shirt-jacket
+  ],
+  "mens-tshirts": [
+    "product-slim-fit-tee.jpg",
+    "product-slim-fit-tee-2.jpg",
+    "product-blurred-print-tee.jpg",
+    "product-blurred-print-tee-2.jpg",
+    "hero-look-2.jpg",
+    "hero-look-2b.jpg",
+    "hero-look-2c.jpg",
+  ],
+  "mens-hoodies": [
+    "product-fleece-hoodie.jpg",
+    "product-zip-crewneck.jpg",
+    "product-zip-crewneck-2.jpg",
+  ],
+  "mens-jackets": ["hero-look-3b.jpg", "hero-look-3.jpg"],
+  "mens-jeans": ["hero-look-1c.jpg"],
+  "mens-trousers": ["hero-look-1.jpg", "hero-look-1b.jpg"],
+  "mens-knitwear": ["hero-look-3c.jpg", "product-zip-crewneck-2.jpg"],
+  "mens-shorts": ["hero-look-1b.jpg"],
+
+  "womens-tops": [
+    "product-women-wrap-blouse.jpg",
+    "product-women-crop-top.jpg",
+    "product-women-tie-dye-tee.jpg",
+    "category-women-tops.jpg",
+    "category-women-blouses.jpg",
+  ],
+  "womens-dresses": [
+    "product-women-slip-dress.jpg",
+    "category-women-dresses.jpg",
+  ],
+  "womens-skirts": ["product-women-midi-skirt.jpg", "category-women-skirts.jpg"],
+  "womens-jeans": ["product-women-wide-jeans.jpg", "category-women-denim.jpg"],
+  "womens-hoodies": [
+    "category-women-loungewear.jpg",
+    "category-women-activewear.jpg",
+  ],
+  "womens-jackets": [
+    "product-women-puffer-jacket.jpg",
+    "category-women-outerwear.jpg",
+  ],
+  "womens-knitwear": [
+    "product-women-cardigan.jpg",
+    "category-women-knitwear.jpg",
+  ],
+  "womens-coords": ["category-women-coords.jpg"],
+};
+
+/**
+ * Last resort when a category has no photo of its own. Split by audience,
+ * because a shared pool put men's lookbook shots on women's listings.
+ */
+const FALLBACK_BY_AUDIENCE: Record<"Men" | "Women", string[]> = {
+  Men: [
+    "product-seersucker-shirt.jpg", "product-seersucker-shirt-2.jpg",
+    "product-slim-fit-tee.jpg", "product-slim-fit-tee-2.jpg",
+    "product-blurred-print-tee.jpg", "product-blurred-print-tee-2.jpg",
+    "product-zip-crewneck.jpg", "product-zip-crewneck-2.jpg",
+    "product-fleece-hoodie.jpg",
+    "hero-look-1.jpg", "hero-look-1b.jpg", "hero-look-1c.jpg",
+    "hero-look-2.jpg", "hero-look-2b.jpg", "hero-look-2c.jpg",
+    "hero-look-3.jpg", "hero-look-3b.jpg", "hero-look-3c.jpg",
+  ],
+  Women: [
+    "product-women-wrap-blouse.jpg", "product-women-crop-top.jpg",
+    "product-women-tie-dye-tee.jpg", "product-women-wide-jeans.jpg",
+    "product-women-midi-skirt.jpg", "product-women-cardigan.jpg",
+    "product-women-slip-dress.jpg", "product-women-puffer-jacket.jpg",
+    "category-women-tops.jpg", "category-women-dresses.jpg",
+    "category-women-blouses.jpg", "category-women-denim.jpg",
+    "category-women-skirts.jpg", "category-women-knitwear.jpg",
+    "category-women-loungewear.jpg", "category-women-coords.jpg",
+    "category-women-activewear.jpg", "category-women-outerwear.jpg",
+    "hero-look-women-1.jpg", "hero-look-women-2.jpg", "hero-look-women-3.jpg",
+    "hero-look-women-4.jpg", "hero-look-women-5.jpg", "hero-look-women-6.jpg",
+    "hero-look-women-7.jpg", "hero-look-women-8.jpg",
+  ],
+};
 
 const img = (file: string) => `${config.imagesRoute}/${file}`;
 
@@ -283,13 +357,14 @@ async function seed(): Promise<void> {
   ).size;
 
   /**
-   * Prefers a photo tagged with this listing's category; falls back to the
-   * untagged pool when the API had nothing for it.
+   * Prefers a photo of this listing's own category. Falls back to the pool for
+   * the listing's audience — never the other one, so a men's photo cannot land
+   * on a women's listing.
    */
-  const photoFor = (categorySlug: string): string => {
+  const photoFor = (categorySlug: string, audience: "Men" | "Women"): string => {
     const tagged = photosByCategory.get(categorySlug);
     if (tagged && tagged.length > 0) return pick(tagged);
-    return img(pick(FALLBACK_PHOTO_POOL));
+    return img(pick(FALLBACK_BY_AUDIENCE[audience]));
   };
 
   console.log(
@@ -386,7 +461,7 @@ async function seed(): Promise<void> {
     // 1-4 photos each, first one primary, all showing this garment's category.
     const photoCount = pickInt(1, 4);
     for (let p = 0; p < photoCount; p++) {
-      photoRows.push([i, photoFor(category.slug), p === 0, p]);
+      photoRows.push([i, photoFor(category.slug, audience), p === 0, p]);
     }
   }
 
