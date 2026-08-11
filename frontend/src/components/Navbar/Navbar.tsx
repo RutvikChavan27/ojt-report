@@ -5,11 +5,6 @@ import CategoryList from "../common/CategoryList";
 import Logo from "../common/Logo";
 import { useWishlist } from "../../store/WishlistContext";
 
-const NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "Collections", href: "#collections" },
-];
-
 type NavbarProps = {
   activeCategory: string;
   onCategoryChange: (category: string) => void;
@@ -48,25 +43,17 @@ function Navbar({
         <ul className="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-900 sm:gap-8">
           <li>
             <a
-              href={NAV_LINKS[0].href}
+              href="#home"
               onClick={onGoHome}
               className="transition hover:text-gray-500"
             >
-              {NAV_LINKS[0].label}
+              Home
             </a>
           </li>
 
           <li>
             <CategoryList active={activeCategory} onChange={onCategoryChange} />
           </li>
-
-          {NAV_LINKS.slice(1).map((link) => (
-            <li key={link.label}>
-              <a href={link.href} className="transition hover:text-gray-500">
-                {link.label}
-              </a>
-            </li>
-          ))}
         </ul>
 
         {/* Center: brand logo */}
