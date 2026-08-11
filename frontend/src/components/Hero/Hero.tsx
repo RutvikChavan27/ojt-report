@@ -88,8 +88,10 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
     <section id="home">
       <div className="mx-auto w-full px-6 pb-14 sm:px-10 lg:px-16">
         <div className="grid items-start gap-6 lg:grid-cols-[230px_1fr] lg:gap-12">
-          {/* Sidebar: heading, CTA */}
-          <div className="flex flex-col gap-6">
+          {/* Sidebar: heading, CTA. The top padding matches the strip's offset
+              below, so the heading starts level with the photos instead of
+              floating 80px above them. */}
+          <div className="flex flex-col gap-6 lg:pt-20">
             <div>
               <h1 className="text-4xl font-black leading-[0.95] tracking-tight text-gray-900 sm:text-5xl">
                 NEW
