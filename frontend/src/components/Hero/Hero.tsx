@@ -6,7 +6,12 @@ import {
   FiHeart,
 } from "react-icons/fi";
 import ImageCarousel from "../common/ImageCarousel";
-import { fetchHeroLooks, fetchProducts, type Product } from "../../lib/api";
+import {
+  fetchHeroLooks,
+  fetchProducts,
+  type HeroLook,
+  type Product,
+} from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { useWishlist } from "../../store/WishlistContext";
 
@@ -34,14 +39,22 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
     [activeCategory],
   );
 
-  /** Opens the linked product when there is one, otherwise falls back to the shop. */
-  const openLook = (productSlug: string | null) => {
-    const product = productSlug
-      ? productData?.find((candidate) => candidate.id === productSlug)
+  /**
+   * Opens the linked product, leading with the look photo that was clicked so
+   * the detail page shows the image you came from (its own shot follows in the
+   * gallery). Falls back to the shop when a look has no linked product.
+   */
+  const openLook = (look: HeroLook) => {
+    const product = look.productSlug
+      ? productData?.find((candidate) => candidate.id === look.productSlug)
       : undefined;
 
     if (product && onSelectProduct) {
-      onSelectProduct(product);
+      onSelectProduct({
+        ...product,
+        image: look.src,
+        images: [look.src, ...product.images.filter((src) => src !== look.src)],
+      });
       return;
     }
     onGoToShopClick();
@@ -135,7 +148,7 @@ function Hero({ activeCategory, onGoToShopClick, onSelectProduct }: HeroProps) {
                     <button
                       key={look.src}
                       type="button"
-                      onClick={() => openLook(look.productSlug)}
+                      onClick={() => openLook(look)}
                       aria-label={`Shop the look: ${look.alt}`}
                       className="aspect-[3/4] w-full max-w-64 flex-1 text-left"
                     >
