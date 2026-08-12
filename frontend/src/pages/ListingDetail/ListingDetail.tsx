@@ -264,14 +264,7 @@ function ListingDetail({ listingId, onBack, onViewBag }: ListingDetailProps) {
               </button>
             </div>
 
-            <div className="mt-8">
-              <h2 className="text-sm font-bold text-gray-900">Description</h2>
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {listing.description}
-              </p>
-            </div>
-
-            <p className="mt-6 text-xs text-gray-400">
+            <p className="mt-8 text-xs text-gray-400">
               Listed by {listing.sellerName} on {postedOn} ·{" "}
               {listing.viewCount.toLocaleString("en-IN")} views
             </p>
