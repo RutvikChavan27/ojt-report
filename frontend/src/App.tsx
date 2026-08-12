@@ -95,7 +95,7 @@ function App() {
         ) : page === "wishlist" ? (
           <Wishlist onGoToShopClick={() => goTo("shop")} />
         ) : page === "cart" ? (
-          <Cart onGoToShopClick={() => goTo("shop")} />
+          <Cart onStartShopping={() => goTo("home")} />
         ) : page === "category" && selectedCategory ? (
           <CategoryListings
             categorySlug={selectedCategory.slug}

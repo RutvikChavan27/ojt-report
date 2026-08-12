@@ -12,7 +12,8 @@ import { useCart, type CartItem } from "../../store/CartContext";
 import { useWishlist } from "../../store/WishlistContext";
 
 type CartProps = {
-  onGoToShopClick: () => void;
+  /** Where an empty bag sends you — the home page, not the filtered shop. */
+  onStartShopping: () => void;
 };
 
 const QUANTITY_OPTIONS = [1, 2, 3, 4, 5];
@@ -40,7 +41,7 @@ function deliveryEstimate(): string {
  * priced in dollars and marketplace listings in rupees; adding those together
  * would produce a meaningless number.
  */
-function Cart({ onGoToShopClick }: CartProps) {
+function Cart({ onStartShopping }: CartProps) {
   const { items, count, totals, remove, setQuantity } = useCart();
   const { isWishlisted, toggle } = useWishlist();
 
@@ -74,7 +75,7 @@ function Cart({ onGoToShopClick }: CartProps) {
             </p>
             <button
               type="button"
-              onClick={onGoToShopClick}
+              onClick={onStartShopping}
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-900 px-7 py-3 text-sm font-bold text-white transition hover:bg-black"
             >
               Start shopping
