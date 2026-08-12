@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   FiArrowLeft,
+  FiCheck,
   FiChevronRight,
   FiHeart,
   FiMapPin,
@@ -14,6 +15,8 @@ import { useCart } from "../../store/CartContext";
 type ListingDetailProps = {
   listingId: string;
   onBack: () => void;
+  /** Opens the bag, offered once something is in it. */
+  onViewBag?: () => void;
 };
 
 const QUANTITY_OPTIONS = [1, 2, 3];
@@ -23,7 +26,7 @@ const QUANTITY_OPTIONS = [1, 2, 3];
  * "was" price or size picker: a second-hand item is one garment in one size, so
  * the size is stated rather than chosen.
  */
-function ListingDetail({ listingId, onBack }: ListingDetailProps) {
+function ListingDetail({ listingId, onBack, onViewBag }: ListingDetailProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
   const { add: addToCart } = useCart();
   const [activeImage, setActiveImage] = useState(0);
@@ -35,7 +38,7 @@ function ListingDetail({ listingId, onBack }: ListingDetailProps) {
     [listingId],
   );
 
-  const handleAddToCart = () => {
+  const handleAddToBag = () => {
     if (!listing) return;
     addToCart({
       productId: listing.id,
@@ -48,8 +51,8 @@ function ListingDetail({ listingId, onBack }: ListingDetailProps) {
       currency: "₹",
       quantity,
     });
+    // Stays put rather than timing out, so the bag link remains reachable.
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
   };
 
   if (loading) {
@@ -209,13 +212,34 @@ function ListingDetail({ listingId, onBack }: ListingDetailProps) {
               </select>
             </div>
 
-            <div className="mt-6 flex items-center gap-3">
+            {added && (
+              <div
+                role="status"
+                className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5"
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <FiCheck size={15} className="flex-shrink-0" />
+                  Added to bag
+                </span>
+                {onViewBag && (
+                  <button
+                    type="button"
+                    onClick={onViewBag}
+                    className="text-xs font-bold uppercase tracking-wide text-gray-900 underline decoration-gray-400 underline-offset-2 transition hover:decoration-gray-900"
+                  >
+                    View your bag
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className={`flex items-center gap-3 ${added ? "mt-3" : "mt-6"}`}>
               <button
                 type="button"
-                onClick={handleAddToCart}
+                onClick={handleAddToBag}
                 className="flex-1 rounded-full bg-gray-900 py-3.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-black"
               >
-                {added ? "Added" : "Add to Cart"}
+                Add to Bag
               </button>
               <button
                 type="button"

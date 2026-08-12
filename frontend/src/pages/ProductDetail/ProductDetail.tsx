@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { FiArrowLeft, FiChevronRight, FiHeart, FiShield, FiStar } from "react-icons/fi";
+import {
+  FiAlertCircle,
+  FiArrowLeft,
+  FiCheck,
+  FiChevronRight,
+  FiHeart,
+  FiShield,
+  FiStar,
+} from "react-icons/fi";
 import { FaFacebookF, FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
 import type { Product } from "../../lib/api";
 import { useWishlist } from "../../store/WishlistContext";
@@ -8,6 +16,8 @@ import { useCart } from "../../store/CartContext";
 type ProductDetailProps = {
   product: Product;
   onBack: () => void;
+  /** Opens the bag, offered after something has been added to it. */
+  onViewBag?: () => void;
 };
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL"];
@@ -24,7 +34,7 @@ const SINGLE_PHOTO_CROPS = [
   { scale: 1.6, origin: "center" },
 ];
 
-function ProductDetail({ product, onBack }: ProductDetailProps) {
+function ProductDetail({ product, onBack, onViewBag }: ProductDetailProps) {
   const { isWishlisted: checkWishlisted, toggle } = useWishlist();
   const { add: addToCart } = useCart();
   const wishlisted = checkWishlisted(product.id);
@@ -32,12 +42,15 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
   const orderedSizes = [...product.sizes].sort(
     (a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b),
   );
-  const [selectedSize, setSelectedSize] = useState<string | null>(
-    orderedSizes[0] ?? null,
-  );
+
+  // Starts unselected on purpose. Pre-selecting a size means someone can add the
+  // wrong one without ever noticing they had a choice.
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [added, setAdded] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  /** Feedback under the button: either "pick a size" or "it's in the bag". */
+  const [notice, setNotice] = useState<"needs-size" | "added" | null>(null);
 
   const discountPercent = Math.round(
     (1 - product.price / product.originalPrice) * 100,
@@ -51,7 +64,13 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
   const goToNextImage = () =>
     setActiveImageIndex((index) => (index + 1) % galleryTiles.length);
 
-  const handleAddToCart = () => {
+  const handleAddToBag = () => {
+    // Refuse rather than silently bagging a size the shopper never chose.
+    if (orderedSizes.length > 0 && !selectedSize) {
+      setNotice("needs-size");
+      return;
+    }
+
     addToCart({
       productId: product.id,
       name: product.name,
@@ -63,8 +82,7 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
       currency: "$",
       quantity,
     });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    setNotice("added");
   };
 
   return (
@@ -157,7 +175,11 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
                     <button
                       key={size}
                       type="button"
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        // Choosing a size answers the warning, so retract it.
+                        if (notice === "needs-size") setNotice(null);
+                      }}
                       aria-pressed={selectedSize === size}
                       className={`flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 text-sm font-semibold transition ${
                         selectedSize === size
@@ -190,13 +212,47 @@ function ProductDetail({ product, onBack }: ProductDetailProps) {
               </select>
             </div>
 
-            <div className="mt-6 flex items-center gap-3">
+            {/* Sits directly above the button so the reason for a refused click
+                is next to the thing that was clicked. */}
+            {notice === "needs-size" && (
+              <p
+                role="alert"
+                className="mt-6 flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900"
+              >
+                <FiAlertCircle size={15} className="flex-shrink-0" />
+                Please select a size first.
+              </p>
+            )}
+
+            {notice === "added" && (
+              <div
+                role="status"
+                className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5"
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <FiCheck size={15} className="flex-shrink-0" />
+                  Added to bag
+                  {selectedSize ? ` · Size ${selectedSize}` : ""}
+                </span>
+                {onViewBag && (
+                  <button
+                    type="button"
+                    onClick={onViewBag}
+                    className="text-xs font-bold uppercase tracking-wide text-gray-900 underline decoration-gray-400 underline-offset-2 transition hover:decoration-gray-900"
+                  >
+                    View your bag
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className={`flex items-center gap-3 ${notice ? "mt-3" : "mt-6"}`}>
               <button
                 type="button"
-                onClick={handleAddToCart}
+                onClick={handleAddToBag}
                 className="flex-1 rounded-full bg-gray-900 py-3.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-black"
               >
-                {added ? "Added" : "Add to Cart"}
+                Add to Bag
               </button>
               <button
                 type="button"

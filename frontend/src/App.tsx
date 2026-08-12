@@ -108,9 +108,14 @@ function App() {
           <ListingDetail
             listingId={selectedListingId}
             onBack={() => setPage(selectedCategory ? "category" : returnPage)}
+            onViewBag={() => goTo("cart")}
           />
         ) : page === "product" && selectedProduct ? (
-          <ProductDetail product={selectedProduct} onBack={() => goTo(returnPage)} />
+          <ProductDetail
+            product={selectedProduct}
+            onBack={() => goTo(returnPage)}
+            onViewBag={() => goTo("cart")}
+          />
         ) : (
           dashboard
         )}
