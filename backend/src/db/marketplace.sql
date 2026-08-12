@@ -7,6 +7,25 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm; -- trigram similarity, for typo tolerance
 CREATE EXTENSION IF NOT EXISTS citext; -- case-insensitive email comparison
 
+-- pg_trgm ships with word_similarity_threshold at 0.6, which is too strict for
+-- ordinary misspellings: measured against this data, "hoodei" -> "Hoodie"
+-- scores 0.571, "jaket" -> "Jacket" 0.444 and "swaeter" -> "Sweater" 0.333, so
+-- every one of them was rejected. 0.3 accepts all of those.
+--
+-- The cost is recall traded for precision: a looser threshold matches more
+-- unrelated words, which is why the fuzzy path only runs after the exact search
+-- has already returned nothing.
+DO $$
+BEGIN
+  -- Touch a pg_trgm function first so its GUCs are registered in this session,
+  -- otherwise ALTER DATABASE rejects the parameter as unrecognised.
+  PERFORM word_similarity('a', 'b');
+  EXECUTE format(
+    'ALTER DATABASE %I SET pg_trgm.word_similarity_threshold = 0.3',
+    current_database()
+  );
+END $$;
+
 -- Sellers/buyers. password_hash is nullable because an OAuth-only account has
 -- no local password; such a user can still add one later.
 CREATE TABLE IF NOT EXISTS users (

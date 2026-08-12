@@ -69,6 +69,20 @@ export type ListingPageDTO = {
   hasMore: boolean;
 };
 
+/** A page of search results plus what the search did to produce them. */
+export type ListingSearchDTO = {
+  items: ListingDTO[];
+  total: number;
+  page: number;
+  perPage: number;
+  hasMore: boolean;
+  sort: string;
+  /** True when the exact search missed and trigram similarity was used instead. */
+  fuzzy: boolean;
+  /** Closest real title to a misspelled query, for "did you mean". */
+  suggestion: string | null;
+};
+
 /** A browsable category with how many active listings it holds. */
 export type ListingCategoryDTO = {
   slug: string;

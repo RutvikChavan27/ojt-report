@@ -4,6 +4,8 @@ import {
   listListingCategories,
   listListings,
 } from "../services/marketplace.service";
+import { searchListings } from "../services/listingSearch.service";
+import { parseSearchRequest } from "../validators/listingSearch.validator";
 import { sendError, sendSuccess } from "../utils/response";
 
 const AUDIENCES = new Set(["Men", "Women", "Unisex"]);
@@ -64,6 +66,26 @@ export async function getListingById(
     }
 
     sendSuccess(res, listing);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/search/listings
+ *
+ * Query params: q, category, audience, city, condition (repeatable), minPrice,
+ * maxPrice, postedWithin (days), sort (relevance|newest|price_asc|price_desc),
+ * page, perPage.
+ */
+export async function getListingSearch(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const results = await searchListings(parseSearchRequest(req.query));
+    sendSuccess(res, results);
   } catch (err) {
     next(err);
   }

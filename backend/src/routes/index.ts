@@ -7,11 +7,13 @@ import {
   getListingById,
   getListingCategories,
   getListings,
+  getListingSearch,
 } from "../controllers/marketplace.controller";
 
 const router = Router();
 
 // Marketplace listings (the 100k searchable table).
+router.get("/search/listings", getListingSearch);
 router.get("/listings", getListings);
 router.get("/listings/:id", getListingById);
 router.get("/listing-categories", getListingCategories);
