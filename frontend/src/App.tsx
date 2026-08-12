@@ -23,7 +23,20 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Men");
 
+  /**
+   * Where the bag's Back link returns to. The bag is reachable from the navbar
+   * on any page and from "View your bag" on a detail page, so the origin has to
+   * be recorded rather than assumed.
+   */
+  const [bagReturn, setBagReturn] = useState<Page>("home");
+
   const goTo = (next: MainPage) => setPage(next);
+
+  const openCart = () => {
+    // Guard against re-entering the bag and making Back point at itself.
+    if (page !== "cart") setBagReturn(page);
+    setPage("cart");
+  };
 
   /** Remembers which navbar view to return to when a detail view is opened. */
   const rememberReturnPage = () => {
@@ -78,7 +91,7 @@ function App() {
         onCategoryChange={setActiveCategory}
         onGoHome={() => goTo("home")}
         onOpenWishlist={() => goTo("wishlist")}
-        onOpenCart={() => goTo("cart")}
+        onOpenCart={openCart}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -95,7 +108,10 @@ function App() {
         ) : page === "wishlist" ? (
           <Wishlist onGoToShopClick={() => goTo("shop")} />
         ) : page === "cart" ? (
-          <Cart onStartShopping={() => goTo("home")} />
+          <Cart
+            onStartShopping={() => goTo("home")}
+            onBack={() => setPage(bagReturn)}
+          />
         ) : page === "category" && selectedCategory ? (
           <CategoryListings
             categorySlug={selectedCategory.slug}
@@ -108,13 +124,13 @@ function App() {
           <ListingDetail
             listingId={selectedListingId}
             onBack={() => setPage(selectedCategory ? "category" : returnPage)}
-            onViewBag={() => goTo("cart")}
+            onViewBag={openCart}
           />
         ) : page === "product" && selectedProduct ? (
           <ProductDetail
             product={selectedProduct}
             onBack={() => goTo(returnPage)}
-            onViewBag={() => goTo("cart")}
+            onViewBag={openCart}
           />
         ) : (
           dashboard

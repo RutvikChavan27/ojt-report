@@ -1,4 +1,5 @@
 import {
+  FiArrowLeft,
   FiChevronRight,
   FiHeart,
   FiPercent,
@@ -14,6 +15,8 @@ import { useWishlist } from "../../store/WishlistContext";
 type CartProps = {
   /** Where an empty bag sends you — the home page, not the filtered shop. */
   onStartShopping: () => void;
+  /** Returns to whichever page the bag was opened from. */
+  onBack?: () => void;
 };
 
 const QUANTITY_OPTIONS = [1, 2, 3, 4, 5];
@@ -41,7 +44,7 @@ function deliveryEstimate(): string {
  * priced in dollars and marketplace listings in rupees; adding those together
  * would produce a meaningless number.
  */
-function Cart({ onStartShopping }: CartProps) {
+function Cart({ onStartShopping, onBack }: CartProps) {
   const { items, count, totals, remove, setQuantity } = useCart();
   const { isWishlisted, toggle } = useWishlist();
 
@@ -63,6 +66,17 @@ function Cart({ onStartShopping }: CartProps) {
     return (
       <section className="pb-20 pt-10">
         <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="mb-6 flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-900"
+            >
+              <FiArrowLeft size={16} />
+              Back
+            </button>
+          )}
+
           <div className="rounded-3xl border border-gray-200 bg-black/[0.03] px-6 py-20 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-900">
               <FiShoppingBag size={22} />
@@ -93,6 +107,17 @@ function Cart({ onStartShopping }: CartProps) {
   return (
     <section className="pb-20 pt-8">
       <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-6 flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-900"
+          >
+            <FiArrowLeft size={16} />
+            Back
+          </button>
+        )}
+
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-black tracking-tight text-gray-900">My Bag</h1>
           <span className="text-sm text-gray-500">
