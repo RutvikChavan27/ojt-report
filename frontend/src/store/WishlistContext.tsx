@@ -1,4 +1,12 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { loadJSON, saveJSON, STORAGE_KEYS } from "../lib/storage";
 
 /**
  * Anything likeable: a real Product (has category/price) or a lookbook photo
@@ -23,7 +31,23 @@ type WishlistContextValue = {
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<Map<string, WishlistItem>>(new Map());
+  /**
+   * Held as a Map for O(1) `isWishlisted`, but stored as an array — a Map does
+   * not survive JSON.stringify, it serialises to `{}`.
+   */
+  const [items, setItems] = useState<Map<string, WishlistItem>>(
+    () =>
+      new Map(
+        loadJSON<WishlistItem[]>(STORAGE_KEYS.wishlist, []).map((item) => [
+          item.id,
+          item,
+        ]),
+      ),
+  );
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.wishlist, [...items.values()]);
+  }, [items]);
 
   const toggle = (item: WishlistItem) => {
     setItems((current) => {

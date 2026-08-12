@@ -1,4 +1,12 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { loadJSON, saveJSON, STORAGE_KEYS } from "../lib/storage";
 
 /**
  * A line in the bag. The same garment in two sizes is two lines, so `id`
@@ -53,7 +61,15 @@ const lineId = (productId: string, size?: string | null) =>
   `${productId}::${size ?? ""}`;
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  // Read once on mount, via the lazy initialiser so it does not run on every
+  // render. Without this the bag emptied on refresh and on browser back.
+  const [items, setItems] = useState<CartItem[]>(() =>
+    loadJSON<CartItem[]>(STORAGE_KEYS.cart, []),
+  );
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.cart, items);
+  }, [items]);
 
   /** Adds a line, or bumps the quantity when that product/size is already in. */
   const add = (input: CartInput) => {
