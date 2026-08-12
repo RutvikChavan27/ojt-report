@@ -113,8 +113,8 @@ function ListingDetail({ listingId, onBack, onViewBag }: ListingDetailProps) {
           Back
         </button>
 
-        <div className="mx-auto flex max-w-5xl flex-col gap-10 lg:flex-row">
-          <div className="flex gap-3 lg:w-1/2">
+        <div className="mx-auto flex max-w-6xl flex-col gap-10 lg:flex-row lg:items-start lg:gap-14">
+          <div className="flex items-start gap-3 lg:w-[40%] lg:max-w-[400px]">
             {images.length > 1 && (
               <div className="flex w-16 flex-shrink-0 flex-col gap-3 sm:w-20">
                 {images.map((src, index) => (
@@ -136,7 +136,7 @@ function ListingDetail({ listingId, onBack, onViewBag }: ListingDetailProps) {
               </div>
             )}
 
-            <div className="relative aspect-[3/4] w-full flex-1 overflow-hidden rounded-3xl bg-gray-100">
+            <div className="relative aspect-[4/5] w-full flex-1 overflow-hidden rounded-2xl bg-gray-100">
               <img
                 src={mainImage}
                 alt={listing.title}
@@ -155,7 +155,7 @@ function ListingDetail({ listingId, onBack, onViewBag }: ListingDetailProps) {
             </div>
           </div>
 
-          <div className="lg:max-w-md">
+          <div className="flex-1">
             <p className="text-sm font-semibold text-gray-500">
               {listing.brand ?? listing.categoryLabel}
             </p>
