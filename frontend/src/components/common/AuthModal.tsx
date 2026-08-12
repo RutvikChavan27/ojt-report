@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { FiX, FiMail, FiLock, FiUser, FiArrowRight } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
+import { googleSignInUrl } from "../../lib/api";
+import { useAuth } from "../../store/AuthContext";
 
 type AuthModalProps = {
   onClose: () => void;
@@ -9,6 +12,40 @@ type AuthMode = "sign-in" | "sign-up";
 
 function AuthModal({ onClose }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
+  const { signIn, signUp, googleEnabled } = useAuth();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  /** Switching tabs clears the error, which belonged to the other form. */
+  const switchMode = (next: AuthMode) => {
+    setMode(next);
+    setError(null);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    setError(null);
+    setSubmitting(true);
+    try {
+      if (mode === "sign-in") {
+        await signIn({ email, password });
+      } else {
+        await signUp({ name, email, password });
+      }
+      onClose();
+    } catch (err) {
+      // The server's wording is the user-facing message.
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -49,7 +86,7 @@ function AuthModal({ onClose }: AuthModalProps) {
           <div className="flex rounded-full bg-gray-100 p-1 text-sm font-semibold">
             <button
               type="button"
-              onClick={() => setMode("sign-in")}
+              onClick={() => switchMode("sign-in")}
               className={`flex-1 rounded-full py-2 transition ${
                 mode === "sign-in"
                   ? "bg-gray-900 text-white shadow-sm"
@@ -60,7 +97,7 @@ function AuthModal({ onClose }: AuthModalProps) {
             </button>
             <button
               type="button"
-              onClick={() => setMode("sign-up")}
+              onClick={() => switchMode("sign-up")}
               className={`flex-1 rounded-full py-2 transition ${
                 mode === "sign-up"
                   ? "bg-gray-900 text-white shadow-sm"
@@ -71,12 +108,7 @@ function AuthModal({ onClose }: AuthModalProps) {
             </button>
           </div>
 
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              onClose();
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             {mode === "sign-up" && (
               <div className="relative mt-5">
                 <FiUser
@@ -86,6 +118,10 @@ function AuthModal({ onClose }: AuthModalProps) {
                 <input
                   type="text"
                   placeholder="Full name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  autoComplete="name"
+                  required
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-gray-900 focus:bg-white focus:ring-2 focus:ring-gray-900/10"
                 />
               </div>
@@ -99,6 +135,10 @@ function AuthModal({ onClose }: AuthModalProps) {
               <input
                 type="email"
                 placeholder="Email address"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                required
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-gray-900 focus:bg-white focus:ring-2 focus:ring-gray-900/10"
               />
             </div>
@@ -110,19 +150,59 @@ function AuthModal({ onClose }: AuthModalProps) {
               />
               <input
                 type="password"
-                placeholder="Password"
+                placeholder={mode === "sign-up" ? "Password (8+ characters)" : "Password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+                required
+                minLength={mode === "sign-up" ? 8 : undefined}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-gray-900 focus:bg-white focus:ring-2 focus:ring-gray-900/10"
               />
             </div>
 
+            {error && (
+              <p
+                role="alert"
+                className="mt-4 rounded-xl border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm text-gray-900"
+              >
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 font-semibold text-white transition hover:bg-black hover:shadow-lg"
+              disabled={submitting}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 font-semibold text-white transition hover:bg-black hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {mode === "sign-in" ? "Sign In" : "Create Account"}
-              <FiArrowRight size={16} />
+              {submitting
+                ? "Please wait…"
+                : mode === "sign-in"
+                  ? "Sign In"
+                  : "Create Account"}
+              {!submitting && <FiArrowRight size={16} />}
             </button>
           </form>
+
+          {googleEnabled && (
+            <>
+              <div className="my-5 flex items-center gap-3">
+                <span className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  or
+                </span>
+                <span className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              {/* A link, not a fetch: the browser itself must visit Google. */}
+              <a
+                href={googleSignInUrl}
+                className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-gray-300 py-3 text-sm font-semibold text-gray-900 transition hover:bg-black/5"
+              >
+                <FcGoogle size={18} />
+                Continue with Google
+              </a>
+            </>
+          )}
 
           <p className="mt-5 text-center text-sm text-gray-500">
             {mode === "sign-in" ? (

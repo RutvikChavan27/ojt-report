@@ -379,9 +379,12 @@ async function seed(): Promise<void> {
     `[seed] generating ${total.toLocaleString()} listings (${taggedCount} category-matched photos available)…`,
   );
 
+  // Only the generated seller accounts are removed. TRUNCATE ... users would
+  // take real signups with it, so reseeding listings must not touch them.
   await query(
-    "TRUNCATE TABLE listing_photos, saved_searches, listings, listing_categories, oauth_identities, users RESTART IDENTITY CASCADE",
+    "TRUNCATE TABLE listing_photos, saved_searches, listings, listing_categories RESTART IDENTITY CASCADE",
   );
+  await query("DELETE FROM users WHERE email LIKE 'seller%@bazaar.test'");
 
   // --- categories ---------------------------------------------------------
   const categories = [
@@ -398,7 +401,16 @@ async function seed(): Promise<void> {
     `Seller ${i + 1}`,
   ]);
   await insertRows("users", ["email", "password_hash", "display_name"], sellerRows);
-  console.log(`[seed] inserted ${SELLER_COUNT.toLocaleString()} sellers`);
+
+  // Read the ids back rather than assuming 1..SELLER_COUNT. users.id is a SERIAL
+  // that is no longer reset between runs (real accounts must survive), so the
+  // generated sellers sit at whatever range the sequence had reached.
+  const { rows: sellerIdRows } = await query<{ id: number }>(
+    "SELECT id FROM users WHERE email LIKE 'seller%@bazaar.test' ORDER BY id",
+  );
+  const sellerIds = sellerIdRows.map((row) => row.id);
+  if (sellerIds.length === 0) throw new Error("[seed] no seller accounts inserted");
+  console.log(`[seed] inserted ${sellerIds.length.toLocaleString()} sellers`);
 
   // --- listings -----------------------------------------------------------
   const now = Date.now();
@@ -448,7 +460,7 @@ async function seed(): Promise<void> {
     const expiresAt = new Date(postedAt.getTime() + SHELF_LIFE_MS);
 
     listingRows.push([
-      pickInt(1, SELLER_COUNT),
+      pick(sellerIds),
       buildTitle(garment, brand, colour),
       buildDescription(garment, brand, colour, size, condition),
       category.slug,

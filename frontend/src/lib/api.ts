@@ -72,6 +72,62 @@ export type Category = { label: string; image: string };
 
 type ApiEnvelope<T> = { success: boolean; data: T; message?: string };
 
+/** The signed-in user, as /api/auth/me reports them. */
+export type AuthUser = {
+  id: number;
+  email: string;
+  name: string;
+};
+
+/**
+ * Auth requests must send the session cookie, and the API is on a different
+ * origin in development, so every one of them needs `credentials: "include"` —
+ * without it the browser omits the cookie and the server sees a stranger.
+ */
+async function authRequest<T>(
+  path: string,
+  init?: { method?: string; body?: unknown },
+): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: init?.method ?? "GET",
+    credentials: "include",
+    headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+    body: init?.body ? JSON.stringify(init.body) : undefined,
+  });
+
+  const body = (await res.json()) as ApiEnvelope<T>;
+  // The server's message is written for a person to read, so surface it as-is
+  // rather than replacing it with a status code.
+  if (!res.ok || !body.success) {
+    throw new Error(body.message ?? `Request failed (${res.status})`);
+  }
+  return body.data;
+}
+
+export const fetchCurrentUser = () => authRequest<AuthUser | null>("/api/auth/me");
+
+export const registerUser = (input: {
+  name: string;
+  email: string;
+  password: string;
+}) => authRequest<AuthUser>("/api/auth/register", { method: "POST", body: input });
+
+export const loginUser = (input: { email: string; password: string }) =>
+  authRequest<AuthUser>("/api/auth/login", { method: "POST", body: input });
+
+export const logoutUser = () =>
+  authRequest<{ loggedOut: boolean }>("/api/auth/logout", { method: "POST" });
+
+/** Which third-party sign-ins the server actually has credentials for. */
+export const fetchAuthProviders = () =>
+  authRequest<{ google: boolean }>("/api/auth/providers");
+
+/**
+ * Full-page redirect, not fetch: the browser has to visit Google itself, and
+ * Google will not answer a cross-origin XHR.
+ */
+export const googleSignInUrl = `${API_BASE}/api/auth/google`;
+
 /** Turns a stored image path ("/images/x.jpg") into an absolute API URL. */
 export function resolveImage(path: string): string {
   if (/^https?:\/\//.test(path)) return path;

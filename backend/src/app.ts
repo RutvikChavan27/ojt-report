@@ -2,14 +2,24 @@ import express from "express";
 import cors from "cors";
 import { config } from "./config/env";
 import apiRouter from "./routes/index";
+import authRouter from "./routes/auth.routes";
+import { buildSessionMiddleware } from "./middleware/session.middleware";
 import { errorHandler, notFound } from "./middleware/error.middleware";
 
 /** Builds the Express app (no listening / no DB — kept pure for testing). */
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: config.clientUrl }));
+  // `credentials` and a single explicit origin are both required for the session
+  // cookie to survive a cross-origin request: browsers refuse to send cookies to
+  // a wildcard origin.
+  app.use(cors({ origin: config.clientUrl, credentials: true }));
   app.use(express.json());
+
+  // Session cookie is signed, so the app has to know it is behind a proxy in
+  // production or `secure: true` cookies are dropped.
+  if (config.isProduction) app.set("trust proxy", 1);
+  app.use(buildSessionMiddleware());
 
   // Serve listing/category/hero images straight from disk.
   // A product stored with image "/images/foo.jpg" resolves to <imagesDir>/foo.jpg.
@@ -19,6 +29,7 @@ export function createApp() {
     res.json({ success: true, status: "ok" });
   });
 
+  app.use("/api/auth", authRouter);
   app.use("/api", apiRouter);
 
   app.use(notFound);

@@ -69,6 +69,16 @@ export type ListingPageDTO = {
   hasMore: boolean;
 };
 
+/**
+ * The signed-in user as the API reports them. No password hash and no provider
+ * ids — the shape itself keeps those out of responses.
+ */
+export type AuthUserDTO = {
+  id: number;
+  email: string;
+  name: string;
+};
+
 /** A page of search results plus what the search did to produce them. */
 export type ListingSearchDTO = {
   items: ListingDTO[];

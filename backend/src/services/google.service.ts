@@ -1,0 +1,104 @@
+/**
+ * Google OAuth 2.0 authorisation-code flow, implemented directly against
+ * Google's endpoints.
+ *
+ * Done by hand rather than with passport because the flow is three requests and
+ * the brief cares that the exchange is understood: build an authorise URL, swap
+ * the returned code for tokens, then read the profile.
+ *
+ * Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET. Without them
+ * `isGoogleConfigured()` is false and the routes report that rather than
+ * pretending to work.
+ */
+import { config } from "../config/env";
+
+const AUTHORISE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+const TOKEN_URL = "https://oauth2.googleapis.com/token";
+const USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+export function isGoogleConfigured(): boolean {
+  return Boolean(config.googleClientId && config.googleClientSecret);
+}
+
+/**
+ * The URL to send the browser to. `state` is generated per attempt and checked
+ * on return, which is what stops a third party from feeding us a code of their
+ * own choosing (CSRF on the callback).
+ */
+export function buildAuthoriseUrl(state: string): string {
+  const params = new URLSearchParams({
+    client_id: config.googleClientId,
+    redirect_uri: config.googleCallbackUrl,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+    // Ask for the account chooser every time rather than silently reusing the
+    // one Google session the browser happens to hold.
+    prompt: "select_account",
+  });
+  return `${AUTHORISE_URL}?${params.toString()}`;
+}
+
+export type GoogleProfile = {
+  providerUserId: string;
+  email: string;
+  name: string;
+};
+
+/**
+ * Exchanges an authorisation code for the user's profile.
+ *
+ * Throws when Google rejects the exchange or the account has no verified email:
+ * an unverified address could be someone else's, and linking on it would hand
+ * over an existing account.
+ */
+export async function fetchGoogleProfile(code: string): Promise<GoogleProfile> {
+  const tokenResponse = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: config.googleClientId,
+      client_secret: config.googleClientSecret,
+      redirect_uri: config.googleCallbackUrl,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!tokenResponse.ok) {
+    throw new Error(`Google token exchange failed (${tokenResponse.status})`);
+  }
+
+  const { access_token: accessToken } = (await tokenResponse.json()) as {
+    access_token?: string;
+  };
+  if (!accessToken) throw new Error("Google token response had no access_token");
+
+  const profileResponse = await fetch(USERINFO_URL, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!profileResponse.ok) {
+    throw new Error(`Google userinfo failed (${profileResponse.status})`);
+  }
+
+  const profile = (await profileResponse.json()) as {
+    sub?: string;
+    email?: string;
+    email_verified?: boolean;
+    name?: string;
+  };
+
+  if (!profile.sub || !profile.email) {
+    throw new Error("Google profile was missing sub or email");
+  }
+  if (profile.email_verified === false) {
+    throw new Error("Google account email is not verified");
+  }
+
+  return {
+    providerUserId: profile.sub,
+    email: profile.email,
+    // Google omits `name` on some accounts; fall back to the local part.
+    name: profile.name?.trim() || profile.email.split("@")[0],
+  };
+}

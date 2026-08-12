@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { FiHeart, FiSearch, FiShoppingBag, FiUser, FiX } from "react-icons/fi";
+import {
+  FiHeart,
+  FiLogOut,
+  FiSearch,
+  FiShoppingBag,
+  FiUser,
+  FiX,
+} from "react-icons/fi";
 import AuthModal from "../common/AuthModal";
 import CategoryList from "../common/CategoryList";
 import Logo from "../common/Logo";
 import { useWishlist } from "../../store/WishlistContext";
 import { useCart } from "../../store/CartContext";
+import { useAuth } from "../../store/AuthContext";
 
 type NavbarProps = {
   activeCategory: string;
@@ -27,6 +35,7 @@ function Navbar({
 }: NavbarProps) {
   const { count } = useWishlist();
   const { count: cartCount } = useCart();
+  const { user, loading, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -121,14 +130,36 @@ function Navbar({
             )}
           </button>
 
-          <button
-            type="button"
-            aria-label="Account"
-            onClick={() => setShowAuth(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white transition hover:bg-black"
-          >
-            <FiUser size={16} />
-          </button>
+          {/* Signed out: the account button opens the existing modal. Signed in:
+              the user's first name with a logout option beside it. */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span
+                className="hidden text-sm font-semibold text-gray-900 sm:inline"
+                title={user.email}
+              >
+                Hi, {user.name.split(" ")[0]}
+              </span>
+              <button
+                type="button"
+                aria-label="Sign out"
+                title="Sign out"
+                onClick={() => void signOut()}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400"
+              >
+                <FiLogOut size={15} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              aria-label={loading ? "Account" : "Log in or sign up"}
+              onClick={() => setShowAuth(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white transition hover:bg-black"
+            >
+              <FiUser size={16} />
+            </button>
+          )}
         </div>
       </div>
 
