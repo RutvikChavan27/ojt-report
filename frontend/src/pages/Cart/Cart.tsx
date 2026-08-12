@@ -63,7 +63,7 @@ function Cart({ onStartShopping }: CartProps) {
     return (
       <section className="pb-20 pt-10">
         <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
-          <div className="rounded-3xl border border-gray-200 bg-white px-6 py-20 text-center shadow-sm">
+          <div className="rounded-3xl border border-gray-200 bg-black/[0.03] px-6 py-20 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-900">
               <FiShoppingBag size={22} />
             </span>
@@ -121,7 +121,7 @@ function Cart({ onStartShopping }: CartProps) {
             {items.map((item) => (
               <li
                 key={item.id}
-                className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+                className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-black/[0.03] transition"
               >
                 <div className="flex gap-4 p-4">
                   <div className="h-32 w-26 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:h-36 sm:w-28">
@@ -227,7 +227,7 @@ function Cart({ onStartShopping }: CartProps) {
 
           {/* Summary */}
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black/[0.03]">
               <h2 className="border-b border-gray-100 px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-gray-500">
                 Price Summary
               </h2>
@@ -301,7 +301,7 @@ function Cart({ onStartShopping }: CartProps) {
               ].map((badge) => (
                 <div
                   key={badge.label}
-                  className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 py-3 text-center text-gray-900"
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-200 bg-black/[0.03] px-2 py-3 text-center text-gray-900"
                 >
                   {badge.icon}
                   <span className="text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-500">
