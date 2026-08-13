@@ -11,6 +11,7 @@
     "seed": "tsx src/db/seeds/seedListings.ts",
     "seed:listings": "tsx src/db/seeds/seedListings100k.ts",
     "images:fetch": "tsx src/scripts/fetchListingImages.ts",
+    "explain:facets": "tsx src/scripts/explainFacets.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

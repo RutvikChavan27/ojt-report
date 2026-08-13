@@ -4,13 +4,20 @@
  */
 import {
   countSearchMatches,
+  fetchFacetCounts,
   searchListingsExact,
   searchListingsFuzzy,
   suggestCorrection,
+  type FacetCountRow,
 } from "../repositories/listingSearch.repository";
 import type { SortKey } from "../db/queries/listingSearch.sql";
+import type { FacetKey } from "../db/queries/listingFacets.sql";
 import { resolveImagePath } from "../utils/images";
-import type { ListingDTO, ListingSearchDTO } from "../types/dto";
+import type {
+  ListingDTO,
+  ListingFacetsDTO,
+  ListingSearchDTO,
+} from "../types/dto";
 
 const PLACEHOLDER_IMAGE = "/images/product-slim-fit-tee.jpg";
 
@@ -20,6 +27,8 @@ export type SearchRequest = {
   audience?: string;
   city?: string;
   conditions?: string[];
+  sizes?: string[];
+  colours?: string[];
   minPrice?: number;
   maxPrice?: number;
   postedWithinDays?: number;
@@ -27,6 +36,37 @@ export type SearchRequest = {
   page: number;
   perPage: number;
 };
+
+/**
+ * Folds the flat rows from the facet query into one array per group.
+ *
+ * Every group is present even when empty, so the UI can render a filter list
+ * that is simply empty rather than having to guard against a missing key.
+ */
+function groupFacets(rows: FacetCountRow[]): ListingFacetsDTO {
+  const grouped: ListingFacetsDTO = {
+    category: [],
+    audience: [],
+    city: [],
+    condition: [],
+    size: [],
+    colour: [],
+  };
+
+  for (const row of rows) {
+    const group = grouped[row.facet as FacetKey];
+    // Ignore anything the query grew that this version does not know about.
+    if (!group) continue;
+
+    group.push({
+      value: row.value,
+      label: row.label ?? row.value,
+      count: Number(row.total),
+    });
+  }
+
+  return grouped;
+}
 
 const toDTO = (row: {
   id: string;
@@ -88,7 +128,12 @@ export async function searchListings(
     }
   }
 
-  const total = await countSearchMatches({ ...request, fuzzy });
+  // Independent of each other, so run them together rather than in sequence —
+  // the endpoint's latency is then the slower of the two, not their sum.
+  const [total, facetRows] = await Promise.all([
+    countSearchMatches({ ...request, fuzzy }),
+    fetchFacetCounts({ ...request, fuzzy }),
+  ]);
 
   return {
     items: rows.map(toDTO),
@@ -99,5 +144,6 @@ export async function searchListings(
     sort: request.sort,
     fuzzy,
     suggestion,
+    facets: groupFacets(facetRows),
   };
 }

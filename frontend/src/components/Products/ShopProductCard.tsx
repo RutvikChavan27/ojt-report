@@ -22,7 +22,7 @@ function ShopProductCard({ product, onSelectProduct }: ShopProductCardProps) {
         type="button"
         onClick={() => onSelectProduct?.(product)}
         aria-label={`View ${product.name}`}
-        className="relative block aspect-[3/4] w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 text-left"
+        className="relative block aspect-3/4  w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 text-left"
       >
         <img
           src={product.image}

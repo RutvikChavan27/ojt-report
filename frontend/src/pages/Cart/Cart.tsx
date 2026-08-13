@@ -17,6 +17,8 @@ type CartProps = {
   onStartShopping: () => void;
   /** Returns to whichever page the bag was opened from. */
   onBack?: () => void;
+  /** Moves on to checkout, which handles the sign-in gate itself. */
+  onPlaceOrder?: () => void;
 };
 
 const QUANTITY_OPTIONS = [1, 2, 3, 4, 5];
@@ -44,7 +46,7 @@ function deliveryEstimate(): string {
  * priced in dollars and marketplace listings in rupees; adding those together
  * would produce a meaningless number.
  */
-function Cart({ onStartShopping, onBack }: CartProps) {
+function Cart({ onStartShopping, onBack, onPlaceOrder }: CartProps) {
   const { items, count, totals, remove, setQuantity } = useCart();
   const { isWishlisted, toggle } = useWishlist();
 
@@ -65,7 +67,7 @@ function Cart({ onStartShopping, onBack }: CartProps) {
   if (items.length === 0) {
     return (
       <section className="pb-20 pt-10">
-        <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
+        <div className="mx-auto w-full px-6 sm:px-10 lg:px-16">
           {onBack && (
             <button
               type="button"
@@ -77,7 +79,9 @@ function Cart({ onStartShopping, onBack }: CartProps) {
             </button>
           )}
 
-          <div className="rounded-3xl border border-gray-200 bg-black/[0.03] px-6 py-20 text-center">
+          {/* Constrained even though the page is wide: a full-bleed empty state
+              leaves the centred text stranded in the middle of nothing. */}
+          <div className="mx-auto max-w-3xl rounded-3xl border border-gray-200 bg-black/[0.03] px-6 py-20 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-900">
               <FiShoppingBag size={22} />
             </span>
@@ -106,7 +110,10 @@ function Cart({ onStartShopping, onBack }: CartProps) {
 
   return (
     <section className="pb-20 pt-8">
-      <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
+      {/* Same gutters as the navbar and the Shop page, and deliberately no
+          max-width: a cap would re-centre the column and push "Back" inward
+          off the site's left gutter. */}
+      <div className="mx-auto w-full px-6 sm:px-10 lg:px-16">
         {onBack && (
           <button
             type="button"
@@ -118,8 +125,10 @@ function Cart({ onStartShopping, onBack }: CartProps) {
           </button>
         )}
 
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-black tracking-tight text-gray-900">My Bag</h1>
+        <div className="flex items-baseline gap-2.5 border-b border-gray-200 pb-4">
+          <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+            My Bag
+          </h1>
           <span className="text-sm text-gray-500">
             {count} {count === 1 ? "item" : "items"}
           </span>
@@ -140,7 +149,9 @@ function Cart({ onStartShopping, onBack }: CartProps) {
           </div>
         )}
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* minmax(0,1fr) rather than 1fr: a bare 1fr lets long product names
+            push the lines column past its share and squash the summary. */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
           {/* Lines */}
           <ul className="space-y-4">
             {items.map((item) => (
@@ -148,8 +159,8 @@ function Cart({ onStartShopping, onBack }: CartProps) {
                 key={item.id}
                 className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-black/[0.03] transition"
               >
-                <div className="flex gap-4 p-4">
-                  <div className="h-32 w-26 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:h-36 sm:w-28">
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-5">
+                  <div className="h-40 w-32 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:h-44 sm:w-36">
                     <img
                       src={item.image}
                       alt={item.name}
@@ -163,7 +174,7 @@ function Cart({ onStartShopping, onBack }: CartProps) {
                         {item.category}
                       </p>
                     )}
-                    <p className="mt-1 text-sm font-bold leading-snug text-gray-900">
+                    <p className="mt-1 text-base font-bold leading-snug text-gray-900">
                       {item.name}
                     </p>
 
@@ -192,47 +203,53 @@ function Cart({ onStartShopping, onBack }: CartProps) {
                       </label>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                      <span className="text-base font-black text-gray-900">
-                        {money(item.currency, item.price * item.quantity)}
-                      </span>
-                      {item.originalPrice && item.originalPrice > item.price && (
-                        <>
-                          <span className="text-xs text-gray-400 line-through">
-                            {money(item.currency, item.originalPrice * item.quantity)}
-                          </span>
-                          <span className="rounded-md bg-gray-900 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                            Save{" "}
-                            {money(
-                              item.currency,
-                              (item.originalPrice - item.price) * item.quantity,
-                            )}
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+                    <p className="mt-3 flex items-center gap-1.5 text-xs text-gray-500">
                       <FiTruck size={12} className="flex-shrink-0" />
                       Est. delivery by{" "}
                       <span className="font-semibold text-gray-900">{estimate}</span>
                     </p>
                   </div>
+
+                  {/* Price sits in its own right-hand column: on a wide card a
+                      price tucked under the name leaves the row trailing off
+                      into empty space. sm:pt-7 clears the corner close button. */}
+                  <div className="flex flex-wrap items-baseline gap-2 sm:w-44 sm:flex-col sm:items-end sm:gap-1.5 sm:pt-7 sm:text-right">
+                    <span className="text-xl font-black text-gray-900">
+                      {money(item.currency, item.price * item.quantity)}
+                    </span>
+                    {item.originalPrice && item.originalPrice > item.price && (
+                      <>
+                        <span className="text-xs text-gray-400 line-through">
+                          {money(item.currency, item.originalPrice * item.quantity)}
+                        </span>
+                        <span className="rounded-md bg-gray-900 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                          Save{" "}
+                          {money(
+                            item.currency,
+                            (item.originalPrice - item.price) * item.quantity,
+                          )}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex divide-x divide-gray-100 border-t border-gray-100">
+                {/* Left-aligned rather than two stretched halves: on a card
+                    this wide, full-width buttons read as a toolbar. */}
+                <div className="flex items-center border-t border-gray-200 px-4 sm:px-5">
                   <button
                     type="button"
                     onClick={() => saveForLater(item)}
-                    className="flex flex-1 items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-900 transition hover:bg-gray-50"
+                    className="flex items-center gap-2 py-3 pr-5 text-xs font-bold uppercase tracking-wide text-gray-900 transition hover:text-gray-500"
                   >
                     <FiHeart size={13} />
                     Save for later
                   </button>
+                  <span aria-hidden className="h-3.5 w-px bg-gray-300" />
                   <button
                     type="button"
                     onClick={() => remove(item.id)}
-                    className="flex flex-1 items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wide text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+                    className="flex items-center gap-2 py-3 pl-5 text-xs font-bold uppercase tracking-wide text-gray-500 transition hover:text-gray-900"
                   >
                     Remove
                   </button>
@@ -303,9 +320,10 @@ function Cart({ onStartShopping, onBack }: CartProps) {
               <div className="px-5 pb-5">
                 <button
                   type="button"
+                  onClick={onPlaceOrder}
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 py-3.5 text-sm font-black uppercase tracking-wide text-white transition hover:bg-black"
                 >
-                  Proceed
+                  Place Order
                   <FiChevronRight size={16} />
                 </button>
 

@@ -17,6 +17,10 @@ export type ListingFilters = {
   city?: string;
   /** Empty means "any condition". */
   conditions?: string[];
+  /** Empty means "any size". */
+  sizes?: string[];
+  /** Empty means "any colour". */
+  colours?: string[];
   minPrice?: number;
   maxPrice?: number;
   /** "Posted within" in days. */
@@ -61,6 +65,16 @@ export function buildListingWhere(
   if (filters.conditions && filters.conditions.length > 0) {
     values.push(filters.conditions);
     clauses.push(`l.condition = ANY(${next()}::listing_condition[])`);
+  }
+
+  if (filters.sizes && filters.sizes.length > 0) {
+    values.push(filters.sizes);
+    clauses.push(`l.size = ANY(${next()}::text[])`);
+  }
+
+  if (filters.colours && filters.colours.length > 0) {
+    values.push(filters.colours);
+    clauses.push(`l.colour = ANY(${next()}::text[])`);
   }
 
   if (filters.minPrice !== undefined) {

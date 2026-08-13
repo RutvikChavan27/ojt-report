@@ -1,12 +1,14 @@
-import { FiHeart, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiHeart, FiX } from "react-icons/fi";
 import { useWishlist, type WishlistItem } from "../../store/WishlistContext";
 import { useCart } from "../../store/CartContext";
 
 type WishlistProps = {
   onGoToShopClick: () => void;
+  /** Returns to whichever page the wishlist was opened from. */
+  onBack?: () => void;
 };
 
-function Wishlist({ onGoToShopClick }: WishlistProps) {
+function Wishlist({ onGoToShopClick, onBack }: WishlistProps) {
   const { items, remove } = useWishlist();
   const { add: addToCart } = useCart();
 
@@ -33,6 +35,17 @@ function Wishlist({ onGoToShopClick }: WishlistProps) {
   return (
     <section className="pb-20 pt-8">
       <div className="mx-auto w-full px-6 sm:px-10 lg:px-16">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-6 flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-900"
+          >
+            <FiArrowLeft size={16} />
+            Back
+          </button>
+        )}
+
         <h1 className="text-lg font-bold text-gray-900">
           My Wishlist ({items.length} {items.length === 1 ? "item" : "items"})
         </h1>

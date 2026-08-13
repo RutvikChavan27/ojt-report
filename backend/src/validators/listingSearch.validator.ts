@@ -16,6 +16,10 @@ const CONDITIONS = new Set(["New with tags", "Like new", "Good", "Fair"]);
 /** Longer than this is not a real search; trigram cost grows with length. */
 const MAX_QUERY_LENGTH = 120;
 
+/** No real size or colour is longer than this, or selected more times. */
+const MAX_VALUE_LENGTH = 40;
+const MAX_LIST_VALUES = 20;
+
 const first = (value: unknown): string | undefined => {
   if (typeof value === "string") return value;
   if (Array.isArray(value) && typeof value[0] === "string") return value[0];
@@ -34,16 +38,28 @@ function parsePositiveInt(value: unknown, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-/** Accepts repeated params or one comma-separated value, keeping known values. */
-function parseConditions(value: unknown): string[] | undefined {
+/**
+ * Accepts repeated params or one comma-separated value.
+ *
+ * `allowed` restricts the result to a known set where one exists. Sizes and
+ * colours are open-ended seed data rather than enums, so they are length-capped
+ * instead — they still reach SQL as bind parameters either way.
+ */
+function parseList(
+  value: unknown,
+  allowed?: Set<string>,
+): string[] | undefined {
   const raw = Array.isArray(value) ? value : [first(value)];
   const parsed = raw
     .filter((entry): entry is string => typeof entry === "string")
     .flatMap((entry) => entry.split(","))
     .map((entry) => entry.trim())
-    .filter((entry) => CONDITIONS.has(entry));
+    .filter((entry) => entry.length > 0 && entry.length <= MAX_VALUE_LENGTH)
+    .filter((entry) => !allowed || allowed.has(entry));
 
-  return parsed.length > 0 ? [...new Set(parsed)] : undefined;
+  // Capped so a hand-written URL cannot turn one request into a huge ANY(...).
+  const unique = [...new Set(parsed)].slice(0, MAX_LIST_VALUES);
+  return unique.length > 0 ? unique : undefined;
 }
 
 function parseAudience(value: unknown): string | undefined {
@@ -73,7 +89,9 @@ export function parseSearchRequest(queryString: Request["query"]): SearchRequest
     categorySlug: first(queryString.category) || undefined,
     audience: parseAudience(queryString.audience),
     city: first(queryString.city) || undefined,
-    conditions: parseConditions(queryString.condition),
+    conditions: parseList(queryString.condition, CONDITIONS),
+    sizes: parseList(queryString.size),
+    colours: parseList(queryString.colour),
     minPrice,
     maxPrice,
     postedWithinDays: parseNumber(queryString.postedWithin),

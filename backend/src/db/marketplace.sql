@@ -156,6 +156,21 @@ CREATE INDEX IF NOT EXISTS listings_status_category_posted_idx
 CREATE INDEX IF NOT EXISTS listings_status_city_posted_idx
   ON listings (status, city, posted_at DESC, id DESC);
 
+-- Facet counts. Every filter list needs a count over all active listings, so
+-- there is no selective predicate to exploit — roughly 70% of the table
+-- qualifies and an ordinary index would be ignored in favour of a seq scan.
+--
+-- What this index does instead is make that scan cheaper: it holds only the six
+-- faceted columns, so the whole active set can be read index-only without
+-- touching a heap whose rows also carry title, description and the tsvector.
+-- Partial on status='active' so no space is spent on sold or expired rows.
+--
+-- Requires the visibility map to be current to be used index-only, which is why
+-- listings is vacuumed after seeding.
+CREATE INDEX IF NOT EXISTS listings_facets_idx
+  ON listings (category_slug, audience, city, condition, size, colour)
+  WHERE status = 'active';
+
 -- Expiry sweep: find active listings whose expires_at has passed.
 CREATE INDEX IF NOT EXISTS listings_expires_at_idx
   ON listings (expires_at) WHERE status = 'active';

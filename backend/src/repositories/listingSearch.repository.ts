@@ -12,6 +12,7 @@ import {
   type ListingFilters,
   type SortKey,
 } from "../db/queries/listingSearch.sql";
+import { buildFacetCountsQuery } from "../db/queries/listingFacets.sql";
 import type { ListingRow } from "./marketplace.repository";
 
 export type SearchRow = ListingRow & { rank: string };
@@ -131,6 +132,32 @@ export async function countSearchMatches(
   );
 
   return Number(rows[0]?.total ?? 0);
+}
+
+/** One facet group's value: `{ facet: "colour", value: "Black", total: "312" }`. */
+export type FacetCountRow = {
+  facet: string;
+  value: string;
+  label: string | null;
+  /** bigint, so node-postgres hands it back as a string. */
+  total: string;
+};
+
+/**
+ * Every facet count for the current filters, in one round trip.
+ *
+ * See buildFacetCountsQuery for why each facet excludes its own filter and how
+ * one statement covers all six groups.
+ */
+export async function fetchFacetCounts(
+  options: ListingFilters & { fuzzy?: boolean },
+): Promise<FacetCountRow[]> {
+  const { text, values } = buildFacetCountsQuery(options, {
+    fuzzy: options.fuzzy,
+  });
+
+  const { rows } = await query<FacetCountRow>(text, values);
+  return rows;
 }
 
 /**

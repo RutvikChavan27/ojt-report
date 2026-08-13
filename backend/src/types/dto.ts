@@ -79,6 +79,29 @@ export type AuthUserDTO = {
   name: string;
 };
 
+/** One selectable value in a filter list, with how many listings it would match. */
+export type FacetValueDTO = {
+  /** What to send back as the filter value. */
+  value: string;
+  /** What to show the shopper — equal to `value` unless a label exists. */
+  label: string;
+  count: number;
+};
+
+/**
+ * Counts for every checkbox filter. Each group is counted with the other
+ * filters applied but not its own, so the alternatives within a group stay
+ * visible after one of them is picked.
+ */
+export type ListingFacetsDTO = {
+  category: FacetValueDTO[];
+  audience: FacetValueDTO[];
+  city: FacetValueDTO[];
+  condition: FacetValueDTO[];
+  size: FacetValueDTO[];
+  colour: FacetValueDTO[];
+};
+
 /** A page of search results plus what the search did to produce them. */
 export type ListingSearchDTO = {
   items: ListingDTO[];
@@ -91,6 +114,7 @@ export type ListingSearchDTO = {
   fuzzy: boolean;
   /** Closest real title to a misspelled query, for "did you mean". */
   suggestion: string | null;
+  facets: ListingFacetsDTO;
 };
 
 /** A browsable category with how many active listings it holds. */

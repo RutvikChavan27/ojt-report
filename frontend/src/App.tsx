@@ -8,11 +8,12 @@ import ProductDetail from "./pages/ProductDetail/ProductDetail";
 import CategoryListings from "./pages/CategoryListings/CategoryListings";
 import ListingDetail from "./pages/ListingDetail/ListingDetail";
 import Cart from "./pages/Cart/Cart";
+import Checkout from "./pages/Checkout/Checkout";
 import type { Listing, ListingCategory, Product } from "./lib/api";
 
 /** Views reachable from the navbar; the detail views are pushed on top of one. */
 type MainPage = "home" | "shop" | "wishlist" | "cart";
-type Page = MainPage | "product" | "category" | "listing";
+type Page = MainPage | "product" | "category" | "listing" | "checkout";
 
 function App() {
   const [page, setPage] = useState<Page>("home");
@@ -30,12 +31,20 @@ function App() {
    */
   const [bagReturn, setBagReturn] = useState<Page>("home");
 
+  /** Same idea for the wishlist, which is also reachable from any page. */
+  const [wishlistReturn, setWishlistReturn] = useState<Page>("home");
+
   const goTo = (next: MainPage) => setPage(next);
 
   const openCart = () => {
     // Guard against re-entering the bag and making Back point at itself.
     if (page !== "cart") setBagReturn(page);
     setPage("cart");
+  };
+
+  const openWishlist = () => {
+    if (page !== "wishlist") setWishlistReturn(page);
+    setPage("wishlist");
   };
 
   /** Remembers which navbar view to return to when a detail view is opened. */
@@ -90,7 +99,7 @@ function App() {
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
         onGoHome={() => goTo("home")}
-        onOpenWishlist={() => goTo("wishlist")}
+        onOpenWishlist={openWishlist}
         onOpenCart={openCart}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -106,11 +115,20 @@ function App() {
             onSelectProduct={onSelectProduct}
           />
         ) : page === "wishlist" ? (
-          <Wishlist onGoToShopClick={() => goTo("shop")} />
+          <Wishlist
+            onGoToShopClick={() => goTo("shop")}
+            onBack={() => setPage(wishlistReturn)}
+          />
         ) : page === "cart" ? (
           <Cart
             onStartShopping={() => goTo("home")}
             onBack={() => setPage(bagReturn)}
+            onPlaceOrder={() => setPage("checkout")}
+          />
+        ) : page === "checkout" ? (
+          <Checkout
+            onBack={() => goTo("cart")}
+            onContinueShopping={() => goTo("home")}
           />
         ) : page === "category" && selectedCategory ? (
           <CategoryListings
