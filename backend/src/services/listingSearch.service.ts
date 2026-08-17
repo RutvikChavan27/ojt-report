@@ -51,6 +51,7 @@ function groupFacets(rows: FacetCountRow[]): ListingFacetsDTO {
     condition: [],
     size: [],
     colour: [],
+    price: [],
   };
 
   for (const row of rows) {
@@ -80,6 +81,7 @@ const toDTO = (row: {
   condition: string;
   price: string;
   city: string;
+  location: string | null;
   posted_at: Date;
   image: string | null;
 }): ListingDTO => ({
@@ -94,6 +96,7 @@ const toDTO = (row: {
   condition: row.condition,
   price: Number(row.price),
   city: row.city,
+  location: row.location,
   postedAt: row.posted_at.toISOString(),
   image: resolveImagePath(row.image ?? PLACEHOLDER_IMAGE),
 });

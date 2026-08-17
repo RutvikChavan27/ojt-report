@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Large Dog Crate with Washable Bed">
+  <rect width="800" height="600" fill="#f4f4f5"/>
+  <rect x="0" y="0" width="800" height="10" fill="#22c55e"/>
+  <circle cx="400" cy="170" r="54" fill="#22c55e" opacity="0.15"/>
+  <text x="400" y="188" text-anchor="middle" font-family="system-ui,sans-serif" font-size="44" font-weight="700" fill="#22c55e">L</text>
+  <text x="400" y="279" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#18181b">Large Dog Crate with</text>
+  <text x="400" y="321" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#18181b">Washable Bed</text>
+  <text x="400" y="470" text-anchor="middle" font-family="system-ui,sans-serif" font-size="19" fill="#71717a">Photo not supplied by seller</text>
+</svg>

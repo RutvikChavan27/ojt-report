@@ -1,169 +1,269 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
+  FiBookmark,
+  FiChevronDown,
+  FiGrid,
   FiHeart,
   FiLogOut,
-  FiSearch,
-  FiShoppingBag,
+  FiMenu,
+  FiPlus,
   FiUser,
   FiX,
 } from "react-icons/fi";
-import AuthModal from "../common/AuthModal";
-import CategoryList from "../common/CategoryList";
+import Container from "../layout/Container";
 import Logo from "../common/Logo";
-import { useWishlist } from "../../store/WishlistContext";
-import { useCart } from "../../store/CartContext";
+import SearchBar from "../search/SearchBar";
+import { CATEGORIES } from "../../data/marketplace";
 import { useAuth } from "../../store/AuthContext";
+import { useSavedListings } from "../../store/SavedListingsContext";
+import { useSavedSearches } from "../../store/SavedSearchesContext";
 
-type NavbarProps = {
-  activeCategory: string;
-  onCategoryChange: (category: string) => void;
-  onGoHome: () => void;
-  onOpenWishlist: () => void;
-  onOpenCart: () => void;
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-};
+/**
+ * The marketplace header: brand, search, categories, and the actions a
+ * classifieds site needs — save, saved searches, and posting an ad.
+ *
+ * "Post an Ad" is the only filled button, because it is the one action the
+ * marketplace depends on and everything else is navigation.
+ */
+function Navbar() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { user, signOut } = useAuth();
 
-function Navbar({
-  activeCategory,
-  onCategoryChange,
-  onGoHome,
-  onOpenWishlist,
-  onOpenCart,
-  searchQuery,
-  onSearchChange,
-}: NavbarProps) {
-  const { count } = useWishlist();
-  const { count: cartCount } = useCart();
-  const { user, loading, signOut } = useAuth();
-  const [showAuth, setShowAuth] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  /* The homepage hero already carries a large search box. Repeating it in the
+     header put two identical boxes on screen at once, so the header one only
+     appears on the pages that have no other way to search. */
+  const showSearch = pathname !== "/";
+  const { count: savedCount } = useSavedListings();
+  const { searches } = useSavedSearches();
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  /** Close either dropdown on an outside click, as a menu is expected to. */
   useEffect(() => {
-    if (showSearch) searchInputRef.current?.focus();
-  }, [showSearch]);
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!categoriesRef.current?.contains(target)) setCategoriesOpen(false);
+      if (!profileRef.current?.contains(target)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
 
-  const closeSearch = () => {
-    setShowSearch(false);
-    onSearchChange("");
+  const closeAll = () => {
+    setMobileOpen(false);
+    setCategoriesOpen(false);
+    setProfileOpen(false);
   };
 
+  const iconLink =
+    "relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 transition hover:bg-black/5 hover:text-gray-900";
+
+  const badge = (count: number) =>
+    count > 0 ? (
+      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] font-bold text-white">
+        {count > 99 ? "99+" : count}
+      </span>
+    ) : null;
+
+  const menuPanel =
+    "absolute right-0 top-full mt-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl";
+  const menuItem =
+    "block rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-black/[0.03] hover:text-gray-900";
+
   return (
-    <header className="relative z-50">
-      <div className="mx-auto flex w-full flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-10 lg:px-16">
-        {/* Left: primary links + category toggle */}
-        <ul className="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-900 sm:gap-8">
-          <li>
-            <a
-              href="#home"
-              onClick={onGoHome}
-              className="transition hover:text-gray-500"
-            >
-              Home
-            </a>
-          </li>
+    /* Translucent rather than solid: the page has a subtle noise texture, and a
+       flat white bar would cut a hard line across it while scrolling. */
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-[#f2f1ee]/90 backdrop-blur">
+      <Container>
+        <div className="flex h-18 items-center gap-5 lg:gap-7">
+          <Logo />
 
-          <li>
-            <CategoryList active={activeCategory} onChange={onCategoryChange} />
-          </li>
-        </ul>
+          {showSearch && (
+            /* Capped rather than flex-1: stretched across a wide header the box
+               was far longer than any query anyone types. */
+            <div className="hidden min-w-0 flex-1 md:block md:max-w-md lg:max-w-lg">
+              <SearchBar />
+            </div>
+          )}
 
-        {/* Center: brand logo */}
-        <Logo className="hidden sm:flex" onClick={onGoHome} />
-
-        {/* Right: status, cart, profile */}
-        <div className="flex items-center gap-3">
-          <div className="hidden items-center sm:flex">
-            {showSearch && (
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(event) => onSearchChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") closeSearch();
-                }}
-                placeholder="What are you looking for?"
-                aria-label="Search products"
-                className="mr-2 w-44 flex-shrink-0 animate-[modal-in_0.15s_ease-out] rounded-full border border-gray-200 bg-transparent px-4 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-400 lg:w-64"
-              />
-            )}
+          <div ref={categoriesRef} className="relative hidden lg:block">
             <button
               type="button"
-              aria-label={showSearch ? "Close search" : "Search"}
-              onClick={() => (showSearch ? closeSearch() : setShowSearch(true))}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400"
+              onClick={() => setCategoriesOpen((open) => !open)}
+              aria-expanded={categoriesOpen}
+              /* Sized to sit level with the search box and the Post an Ad
+                 button either side of it — at px-3/py-1.5 it read as a smaller
+                 class of control than its neighbours. */
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-black/5"
             >
-              {showSearch ? <FiX size={16} /> : <FiSearch size={16} />}
+              <FiGrid size={17} />
+              Categories
+              <FiChevronDown size={15} />
             </button>
+
+            {categoriesOpen && (
+              <div className={`${menuPanel} grid w-64 gap-0.5`}>
+                {CATEGORIES.map((category) => (
+                  <Link
+                    key={category.slug}
+                    to={`/category/${category.slug}`}
+                    onClick={closeAll}
+                    className={menuItem}
+                  >
+                    {category.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
-          <button
-            type="button"
-            aria-label="Wishlist"
-            onClick={onOpenWishlist}
-            className="relative hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400 sm:flex"
-          >
-            <FiHeart size={16} />
-            {count > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] font-bold text-white">
-                {count}
-              </span>
-            )}
-          </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <NavLink
+              to="/saved-searches"
+              className={iconLink}
+              aria-label="Saved searches"
+            >
+              <FiBookmark size={18} />
+              {badge(searches.length)}
+            </NavLink>
 
-          <button
-            type="button"
-            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
-            onClick={onOpenCart}
-            className="relative flex items-center gap-3 rounded-full bg-gray-900 py-1.5 pl-5 pr-1.5 text-sm font-medium text-white transition hover:bg-black"
-          >
-            Cart
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-900">
-              <FiShoppingBag size={13} />
-            </span>
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-gray-900 ring-1 ring-gray-900">
-                {cartCount}
-              </span>
-            )}
-          </button>
+            <NavLink to="/saved" className={iconLink} aria-label="Saved listings">
+              <FiHeart size={18} />
+              {badge(savedCount)}
+            </NavLink>
 
-          {/* Signed out: the account button opens the existing modal. Signed in:
-              the user's first name with a logout option beside it. */}
-          {user ? (
-            <div className="flex items-center gap-2">
-              <span
-                className="hidden text-sm font-semibold text-gray-900 sm:inline"
-                title={user.email}
+            <span aria-hidden className="mx-1 hidden h-6 w-px bg-gray-300 sm:block" />
+
+            {user ? (
+              <div ref={profileRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((open) => !open)}
+                  aria-expanded={profileOpen}
+                  className="flex items-center gap-2 rounded-full px-2 py-2 text-sm font-semibold text-gray-700 transition hover:bg-black/5"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-xs font-bold text-white">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {user.name.split(" ")[0]}
+                  </span>
+                  <FiChevronDown size={14} />
+                </button>
+
+                {profileOpen && (
+                  <div className={`${menuPanel} w-52`}>
+                    <div className="px-3 py-2">
+                      <p className="truncate text-xs text-gray-400">
+                        {user.email}
+                      </p>
+                    </div>
+                    <Link to="/profile" onClick={closeAll} className={menuItem}>
+                      My profile
+                    </Link>
+                    <Link to="/my-listings" onClick={closeAll} className={menuItem}>
+                      My listings
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        closeAll();
+                        await signOut();
+                        navigate("/home");
+                      }}
+                      className={`${menuItem} flex w-full items-center gap-2 text-left`}
+                    >
+                      <FiLogOut size={14} />
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden rounded-full px-3 py-1.5 text-[13px] font-semibold text-gray-700 transition hover:bg-black/5 sm:block"
               >
-                Hi, {user.name.split(" ")[0]}
-              </span>
-              <button
-                type="button"
-                aria-label="Sign out"
-                title="Sign out"
-                onClick={() => void signOut()}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-900 transition hover:border-gray-400"
-              >
-                <FiLogOut size={15} />
-              </button>
-            </div>
-          ) : (
+                Login
+              </Link>
+            )}
+
+            {/* Shown to everyone. Posting needs an account, but the gate lives
+                on the page itself (RequireAuth), so a signed-out visitor lands
+                on a log-in prompt that returns them here afterwards rather than
+                on a button that was hidden from them. */}
+            <Link
+              to="/post-ad"
+              className="flex items-center gap-1.5 rounded-full bg-gray-900 px-3 py-2 text-[13px] font-bold text-white transition hover:bg-black sm:px-4"
+            >
+              <FiPlus size={16} />
+              <span className="hidden sm:inline">Post an Ad</span>
+              <span className="sm:hidden">Sell</span>
+            </Link>
+
             <button
               type="button"
-              aria-label={loading ? "Account" : "Log in or sign up"}
-              onClick={() => setShowAuth(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-white transition hover:bg-black"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-label="Menu"
+              aria-expanded={mobileOpen}
+              className={`${iconLink} lg:hidden`}
             >
-              <FiUser size={16} />
+              {mobileOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
-          )}
+          </div>
         </div>
-      </div>
 
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+        {/* On narrow screens the box gets its own row rather than shrinking into
+            uselessness beside the logo. Same homepage exception. */}
+        {showSearch && (
+          <div className="pb-3 md:hidden">
+            <SearchBar />
+          </div>
+        )}
+      </Container>
+
+      {mobileOpen && (
+        <div className="border-t border-gray-200 bg-[#f2f1ee] lg:hidden">
+          <Container className="grid gap-1 py-3">
+            {!user && (
+              <Link
+                to="/login"
+                onClick={closeAll}
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-gray-900 transition hover:bg-black/[0.03]"
+              >
+                <FiUser size={15} />
+                Login / Sign Up
+              </Link>
+            )}
+            <Link to="/my-listings" onClick={closeAll} className={menuItem}>
+              My listings
+            </Link>
+            <Link to="/saved-searches" onClick={closeAll} className={menuItem}>
+              Saved searches
+            </Link>
+
+            <p className="mt-2 px-3 text-xs font-bold uppercase tracking-wide text-gray-400">
+              Categories
+            </p>
+            {CATEGORIES.map((category) => (
+              <Link
+                key={category.slug}
+                to={`/category/${category.slug}`}
+                onClick={closeAll}
+                className={menuItem}
+              >
+                {category.label}
+              </Link>
+            ))}
+          </Container>
+        </div>
+      )}
     </header>
   );
 }

@@ -18,9 +18,23 @@ export const FACET_KEYS = [
   "condition",
   "size",
   "colour",
+  "price",
 ] as const;
 
 export type FacetKey = (typeof FACET_KEYS)[number];
+
+/**
+ * Price bands, bucketed into the ids the client already uses.
+ *
+ * These ids are the contract with PRICE_BANDS in the frontend search helpers —
+ * renaming a band here means renaming it there.
+ */
+const PRICE_BAND_SQL = `CASE
+      WHEN l.price < 5000 THEN '0-5000'
+      WHEN l.price < 20000 THEN '5000-20000'
+      WHEN l.price < 50000 THEN '20000-50000'
+      ELSE '50000-'
+    END`;
 
 /** Where each facet's value comes from on the listings row. */
 const FACET_COLUMN: Record<FacetKey, string> = {
@@ -30,6 +44,7 @@ const FACET_COLUMN: Record<FacetKey, string> = {
   condition: "l.condition::text",
   size: "l.size",
   colour: "l.colour",
+  price: PRICE_BAND_SQL,
 };
 
 /**
@@ -71,12 +86,6 @@ export function buildFacetCountsQuery(
         : `l.search_vector @@ websearch_to_tsquery('english', ${q})`,
     );
   }
-  if (filters.minPrice !== undefined) {
-    always.push(`l.price >= ${bind(filters.minPrice)}`);
-  }
-  if (filters.maxPrice !== undefined) {
-    always.push(`l.price <= ${bind(filters.maxPrice)}`);
-  }
   if (filters.postedWithinDays !== undefined) {
     always.push(
       `l.posted_at >= now() - (${bind(filters.postedWithinDays)} || ' days')::interval`,
@@ -102,6 +111,21 @@ export function buildFacetCountsQuery(
     colour: filters.colours?.length
       ? `l.colour = ANY(${bind(filters.colours)}::text[])`
       : "true",
+    /* Price is a facet like any other, so its range moved out of the
+       unconditional filters and in here. Counted with the other filters but
+       not its own, the remaining bands keep their counts after one is picked —
+       narrowing unconditionally would show every other band as zero and leave
+       no way to switch. */
+    price: [
+      filters.minPrice !== undefined
+        ? `l.price >= ${bind(filters.minPrice)}`
+        : null,
+      filters.maxPrice !== undefined
+        ? `l.price <= ${bind(filters.maxPrice)}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" AND ") || "true",
   };
 
   const selectList = FACET_KEYS.flatMap((key) => [

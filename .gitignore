@@ -1,0 +1,6 @@
+# Database dumps and image archives created during the Supabase migration.
+# These contain real user data (users, sellers, sessions) and must never be
+# committed. Keep them on disk as local backups only.
+backups/
+*.dump
+*.sql.gz

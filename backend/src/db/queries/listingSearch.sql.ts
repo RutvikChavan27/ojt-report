@@ -138,6 +138,7 @@ export const LISTING_COLUMNS = `
   l.condition::text,
   l.price,
   l.city,
+  l.location,
   l.posted_at,
   photo.path AS image
 `;

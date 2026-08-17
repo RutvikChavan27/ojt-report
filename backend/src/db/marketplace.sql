@@ -26,8 +26,13 @@ BEGIN
   );
 END $$;
 
--- Sellers/buyers. password_hash is nullable because an OAuth-only account has
--- no local password; such a user can still add one later.
+-- One account system. password_hash is nullable because an OAuth-only account
+-- has no local password; such a user can still add one later.
+--
+-- There is no buyer/seller distinction here on purpose: "seller" is not a kind
+-- of account, it is a relationship to a row — the user a listing's seller_id
+-- points at. Anyone signed in may post, and owning a listing is what grants the
+-- right to edit or delete it.
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   email CITEXT NOT NULL UNIQUE,
@@ -36,6 +41,19 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Drops the short-lived account_type experiment. Idempotent, like everything
+-- else here, so `npm run migrate` stays safe to re-run; the constraint goes
+-- with the column automatically.
+ALTER TABLE users DROP COLUMN IF EXISTS account_type;
+
+-- Contact number for a seller, and nullable on purpose.
+--
+-- Nothing collects it yet, so every existing row is NULL and the API reports no
+-- phone rather than a placeholder. Only a masked form is ever sent to a client
+-- (see maskPhone in marketplace.service) — the full number is not part of any
+-- response shape.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
 
 -- A social login. Kept in its own table so one user can link several providers,
 -- which is how a Google sign-in matching an existing email resolves to one user
@@ -74,12 +92,23 @@ CREATE TABLE IF NOT EXISTS listing_categories (
   "order" INTEGER NOT NULL DEFAULT 0
 );
 
+-- Subcategories are a browsing convenience layered on the same table: a row
+-- with parent_slug set is a child of that main category. The main category
+-- remains the one a listing must have; subcategory_slug on listings is
+-- nullable, so nothing depends on a listing having been filed that finely.
+ALTER TABLE listing_categories
+  ADD COLUMN IF NOT EXISTS parent_slug TEXT REFERENCES listing_categories (slug) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS listing_categories_parent_idx
+  ON listing_categories (parent_slug, "order");
+
 CREATE TABLE IF NOT EXISTS listings (
   id BIGSERIAL PRIMARY KEY,
   seller_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   category_slug TEXT NOT NULL REFERENCES listing_categories (slug),
+  subcategory_slug TEXT REFERENCES listing_categories (slug),
   audience listing_audience NOT NULL,
   brand TEXT,
   size TEXT,
@@ -189,3 +218,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS listing_photos_one_primary_idx
 
 CREATE INDEX IF NOT EXISTS saved_searches_user_idx
   ON saved_searches (user_id, created_at DESC);
+
+-- Neighbourhood or area within `city`, e.g. "Bandra" for a Mumbai listing.
+--
+-- Nullable and deliberately not backfilled: the seed data has city-level
+-- information only, and inventing a neighbourhood for 100,000 rows would put
+-- fabricated addresses in front of buyers. The API returns null and the UI
+-- falls back to showing the city alone; the Post Ad form is where real values
+-- will start arriving.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS location TEXT;
+
+
+-- Older databases predate the subcategory column on listings.
+ALTER TABLE listings
+  ADD COLUMN IF NOT EXISTS subcategory_slug TEXT REFERENCES listing_categories (slug);
+
+CREATE INDEX IF NOT EXISTS listings_subcategory_idx
+  ON listings (subcategory_slug) WHERE status = 'active';

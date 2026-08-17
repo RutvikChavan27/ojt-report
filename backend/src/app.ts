@@ -21,9 +21,24 @@ export function createApp() {
   if (config.isProduction) app.set("trust proxy", 1);
   app.use(buildSessionMiddleware());
 
-  // Serve listing/category/hero images straight from disk.
-  // A product stored with image "/images/foo.jpg" resolves to <imagesDir>/foo.jpg.
-  app.use(config.imagesRoute, express.static(config.imagesDir));
+  // Serve listing/category/hero images. A row stored as "/images/foo.jpg"
+  // resolves to <imagesDir>/foo.jpg locally, or to the same key inside the
+  // Supabase Storage bucket once the app is deployed.
+  //
+  // The Supabase branch answers 302 rather than streaming the bytes back: the
+  // browser then pulls the file straight from Supabase's CDN, so image traffic
+  // never occupies an API process. Redirecting (instead of rewriting the stored
+  // paths) also keeps `listing_photos.path` provider-agnostic — moving hosts
+  // again is a config change, not a data migration.
+  if (config.imageStorage === "supabase") {
+    const bucketBase = `${config.supabaseUrl}/storage/v1/object/public/${config.storageBucket}`;
+    app.use(config.imagesRoute, (req, res) => {
+      // Mounted at /images, so req.path is the remainder, e.g. "/api/foo.webp".
+      res.redirect(302, `${bucketBase}${req.path}`);
+    });
+  } else {
+    app.use(config.imagesRoute, express.static(config.imagesDir));
+  }
 
   app.get("/health", (_req, res) => {
     res.json({ success: true, status: "ok" });

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Assorted Fiction Novels — Set of 8">
+  <rect width="800" height="600" fill="#f4f4f5"/>
+  <rect x="0" y="0" width="800" height="10" fill="#10b981"/>
+  <circle cx="400" cy="170" r="54" fill="#10b981" opacity="0.15"/>
+  <text x="400" y="188" text-anchor="middle" font-family="system-ui,sans-serif" font-size="44" font-weight="700" fill="#10b981">A</text>
+  <text x="400" y="279" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#18181b">Assorted Fiction</text>
+  <text x="400" y="321" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="700" fill="#18181b">Novels — Set of 8</text>
+  <text x="400" y="470" text-anchor="middle" font-family="system-ui,sans-serif" font-size="19" fill="#71717a">Photo not supplied by seller</text>
+</svg>

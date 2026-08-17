@@ -1,12 +1,15 @@
 import type { Request, Response, NextFunction } from "express";
 import {
+  getDashboard,
   getListing,
   listListingCategories,
   listListings,
 } from "../services/marketplace.service";
 import { searchListings } from "../services/listingSearch.service";
 import { parseSearchRequest } from "../validators/listingSearch.validator";
+import { persistUploads, uploadListingPhotos } from "../middleware/upload.middleware";
 import { sendError, sendSuccess } from "../utils/response";
+import type { UploadedImageDTO } from "../types/dto";
 
 const AUDIENCES = new Set(["Men", "Women", "Unisex"]);
 
@@ -20,6 +23,59 @@ function parseAudience(value: unknown): string | undefined {
 function parsePositiveInt(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+/** GET /api/dashboard — everything the homepage renders, in one call. */
+export async function getDashboardData(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    sendSuccess(res, await getDashboard());
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/listings/images — stores photos and returns their public paths.
+ *
+ * Upload is its own step, before any listing exists: the Post Ad form needs to
+ * show thumbnails while it is still being filled in, and a half-written form
+ * must not create a listing row. The returned paths are what a later
+ * create/update call attaches to a listing.
+ *
+ * Behind requireAuth, so anonymous callers cannot fill the disk.
+ */
+export function postListingImages(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  uploadListingPhotos(req, res, (err: unknown) => {
+    if (err) {
+      // Multer's own errors are size/count limits and the type filter above —
+      // all of them are the caller's mistake, so they are 400s with the reason.
+      sendError(res, 400, err instanceof Error ? err.message : "Upload failed.");
+      return;
+    }
+
+    const files = Array.isArray(req.files) ? req.files : [];
+    if (files.length === 0) {
+      sendError(res, 400, "Attach at least one photo.");
+      return;
+    }
+
+    // persistUploads is async in Supabase mode (it PUTs each buffer to the
+    // bucket), so a rejection goes to next() rather than being left unhandled.
+    persistUploads(files)
+      .then((paths) => {
+        const images: UploadedImageDTO[] = paths.map((path) => ({ path }));
+        sendSuccess(res, { images }, 201);
+      })
+      .catch(next);
+  });
 }
 
 /** GET /api/listings?category=&audience=&page=&perPage= */

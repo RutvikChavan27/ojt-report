@@ -16,6 +16,13 @@ import {
   type AuthUser,
 } from "../lib/api";
 
+/**
+ * One account system.
+ *
+ * There is deliberately no notion of a buyer or a seller here. Anyone signed in
+ * may post a listing, and "seller" only ever describes the user a given listing
+ * belongs to — a fact about that listing, not a property of the account.
+ */
 type AuthContextValue = {
   user: AuthUser | null;
   /** True until the first /me call settles, so the navbar can avoid flickering. */

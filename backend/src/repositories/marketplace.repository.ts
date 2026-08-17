@@ -18,6 +18,7 @@ export type ListingRow = {
   condition: string;
   price: string;
   city: string;
+  location: string | null;
   posted_at: Date;
   image: string | null;
 };
@@ -26,7 +27,10 @@ export type ListingDetailRow = ListingRow & {
   description: string;
   images: string[];
   seller_name: string;
+  seller_created_at: Date;
+  seller_phone: string | null;
   view_count: number;
+  status: string;
 };
 
 export type FindListingsOptions = {
@@ -54,6 +58,7 @@ const LIST_SELECT = `
     l.condition::text,
     l.price,
     l.city,
+    l.location,
     l.posted_at,
     photo.path AS image
   FROM listings l
@@ -133,9 +138,13 @@ export async function findListingById(
        l.condition::text,
        l.price,
        l.city,
+       l.location,
        l.posted_at,
        l.view_count,
+       l.status::text,
        u.display_name AS seller_name,
+       u.created_at AS seller_created_at,
+       u.phone AS seller_phone,
        COALESCE(
          (
            SELECT array_agg(path ORDER BY is_primary DESC, position ASC)
@@ -158,6 +167,42 @@ export async function findListingById(
     [id],
   );
   return rows[0] ?? null;
+}
+
+/**
+ * Who owns a listing, or null when there is no such listing.
+ *
+ * Deliberately returns only the id: an ownership check has no business loading
+ * the row it is guarding, and keeping it to one column means the guard cannot
+ * accidentally become a source of listing data.
+ */
+export async function findListingOwnerId(id: string): Promise<number | null> {
+  const { rows } = await query<{ seller_id: number }>(
+    `SELECT seller_id FROM listings WHERE id = $1::bigint`,
+    [id],
+  );
+  return rows[0]?.seller_id ?? null;
+}
+
+/**
+ * Attaches uploaded photos to a listing.
+ *
+ * The first path becomes the primary, which is what the grid shows; a unique
+ * partial index enforces there being at most one, so callers must not pass a
+ * set that overlaps photos the listing already has.
+ */
+export async function insertListingPhotos(
+  listingId: string,
+  paths: string[],
+): Promise<void> {
+  if (paths.length === 0) return;
+
+  await query(
+    `INSERT INTO listing_photos (listing_id, path, is_primary, position)
+     SELECT $1::bigint, path, ordinality = 1, ordinality - 1
+       FROM unnest($2::text[]) WITH ORDINALITY AS t(path, ordinality)`,
+    [listingId, paths],
+  );
 }
 
 /** Categories with how many active listings each currently holds. */
@@ -186,7 +231,11 @@ export async function findCategoriesWithCounts(audience?: string): Promise<
      FROM listing_categories c
      LEFT JOIN listings l
        ON l.category_slug = c.slug AND l.status = 'active'
-     WHERE ($1::listing_audience IS NULL OR c.audience = $1)
+     -- Main categories only. Subcategories live in the same table, marked by a
+     -- parent_slug, and are fetched per-category rather than mixed into the
+     -- top-level list the tiles and the filter sidebar render.
+     WHERE c.parent_slug IS NULL
+       AND ($1::listing_audience IS NULL OR c.audience = $1)
      GROUP BY c.slug, c.label, c.audience, c."order"
      ORDER BY c."order" ASC`,
     [audience ?? null],

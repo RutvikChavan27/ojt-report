@@ -1,161 +1,151 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import Container from "./components/layout/Container";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
-import Dashboard from "./pages/Dashboard/Dashboard";
-import Shop from "./pages/Shop/Shop";
-import Wishlist from "./pages/Wishlist/Wishlist";
-import ProductDetail from "./pages/ProductDetail/ProductDetail";
-import CategoryListings from "./pages/CategoryListings/CategoryListings";
-import ListingDetail from "./pages/ListingDetail/ListingDetail";
-import Cart from "./pages/Cart/Cart";
-import Checkout from "./pages/Checkout/Checkout";
-import type { Listing, ListingCategory, Product } from "./lib/api";
+import EmptyState from "./components/common/EmptyState";
+import MobilePostBar from "./components/common/MobilePostBar";
+import RequireAuth from "./components/common/RequireAuth";
+import Welcome from "./pages/Welcome/Welcome";
+import Home from "./pages/Home/Home";
+import SearchResults from "./pages/Search/SearchResults";
+import ListingDetails from "./pages/Listing/ListingDetails";
+import CategoryPage from "./pages/Category/CategoryPage";
+import PostAd from "./pages/PostAd/PostAd";
+import MyListings from "./pages/MyListings/MyListings";
+import SavedSearches from "./pages/SavedSearches/SavedSearches";
+import SavedListings from "./pages/SavedListings/SavedListings";
+import Login from "./pages/Auth/Login";
+import Register from "./pages/Auth/Register";
+import Profile from "./pages/Profile/Profile";
 
-/** Views reachable from the navbar; the detail views are pushed on top of one. */
-type MainPage = "home" | "shop" | "wishlist" | "cart";
-type Page = MainPage | "product" | "category" | "listing" | "checkout";
+/**
+ * Returns to the top when the path changes.
+ *
+ * Keyed on pathname only, deliberately: the search page rewrites its query
+ * string on every filter click, and scrolling to the top each time would yank
+ * the page away from someone reading halfway down the results.
+ */
+function ScrollToTop() {
+  const { pathname } = useLocation();
 
-function App() {
-  const [page, setPage] = useState<Page>("home");
-  const [returnPage, setReturnPage] = useState<MainPage>("home");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<ListingCategory | null>(null);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Men");
-
-  /**
-   * Where the bag's Back link returns to. The bag is reachable from the navbar
-   * on any page and from "View your bag" on a detail page, so the origin has to
-   * be recorded rather than assumed.
-   */
-  const [bagReturn, setBagReturn] = useState<Page>("home");
-
-  /** Same idea for the wishlist, which is also reachable from any page. */
-  const [wishlistReturn, setWishlistReturn] = useState<Page>("home");
-
-  const goTo = (next: MainPage) => setPage(next);
-
-  const openCart = () => {
-    // Guard against re-entering the bag and making Back point at itself.
-    if (page !== "cart") setBagReturn(page);
-    setPage("cart");
-  };
-
-  const openWishlist = () => {
-    if (page !== "wishlist") setWishlistReturn(page);
-    setPage("wishlist");
-  };
-
-  /** Remembers which navbar view to return to when a detail view is opened. */
-  const rememberReturnPage = () => {
-    if (
-      page === "home" ||
-      page === "shop" ||
-      page === "wishlist" ||
-      page === "cart"
-    ) {
-      setReturnPage(page);
-    }
-  };
-
-  const onSelectProduct = (product: Product) => {
-    rememberReturnPage();
-    setSelectedProduct(product);
-    setPage("product");
-  };
-
-  const onSelectCategory = (category: ListingCategory) => {
-    rememberReturnPage();
-    setSelectedCategory(category);
-    setPage("category");
-  };
-
-  const onSelectListing = (listing: Listing) => {
-    setSelectedListingId(listing.id);
-    setPage("listing");
-  };
-
-  // Swapping the view keeps the window's scroll offset, so opening a product
-  // from halfway down the home page used to land you near the footer. Reset to
-  // the top on every navigation, including detail-to-detail.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
-  }, [page, selectedProduct?.id, selectedListingId, selectedCategory?.slug]);
+  }, [pathname]);
 
-  const dashboard = (
-    <Dashboard
-      searchQuery={searchQuery}
-      activeCategory={activeCategory}
-      onGoToShopClick={() => goTo("shop")}
-      onSelectProduct={onSelectProduct}
-      onSelectCategory={onSelectCategory}
-    />
-  );
+  return null;
+}
+
+/**
+ * Routes for Bazaar.
+ *
+ * Browsing, searching, filtering, sorting and opening a listing need no account.
+ * Exactly four things do — posting, saved searches, the seller dashboard and the
+ * profile — and each is wrapped in RequireAuth.
+ *
+ * One account system: there is no buyer/seller split to express here, and no
+ * separate seller door. "Seller" describes whoever a listing belongs to, and
+ * whether a signed-in person may change a given listing is an ownership
+ * question only the server can settle.
+ */
+function App() {
+  const { pathname } = useLocation();
+
+  /* The onboarding is a full screen of its own: the marketplace header and
+     footer around it would give away the page it is introducing.
+
+     "/" is the welcome page and "/home" is the marketplace, so opening the site
+     always starts at the introduction — no flag, no first-visit special case,
+     and a refresh shows the same thing. */
+  const onboarding = pathname === "/" || pathname === "/welcome";
+
 
   return (
-    <div className="min-h-screen">
-      <Navbar
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        onGoHome={() => goTo("home")}
-        onOpenWishlist={openWishlist}
-        onOpenCart={openCart}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+    <div className="flex min-h-screen flex-col">
+      <ScrollToTop />
+      {!onboarding && <Navbar />}
 
-      <main>
-        {page === "home" ? (
-          dashboard
-        ) : page === "shop" ? (
-          <Shop
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            onSelectProduct={onSelectProduct}
+      <main className="flex-1">
+        <Routes>
+          {/* The site opens here. Choosing a role pushes, so Back from the
+              marketplace returns to the introduction rather than leaving the
+              site. */}
+          <Route path="/" element={<Welcome />} />
+          {/* Alias, so an old link or bookmark still lands somewhere sensible */}
+          {/* Both paths render the landing page. "/welcome" is the named entry
+              point; "/" is what a bare domain resolves to, and redirecting one
+              to the other would put a pointless hop in front of the first page
+              anyone sees. */}
+          <Route path="/welcome" element={<Welcome />} />
+
+          {/* The marketplace homepage, reached by choosing USER */}
+          <Route path="/home" element={<Home />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/listing/:id" element={<ListingDetails />} />
+          <Route path="/category/:category" element={<CategoryPage />} />
+          {/* Saved listings live on the device, so no account is needed */}
+          <Route path="/saved" element={<SavedListings />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          {/* The separate seller doors are gone. Kept as redirects so an old
+              link or bookmark lands on the one login rather than a 404. */}
+          <Route path="/seller/login" element={<Navigate to="/login" replace />} />
+          <Route
+            path="/seller/register"
+            element={<Navigate to="/register" replace />}
           />
-        ) : page === "wishlist" ? (
-          <Wishlist
-            onGoToShopClick={() => goTo("shop")}
-            onBack={() => setPage(wishlistReturn)}
+
+          {/* Needs an account */}
+          <Route
+            path="/post-ad"
+            element={
+              <RequireAuth action="post an ad">
+                <PostAd />
+              </RequireAuth>
+            }
           />
-        ) : page === "cart" ? (
-          <Cart
-            onStartShopping={() => goTo("home")}
-            onBack={() => setPage(bagReturn)}
-            onPlaceOrder={() => setPage("checkout")}
+          <Route
+            path="/my-listings"
+            element={
+              <RequireAuth action="see your listings">
+                <MyListings />
+              </RequireAuth>
+            }
           />
-        ) : page === "checkout" ? (
-          <Checkout
-            onBack={() => goTo("cart")}
-            onContinueShopping={() => goTo("home")}
+          <Route
+            path="/saved-searches"
+            element={
+              <RequireAuth action="save searches">
+                <SavedSearches />
+              </RequireAuth>
+            }
           />
-        ) : page === "category" && selectedCategory ? (
-          <CategoryListings
-            categorySlug={selectedCategory.slug}
-            categoryLabel={selectedCategory.label}
-            audience={activeCategory}
-            onBack={() => goTo(returnPage)}
-            onSelectListing={onSelectListing}
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth action="see your profile">
+                <Profile />
+              </RequireAuth>
+            }
           />
-        ) : page === "listing" && selectedListingId ? (
-          <ListingDetail
-            listingId={selectedListingId}
-            onBack={() => setPage(selectedCategory ? "category" : returnPage)}
-            onViewBag={openCart}
+
+          <Route
+            path="*"
+            element={
+              <Container className="py-16" narrow="md">
+                <EmptyState
+                  as="h1"
+                  title="Page not found"
+                  description="That link does not point anywhere on Bazaar."
+                />
+              </Container>
+            }
           />
-        ) : page === "product" && selectedProduct ? (
-          <ProductDetail
-            product={selectedProduct}
-            onBack={() => goTo(returnPage)}
-            onViewBag={openCart}
-          />
-        ) : (
-          dashboard
-        )}
+        </Routes>
       </main>
 
-      <Footer />
+      {!onboarding && <MobilePostBar />}
+      {!onboarding && <Footer />}
     </div>
   );
 }

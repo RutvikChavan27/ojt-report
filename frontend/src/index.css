@@ -53,6 +53,101 @@ body {
   }
 }
 
+/* Hero content rises into place once on load, staggered by an inline delay.
+   Fill mode `both` matters: it holds the end state, so the text cannot be left
+   invisible if the animation is interrupted. Elements carry no base opacity-0
+   class either, which is what makes motion-reduce:animate-none safe. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The glow behind the hero drifts slowly, so the panel is never quite static. */
+@keyframes glow-drift {
+  0%,
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, 4%, 0) scale(1.15);
+  }
+}
+
+/* Onboarding: a plain fade for whole screens, and a scale-up for the cards.
+   Both use fill-mode `both` at the call site so the end state is held. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The one screen that leaves: fades and lifts slightly as the next arrives. */
+@keyframes fade-out-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+/* Category names drifting across the welcome screen. The list is rendered twice
+   and shifted by exactly half, so the loop has no visible seam. */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* The swapping word in the welcome subheading. */
+@keyframes word-swap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The floating listing cards on the welcome screen: a slow bob with a touch of
+   rotation, so no two cards ever look locked together. */
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-16px) rotate(calc(var(--tilt, 0deg) * 0.4));
+  }
+}
+
 @keyframes modal-in {
   from {
     opacity: 0;

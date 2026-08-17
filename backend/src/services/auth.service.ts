@@ -66,6 +66,13 @@ export async function register(input: {
   }
 }
 
+/**
+ * Verifies credentials.
+ *
+ * One account system, so there is one way in: no account kinds, no per-door
+ * rules. What a signed-in person may do is decided per action — posting needs
+ * only an account, and editing a listing needs to own it.
+ */
 export async function login(input: {
   email: string;
   password: string;

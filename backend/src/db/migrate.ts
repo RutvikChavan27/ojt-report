@@ -1,5 +1,5 @@
 /**
- * Creates the database (if missing) and applies schema.sql.
+ * Creates the database (if missing) and applies the schema.
  *
  * Run with: npm run migrate
  */
@@ -33,8 +33,13 @@ async function ensureDatabaseExists(): Promise<void> {
   }
 }
 
-/** Applied in order; later files may depend on earlier ones. */
-const SCHEMA_FILES = ["schema.sql", "marketplace.sql"];
+/**
+ * Applied in order; later files may depend on earlier ones.
+ *
+ * schema.sql (products, categories, hero_looks) was dropped with the storefront —
+ * the marketplace schema does not depend on it.
+ */
+const SCHEMA_FILES = ["marketplace.sql"];
 
 async function applySchema(): Promise<void> {
   const client = new Client({ connectionString: config.databaseUrl });

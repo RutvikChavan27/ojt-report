@@ -1,0 +1,219 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { FiPlus, FiStar } from "react-icons/fi";
+import Container from "../layout/Container";
+import type { ApiListing } from "../../lib/api";
+import LocationSelector from "../search/LocationSelector";
+import SearchBar from "../search/SearchBar";
+
+type HeroSearchProps = {
+  /** Live listing count from the API, shown in the reassurance line. */
+  activeCount: number;
+  /** Newest listings, used by the live ticker. Real rows, not sample copy. */
+  recent?: ApiListing[];
+};
+
+/**
+ * Quick searches under the box.
+ *
+ * Every one is checked against the seed data, because a shortcut that lands on
+ * "no results" is worse than no shortcut — it reads as a broken site on the
+ * first thing a visitor clicks.
+ */
+const POPULAR = [
+  "iPhone",
+  "Royal Enfield",
+  "Laptop",
+  "Sofa",
+  "Bicycle",
+  "Samsung",
+];
+
+/**
+ * The homepage hero: one headline, one search box, and the shortcuts most
+ * people want.
+ *
+ * Monochrome, on the page's own off-white background. Emphasis comes from
+ * weight and scale rather than from colour — the only strong tone in this
+ * design is the black of the Search button.
+ */
+function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
+  const [city, setCity] = useState<string | null>(null);
+
+  /** Entry animation, staggered so the eye lands on the headline first. */
+  const rise = (delayMs: number) =>
+    `animate-[rise-in_0.6s_ease-out_both] [animation-delay:${delayMs}ms] motion-reduce:animate-none`;
+
+  /**
+   * The headline number counts up from zero on first paint.
+   *
+   * Runs on a rAF clock rather than a fixed number of steps, so it lands on the
+   * real figure at the same moment on a slow phone and a fast desktop. Anyone
+   * with reduced-motion set skips straight to the final value — a number
+   * animating is decoration, not information.
+   */
+  const [shownCount, setShownCount] = useState(0);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || activeCount === 0) {
+      setShownCount(activeCount);
+      return;
+    }
+
+    const DURATION = 900;
+    const start = performance.now();
+    let frame = 0;
+
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / DURATION, 1);
+      // Ease-out cubic: fast at first, settling gently onto the real number.
+      const eased = 1 - (1 - progress) ** 3;
+      setShownCount(Math.round(activeCount * eased));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+
+    frame = requestAnimationFrame(step);
+
+    /* rAF does not run in a backgrounded or non-compositing tab, which left the
+       count showing 0 while the API had already returned 127. The number is
+       information; the animation is decoration. This guarantees the real value
+       lands even if not one frame is ever painted. */
+    const settle = setTimeout(() => setShownCount(activeCount), DURATION + 150);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(settle);
+    };
+  }, [activeCount]);
+
+  /**
+   * A real listing, rotating every few seconds.
+   *
+   * These are genuine rows from /api/dashboard, not sample copy — the point is
+   * to show the marketplace has a pulse, which a static hero cannot do.
+   */
+  const [tickerIndex, setTickerIndex] = useState(0);
+
+  useEffect(() => {
+    if (recent.length < 2) return;
+    const timer = setInterval(
+      () => setTickerIndex((current) => (current + 1) % recent.length),
+      3200,
+    );
+    return () => clearInterval(timer);
+  }, [recent.length]);
+
+  const live = recent[tickerIndex];
+
+  return (
+    <section className="relative overflow-hidden border-b border-gray-200">
+      {/* Two faint washes drifting behind the content, for a little depth on a
+          flat background. Decorative and pointer-events-none, so they can never
+          interfere with the search box. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-40 -top-40 h-[30rem] w-[30rem] animate-[glow-drift_18s_ease-in-out_infinite] rounded-full bg-black/[0.04] blur-3xl motion-reduce:animate-none"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-52 -right-32 h-[28rem] w-[28rem] animate-[glow-drift_22s_ease-in-out_infinite_reverse] rounded-full bg-black/[0.03] blur-3xl motion-reduce:animate-none"
+      />
+
+      <Container className="relative pb-20 pt-16 text-center sm:pt-20 lg:pt-24">
+        {/* Trust pill. The reference uses bg-white/10 for a dark hero; on this
+            off-white one the same idea needs a black wash to read at all. */}
+        {/* Live ticker. A real listing rather than a slogan — a marketplace
+            claiming to be busy should be able to show it, and this is the one
+            thing on the page that could not be faked with static copy. */}
+        {live ? (
+          <Link
+            to={`/listing/${live.id}`}
+            className={`group mb-6 inline-flex max-w-full items-center gap-2.5 rounded-full border border-gray-200 bg-white/80 py-1.5 pl-1.5 pr-4 text-sm text-gray-600 shadow-sm backdrop-blur-sm transition hover:border-gray-900 ${rise(0)}`}
+          >
+            <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center">
+              <span
+                aria-hidden
+                className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none"
+              />
+              <span
+                aria-hidden
+                className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"
+              />
+            </span>
+            <span key={live.id} className="min-w-0 animate-[fade-in_0.4s_ease-out_both] truncate motion-reduce:animate-none">
+              Just listed in {live.city} —{" "}
+              <span className="font-bold text-gray-900">{live.title}</span>
+            </span>
+          </Link>
+        ) : (
+          <p
+            className={`mb-6 inline-flex items-center gap-2 rounded-full bg-black/[0.05] px-4 py-2 text-sm font-medium text-gray-600 backdrop-blur-sm ${rise(0)}`}
+          >
+            <FiStar size={14} className="flex-shrink-0 text-gray-900" />
+            Trusted by buyers and sellers across India
+          </p>
+        )}
+
+        <h1
+          /* Tighter leading as the type grows: at this scale the default line
+             height opens a gap wide enough to read as two separate headings. */
+          className={`text-4xl font-black leading-[1.05] tracking-tight text-gray-900 sm:text-6xl lg:text-7xl ${rise(90)}`}
+        >
+          Buy &amp; Sell Used Things
+          <br />
+          Near You
+        </h1>
+
+        <p
+          className={`mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-500 sm:text-xl ${rise(190)}`}
+        >
+          <span className="font-black tabular-nums text-gray-900">
+            {shownCount.toLocaleString("en-IN")}
+          </span>{" "}
+          listings from people in your city. Find a good deal, or sell what you no
+          longer need — free to browse, no account needed.
+        </p>
+
+        <div
+          className={`mx-auto mt-9 flex max-w-2xl flex-col gap-2.5 sm:flex-row ${rise(280)}`}
+        >
+          <LocationSelector value={city} onChange={setCity} className="sm:w-44" />
+          <div className="min-w-0 flex-1">
+            <SearchBar size="large" city={city} />
+          </div>
+        </div>
+
+        {/* Popular searches */}
+        <div
+          className={`mt-6 flex flex-wrap items-center justify-center gap-2 ${rise(370)}`}
+        >
+          <span className="text-sm text-gray-400">Popular:</span>
+          {POPULAR.map((term) => (
+            <Link
+              key={term}
+              to={`/search?q=${encodeURIComponent(term)}${
+                city ? `&city=${encodeURIComponent(city)}` : ""
+              }`}
+              className="rounded-full border border-gray-300 bg-white px-3 py-1 text-[13px] text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-900 hover:text-gray-900 motion-reduce:hover:translate-y-0"
+            >
+              {term}
+            </Link>
+          ))}
+        </div>
+
+        <Link
+          to="/post-ad"
+          className={`mt-8 inline-flex items-center gap-2 text-sm font-bold text-gray-900 transition hover:gap-3 ${rise(450)}`}
+        >
+          <FiPlus size={15} />
+          <span className="border-b border-gray-400 pb-0.5">
+            Got something to sell? Post a free ad
+          </span>
+        </Link>
+      </Container>
+    </section>
+  );
+}
+
+export default HeroSearch;

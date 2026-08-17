@@ -15,13 +15,19 @@ export type UserRow = {
   display_name: string;
 };
 
+/** Every SELECT returns the same shape, so UserRow cannot drift from the query. */
+const USER_COLUMNS = "id, email, password_hash, display_name";
+
+/** The same list qualified for the join in findUserByProviderIdentity. */
+const USER_COLUMNS_QUALIFIED =
+  "u.id, u.email, u.password_hash, u.display_name";
+
 /** Postgres error code for a unique-constraint violation. */
 export const UNIQUE_VIOLATION = "23505";
 
 export async function findUserByEmail(email: string): Promise<UserRow | null> {
   const { rows } = await query<UserRow>(
-    `SELECT id, email, password_hash, display_name
-     FROM users WHERE email = $1`,
+    `SELECT ${USER_COLUMNS} FROM users WHERE email = $1`,
     [email],
   );
   return rows[0] ?? null;
@@ -29,8 +35,7 @@ export async function findUserByEmail(email: string): Promise<UserRow | null> {
 
 export async function findUserById(id: number): Promise<UserRow | null> {
   const { rows } = await query<UserRow>(
-    `SELECT id, email, password_hash, display_name
-     FROM users WHERE id = $1`,
+    `SELECT ${USER_COLUMNS} FROM users WHERE id = $1`,
     [id],
   );
   return rows[0] ?? null;
@@ -51,7 +56,7 @@ export async function createUser(input: {
   const { rows } = await query<UserRow>(
     `INSERT INTO users (email, display_name, password_hash)
      VALUES ($1, $2, $3)
-     RETURNING id, email, password_hash, display_name`,
+     RETURNING ${USER_COLUMNS}`,
     [input.email, input.displayName, input.passwordHash],
   );
   return rows[0];
@@ -63,7 +68,7 @@ export async function findUserByProviderIdentity(
   providerUserId: string,
 ): Promise<UserRow | null> {
   const { rows } = await query<UserRow>(
-    `SELECT u.id, u.email, u.password_hash, u.display_name
+    `SELECT ${USER_COLUMNS_QUALIFIED}
      FROM oauth_identities oi
      JOIN users u ON u.id = oi.user_id
      WHERE oi.provider = $1 AND oi.provider_user_id = $2`,

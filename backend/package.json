@@ -8,22 +8,27 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "migrate": "tsx src/db/migrate.ts",
-    "seed": "tsx src/db/seeds/seedListings.ts",
     "seed:listings": "tsx src/db/seeds/seedListings100k.ts",
     "images:fetch": "tsx src/scripts/fetchListingImages.ts",
     "explain:facets": "tsx src/scripts/explainFacets.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:marketplace": "tsx src/db/seeds/seedMarketplace.ts",
+    "images:items": "tsx src/scripts/fetchItemImages.ts",
+    "images:upload": "tsx src/scripts/uploadImagesToStorage.ts",
+    "images:repoint": "tsx src/scripts/rewritePhotoPaths.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/multer": "^2.2.0",
     "bcryptjs": "^3.0.3",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "multer": "^2.2.0",
     "pg": "^8.13.1"
   },
   "devDependencies": {
