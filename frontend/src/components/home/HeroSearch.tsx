@@ -122,7 +122,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
         className="pointer-events-none absolute -bottom-52 -right-32 h-[28rem] w-[28rem] animate-[glow-drift_22s_ease-in-out_infinite_reverse] rounded-full bg-black/[0.03] blur-3xl motion-reduce:animate-none"
       />
 
-      <Container className="relative pb-20 pt-16 text-center sm:pt-20 lg:pt-24">
+      <Container className="relative pb-10 pt-16 text-center sm:pt-20 lg:pt-24">
         {/* Trust pill. The reference uses bg-white/10 for a dark hero; on this
             off-white one the same idea needs a black wash to read at all. */}
         {/* Live ticker. A real listing rather than a slogan — a marketplace
@@ -160,7 +160,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
         <h1
           /* Tighter leading as the type grows: at this scale the default line
              height opens a gap wide enough to read as two separate headings. */
-          className={`text-4xl font-black leading-[1.05] tracking-tight text-gray-900 sm:text-6xl lg:text-7xl ${rise(90)}`}
+          className={`text-3xl font-black italic leading-[1.05] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl ${rise(90)}`}
         >
           Buy &amp; Sell Used Things
           <br />
@@ -168,7 +168,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
         </h1>
 
         <p
-          className={`mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-500 sm:text-xl ${rise(190)}`}
+          className={`mx-auto mt-6 max-w-2xl text-base font-black italic leading-relaxed tracking-tight text-gray-500 sm:text-lg ${rise(190)}`}
         >
           <span className="font-black tabular-nums text-gray-900">
             {shownCount.toLocaleString("en-IN")}
@@ -214,10 +214,14 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
         </div>
 
         {/* A line about what the place is for, in place of the old post-an-ad
-            link (posting still lives in the header). */}
-        <p className={`mt-8 text-sm font-semibold text-gray-500 ${rise(450)}`}>
-          Second-hand, not second-best — give your things a new home, and find
-          your next find nearby. ♻️
+            link (posting still lives in the header). The <p> keeps the staggered
+            rise-in entrance; the inner span carries the blink — two animations on
+            one element would overwrite each other, so they are split across two. */}
+        <p className={`mt-8 ${rise(450)}`}>
+          <span className="animate-[blink_1.8s_ease-in-out_infinite] text-base font-black italic tracking-tight text-gray-900 motion-reduce:animate-none sm:text-lg">
+            Second-hand, not second-best — give your things a new home, and find
+            your next find nearby. ♻️
+          </span>
         </p>
       </Container>
     </section>

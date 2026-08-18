@@ -48,7 +48,9 @@ function FilterSidebar({
         <h2 className="text-base font-black tracking-tight text-gray-900">
           Filters{activeCount > 0 && ` (${activeCount})`}
         </h2>
-        {activeCount > 0 && (
+        {/* Also offered when only a search term is set, so "sofa" with no filters
+            can still be cleared from here — onClearAll resets the query too. */}
+        {(activeCount > 0 || params.q) && (
           <button
             type="button"
             onClick={onClearAll}

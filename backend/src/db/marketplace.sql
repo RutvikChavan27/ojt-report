@@ -123,7 +123,11 @@ CREATE TABLE IF NOT EXISTS listings (
   sold_at TIMESTAMPTZ,
   -- A word in the title must outrank the same word in a description, so the
   -- title is weighted 'A' and the body 'B'. Brand/colour sit lower again: they
-  -- should match, but a brand mention shouldn't beat a real title hit.
+  -- should match, but a brand mention shouldn't beat a real title hit. This is
+  -- a plain full-text search over the listing's own words — no synonyms or
+  -- keyword expansion; a search for "laptop" matches listings whose title or
+  -- description actually contains "laptop", which is why the titles carry the
+  -- item type (see the seed).
   search_vector tsvector GENERATED ALWAYS AS (
     setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(description, '')), 'B') ||

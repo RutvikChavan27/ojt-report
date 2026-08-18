@@ -120,6 +120,44 @@ body {
   }
 }
 
+/* The header settling in on load: a short fade with a small drop from above.
+   Held with fill-mode `both` at the call site so it cannot be left mid-fade. */
+@keyframes header-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* A menu/dropdown arriving: a quick fade with a small downward settle. Short and
+   subtle — feedback that it opened, not a performance. */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* A gentle blink for a line worth drawing the eye to — fades rather than hard
+   on/off, so it reads as a soft pulse instead of a flickering sign. */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
 @keyframes pop-in {
   from {
     opacity: 0;

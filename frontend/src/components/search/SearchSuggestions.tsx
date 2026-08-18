@@ -52,9 +52,9 @@ function SearchSuggestions({
   if (suggestions.length === 0 && recent.length === 0 && !loading) return null;
 
   return (
-    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none">
       {showingRecent && (
-        <div className="flex items-center justify-between px-4 pb-1 pt-3">
+        <div className="flex items-center justify-between px-5 pb-1.5 pt-3.5">
           <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400">
             Recent searches
           </span>
@@ -76,7 +76,14 @@ function SearchSuggestions({
       <ul role="listbox">
         {showingRecent &&
           recent.map((entry) => (
-            <li key={entry.query} className="group flex items-center">
+            /* One padded row: the pick target and the remove button share the
+               same px-4 as the header above, so the clock lines up under
+               "RECENT SEARCHES" and the × lines up under "Clear all". Hover is on
+               the row, so the whole width highlights. */
+            <li
+              key={entry.query}
+              className="flex items-center gap-2 px-5 transition-colors duration-150 hover:bg-black/[0.04]"
+            >
               <button
                 type="button"
                 role="option"
@@ -84,10 +91,10 @@ function SearchSuggestions({
                 // onMouseDown, not onClick: the input's blur fires first and
                 // would unmount this list before a click could land.
                 onMouseDown={() => onPick(entry.query)}
-                className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left transition hover:bg-black/[0.03]"
+                className="flex min-w-0 flex-1 items-center gap-3 py-3.5 text-left"
               >
-                <FiClock size={14} className="flex-shrink-0 text-gray-400" />
-                <span className="min-w-0 flex-1 truncate text-sm text-gray-900">
+                <FiClock size={18} className="flex-shrink-0 text-gray-400" />
+                <span className="min-w-0 flex-1 truncate text-[15px] text-gray-900">
                   {entry.query}
                 </span>
               </button>
@@ -101,9 +108,9 @@ function SearchSuggestions({
                   event.stopPropagation();
                   onRemoveRecent(entry.query);
                 }}
-                className="mr-2 flex-shrink-0 rounded-full p-2 text-gray-300 transition hover:bg-black/5 hover:text-gray-900"
+                className="flex-shrink-0 rounded-full p-1.5 text-gray-300 transition-all duration-150 hover:scale-110 hover:bg-black/5 hover:text-gray-900 motion-reduce:hover:scale-100"
               >
-                <FiX size={14} />
+                <FiX size={17} />
               </button>
             </li>
           ))}
@@ -117,10 +124,10 @@ function SearchSuggestions({
               // Picks the trimmed name, so the box and the search that runs match
               // what was shown rather than the longer stored title.
               onMouseDown={() => onPick(name)}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-black/[0.03]"
+              className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-150 hover:bg-black/[0.04]"
             >
-              <FiSearch size={14} className="flex-shrink-0 text-gray-400" />
-              <span className="min-w-0 flex-1 truncate text-sm text-gray-900">
+              <FiSearch size={18} className="flex-shrink-0 text-gray-400" />
+              <span className="min-w-0 flex-1 truncate text-[15px] text-gray-900">
                 {name}
               </span>
             </button>

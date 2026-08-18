@@ -180,11 +180,17 @@ export type SuggestionRow = {
  * many rows, and a dropdown repeating "iPhone 13" six times is worse than useless.
  * The cheapest row per title wins, which is the one a searcher most wants to see.
  *
+ * Matching is a substring ILIKE so partial typing works ("iph" → iPhone), but the
+ * results are then ranked so a whole-word hit beats an incidental one: typing
+ * "car" puts "Dodge Durango … Car" above "Carbon Steel Wok" (which only matches
+ * because "Carbon" starts with "car"). A generous candidate pool is fetched and
+ * ranked in Node, since there are few distinct titles and the ordering that
+ * matters — word relevance — is awkward to express in SQL safely.
+ *
  * @param q partial query; under two characters returns nothing, since a single
  *          letter matches most of the table and the list would be noise.
  * @param limit how many suggestions to return, capped to keep the dropdown short.
- * @returns titles with price and category, ordered shortest first — a shorter
- *          title containing the query is the closer match to what was typed.
+ * @returns titles with price and category, most relevant first.
  */
 export async function suggestListings(
   q: string,
@@ -204,15 +210,29 @@ export async function suggestListings(
       WHERE l.status = 'active'
         AND l.title ILIKE '%' || $1 || '%'
       ORDER BY l.title, l.price ASC
-      LIMIT $2`,
-    [trimmed, Math.min(Math.max(limit, 1), 10)],
+      LIMIT 50`,
+    [trimmed],
   );
 
-  /* DISTINCT ON forces ordering by title, so the useful ordering — shortest
-     first — is applied here rather than in SQL. The row count is at most ten, so
-     sorting in Node costs nothing and avoids wrapping the query in a subselect
-     purely to re-order it. */
-  return rows.sort((a, b) => a.title.length - b.title.length);
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const wholeWord = new RegExp(`\\b${escaped}\\b`, "i"); // "car" in "… Car"
+  const wordStart = new RegExp(`\\b${escaped}`, "i"); // also matches "Carbon"
+
+  /* Relevance: a whole-word match (2) outranks a word that merely starts with
+     the query (1), which outranks a match buried mid-word (0). Ties break on the
+     shorter title, then price. This is what pushes "Carbon Steel Wok" below the
+     actual cars for "car" without dropping partial-typing support. */
+  const score = (title: string): number =>
+    wholeWord.test(title) ? 2 : wordStart.test(title) ? 1 : 0;
+
+  return rows
+    .sort(
+      (a, b) =>
+        score(b.title) - score(a.title) ||
+        a.title.length - b.title.length ||
+        Number(a.price) - Number(b.price),
+    )
+    .slice(0, Math.min(Math.max(limit, 1), 10));
 }
 
 /**

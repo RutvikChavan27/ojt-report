@@ -141,8 +141,13 @@ function SearchResults() {
     update({ [key]: null } as Partial<SearchParams>);
   };
 
+  /* Resets the whole search — the query and every filter — back to all
+     listings. The search term counts as something the visitor set, so clearing
+     "everything" includes it; removing one thing is what the individual chips
+     are for. */
   const clearAll = () =>
     update({
+      q: "",
       category: null,
       city: null,
       conditions: [],
@@ -211,9 +216,23 @@ function SearchResults() {
         </div>
       </div>
 
-      {/* Applied filters, each removable on its own */}
-      {chips.length > 0 && (
+      {/* The active search term and every filter, each removable on its own,
+          with one "Clear all" that resets the lot. Shows whenever there is a
+          query or any filter — so a bare search like "sofa" can still be
+          cleared here, not only once a filter is added. */}
+      {(chips.length > 0 || params.q) && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          {params.q && (
+            <button
+              type="button"
+              onClick={() => update({ q: "" })}
+              className="flex items-center gap-1.5 rounded-full bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-black"
+            >
+              “{params.q}”
+              <FiX size={12} />
+            </button>
+          )}
+
           {chips.map((chip) => (
             <button
               key={chip.key}

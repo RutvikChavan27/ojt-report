@@ -32,6 +32,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { config } from "../../config/env";
 import { connectDatabase, disconnectDatabase, query } from "../../config/database";
 import { searchTermFor } from "./imageSearchTerms";
+import { brandFor, realisticTitle } from "./productData";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -271,14 +272,18 @@ async function seed(): Promise<void> {
     }
     const expiresAt = new Date(postedAt.getTime() + SHELF_LIFE_MS);
 
+    /* A realistic classified title that carries the item type ("Dell XPS 13
+       Laptop"), and the brand populated from the name. Both are plain listing
+       data the normal full-text search already reads — no query expansion. The
+       full ad copy stays in `description`. */
     listingRows.push([
       pick(sellerIds),
-      template.title,
+      realisticTitle(template.title, template.subcategory_slug),
       template.description,
       template.category_slug,
       template.subcategory_slug,
       template.audience,
-      template.brand,
+      brandFor(template.title) ?? template.brand,
       template.size,
       template.colour,
       condition,

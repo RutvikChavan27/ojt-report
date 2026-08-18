@@ -110,7 +110,7 @@ function SearchBar({
       role="search"
     >
       <div
-        className={`flex w-full items-center gap-2 rounded-full border border-gray-300 bg-white pl-4 transition focus-within:border-gray-900 focus-within:ring-2 focus-within:ring-gray-900/10 ${
+        className={`flex w-full items-center gap-2 rounded-full border border-gray-300 bg-white pl-4 shadow-sm transition-all duration-200 focus-within:border-gray-900 focus-within:shadow-md focus-within:ring-2 focus-within:ring-gray-900/10 ${
           tall ? "py-1.5 pr-1.5" : "py-1 pr-1"
         }`}
       >
@@ -157,8 +157,8 @@ function SearchBar({
 
         <button
           type="submit"
-          className={`flex-shrink-0 rounded-full bg-gray-900 font-bold text-white transition hover:bg-black ${
-            tall ? "px-5 py-2 text-[13px]" : "px-4 py-1.5 text-[13px]"
+          className={`flex-shrink-0 rounded-full bg-gray-900 font-bold text-white shadow-sm transition-all duration-150 ease-out hover:bg-black hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
+            tall ? "px-7 py-2.5 text-sm" : "px-5 py-2 text-sm"
           }`}
         >
           Search
@@ -170,7 +170,8 @@ function SearchBar({
           suggestions={suggestions}
           // Only offered when the box is empty; once there is text, live matches
           // are the more useful list.
-          recent={value.trim() ? [] : recent}
+          // Up to five of the most recent; storage keeps more, the dropdown shows a tidy few.
+          recent={value.trim() ? [] : recent.slice(0, 5)}
           loading={loading}
           onPick={(query) => {
             setValue(query);
