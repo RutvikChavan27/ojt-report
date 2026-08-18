@@ -73,24 +73,48 @@ export const publicPathFor = (filename: string): string =>
   `${config.imagesRoute}/${path.basename(filename)}`;
 
 /**
- * Puts freshly uploaded files where they will still be readable later, and
- * returns the `/images/...` paths to store in `listing_photos.path`.
+ * Network-level failures worth retrying.
  *
- * On disk that is a no-op — multer has already written them. In Supabase mode
- * each buffer is PUT into the bucket first. Either way the caller gets the same
- * shape of path, so nothing downstream knows which backend is in use.
+ * A long-lived server keeps HTTPS connections to Storage alive between uploads,
+ * and the far end is entitled to close an idle one at any point. Node only finds
+ * out when it tries to use it, which surfaces as ECONNRESET on a request that
+ * would have succeeded a moment earlier. Retrying gets a fresh socket.
  *
- * @throws Error if Storage rejects an upload, so the request fails loudly
- *         rather than recording a row pointing at a file that does not exist.
+ * Deliberately only transport errors. An HTTP 4xx — wrong type, too large, bad
+ * key — means the request itself is wrong and will fail identically on a retry,
+ * so it is raised the first time.
  */
-export async function persistUploads(
-  files: Express.Multer.File[]
-): Promise<string[]> {
-  if (!useSupabaseStorage) return files.map((f) => publicPathFor(f.filename));
+const RETRYABLE_CAUSES = new Set([
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "EPIPE",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+]);
 
-  return Promise.all(
-    files.map(async (file) => {
-      const name = storedNameFor(file.mimetype);
+const MAX_ATTEMPTS = 3;
+
+/** The transport error code, which fetch buries under `cause`. */
+function causeCode(err: unknown): string | undefined {
+  const cause = (err as { cause?: { code?: string } })?.cause;
+  return cause?.code ?? (err as { code?: string })?.code;
+}
+
+/**
+ * Uploads one object to Storage, retrying a dropped connection.
+ *
+ * @throws Error with a message fit to show a person. The central error handler
+ *         passes `err.message` straight to the client, so a raw "fetch failed"
+ *         here would end up on screen as the reason a listing could not be
+ *         posted.
+ */
+async function putObject(file: Express.Multer.File, name: string): Promise<void> {
+  let lastCode: string | undefined;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
       const res = await fetch(
         `${config.supabaseUrl}/storage/v1/object/${config.storageBucket}/${name}`,
         {
@@ -103,11 +127,58 @@ export async function persistUploads(
           body: new Uint8Array(file.buffer),
         }
       );
-      if (!res.ok) {
-        throw new Error(
-          `Storage upload failed (${res.status}): ${await res.text()}`
-        );
+
+      if (res.ok) return;
+
+      // Not transient: report it as-is rather than trying twice more.
+      const detail = (await res.text()).slice(0, 200);
+      console.error(`[upload] storage rejected ${name}: ${res.status} ${detail}`);
+      throw new Error(
+        `The photo could not be saved (${res.status}). Please check the file and try again.`
+      );
+    } catch (err) {
+      const code = causeCode(err);
+      if (!code || !RETRYABLE_CAUSES.has(code)) throw err;
+
+      lastCode = code;
+      console.warn(
+        `[upload] ${name} attempt ${attempt}/${MAX_ATTEMPTS} failed with ${code}${
+          attempt < MAX_ATTEMPTS ? " — retrying" : ""
+        }`
+      );
+      // Brief, growing pause: a reset socket is replaced immediately, but a
+      // wobbling connection benefits from a moment before the next attempt.
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 250));
       }
+    }
+  }
+
+  throw new Error(
+    `The photo could not be uploaded — the connection to storage kept dropping (${lastCode}). Please try again.`
+  );
+}
+
+/**
+ * Puts freshly uploaded files where they will still be readable later, and
+ * returns the `/images/...` paths to store in `listing_photos.path`.
+ *
+ * On disk that is a no-op — multer has already written them. In Supabase mode
+ * each buffer is PUT into the bucket first. Either way the caller gets the same
+ * shape of path, so nothing downstream knows which backend is in use.
+ *
+ * @throws Error if an upload cannot be completed, so the request fails loudly
+ *         rather than recording a row pointing at a file that does not exist.
+ */
+export async function persistUploads(
+  files: Express.Multer.File[]
+): Promise<string[]> {
+  if (!useSupabaseStorage) return files.map((f) => publicPathFor(f.filename));
+
+  return Promise.all(
+    files.map(async (file) => {
+      const name = storedNameFor(file.mimetype);
+      await putObject(file, name);
       return publicPathFor(name);
     })
   );

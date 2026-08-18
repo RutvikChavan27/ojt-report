@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 import Container from "../../components/layout/Container";
+import ImageWithLoader from "../../components/common/ImageWithLoader";
 import { fetchDashboard, fetchListings, type ApiListing } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 import { useApi } from "../../hooks/useApi";
@@ -142,7 +143,7 @@ function Welcome() {
             <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
               {/* Empty alt: decoration around the hero, and the page's own copy
                   already says what the site is. */}
-              <img
+              <ImageWithLoader
                 src={card.listing.image}
                 alt=""
                 loading="lazy"
@@ -245,8 +246,8 @@ function Welcome() {
                   to={`/listing/${listing.id}`}
                   className="overflow-hidden rounded-2xl border border-gray-200 bg-white text-left shadow-sm transition hover:border-gray-900"
                 >
-                  <div className="aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                    <img
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                    <ImageWithLoader
                       src={listing.image}
                       alt=""
                       loading="lazy"

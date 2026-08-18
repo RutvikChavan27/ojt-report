@@ -9,6 +9,8 @@ import {
   MAX_LISTING_PHOTOS,
 } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { useConfirm } from "../../store/ConfirmContext";
+import BackLink from "../../components/common/BackLink";
 
 /** Matches the server's own cap, so the form refuses before uploading. */
 const MAX_PHOTOS = MAX_LISTING_PHOTOS;
@@ -51,6 +53,7 @@ function PostAd() {
   const [error, setError] = useState<string | null>(null);
   const [postedId, setPostedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
 
   /* Object URLs hold a reference to the file until revoked, so release them
@@ -109,6 +112,15 @@ function PostAd() {
       setError("Add at least one photo — listings without photos rarely sell.");
       return;
     }
+
+    /* Asked after validation, not before: there is no point confirming a form
+       that is about to be rejected for a missing photo. */
+    const ok = await confirm({
+      title: "Post this listing?",
+      message: "It will appear in search results straight away. You can edit or delete it afterwards from My listings.",
+      confirmLabel: "Post listing",
+    });
+    if (!ok) return;
 
     setError(null);
     setSubmitting(true);
@@ -193,6 +205,8 @@ function PostAd() {
 
   return (
     <Container className="py-8" narrow="md">
+      <BackLink className="mb-4" />
+
       <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
         Post an ad
       </h1>

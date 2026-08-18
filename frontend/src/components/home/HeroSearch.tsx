@@ -175,8 +175,17 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
           longer need — free to browse, no account needed.
         </p>
 
+        {/* `relative z-30` here is load-bearing, not decoration.
+
+            Every element in this hero carries `rise(...)`, and an animated
+            transform creates a stacking context of its own. That makes the search
+            row, the popular chips and the post-ad link three sibling contexts —
+            with no z-index the later two paint over the first, so the suggestions
+            dropdown appeared *under* the chips however high its own z-index went.
+            A child cannot escape its parent's stacking context, so the parent is
+            what has to be lifted. */}
         <div
-          className={`mx-auto mt-9 flex max-w-2xl flex-col gap-2.5 sm:flex-row ${rise(280)}`}
+          className={`relative z-30 mx-auto mt-9 flex max-w-2xl flex-col gap-2.5 sm:flex-row ${rise(280)}`}
         >
           <LocationSelector value={city} onChange={setCity} className="sm:w-44" />
           <div className="min-w-0 flex-1">

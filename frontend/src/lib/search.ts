@@ -352,17 +352,16 @@ export function searchListings(params: SearchParams): SearchResult {
   };
 }
 
-/** Titles that start with what has been typed, for the suggestion dropdown. */
-export function suggestTitles(query: string, limit = 6): Listing[] {
-  const trimmed = query.trim().toLowerCase();
-  if (trimmed.length < 2) return [];
+/* Type-ahead used to be served from here, by filtering the fixture in the
+   browser. It now comes from `GET /api/search/suggest` via `fetchSuggestions`,
+   so it matches the real listings and honours the same active-only rule as the
+   results page.
 
-  return LISTINGS.filter(
-    (listing) =>
-      listing.status === "active" &&
-      listing.title.toLowerCase().includes(trimmed),
-  ).slice(0, limit);
-}
+   `searchListings` and `suggestCorrection` above are the last of that fixture
+   path and no longer have callers — the results page uses `searchApi.ts`. They
+   are left in place only because the tokeniser, edit-distance and vocabulary
+   they share are ~200 lines that want removing in one deliberate pass, not
+   piecemeal. Nothing should import them; use the API. */
 
 /* -------------------------------------------------------------------------- */
 /* URL state                                                                  */

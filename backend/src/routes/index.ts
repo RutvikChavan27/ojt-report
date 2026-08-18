@@ -5,6 +5,7 @@ import {
   getListingCategories,
   getListings,
   getListingSearch,
+  getSearchSuggestions,
   postListingImages,
 } from "../controllers/marketplace.controller";
 import {
@@ -36,6 +37,9 @@ const router = Router();
 router.get("/dashboard", getDashboardData);
 
 // Marketplace listings.
+// Before "/search/listings" is irrelevant — distinct paths — but grouped with it
+// because both are the search surface.
+router.get("/search/suggest", getSearchSuggestions);
 router.get("/search/listings", getListingSearch);
 router.get("/listings", getListings);
 // Before "/listings/:id", or "mine" is read as an id and 404s.

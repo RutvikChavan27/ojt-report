@@ -7,6 +7,7 @@ import ListingGrid from "../../components/listings/ListingGrid";
 import EmptyState from "../../components/common/EmptyState";
 import { fetchDashboard } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { usePageGate } from "../../store/RouteGate";
 
 /** Shared wrapper for the homepage's stacked sections. */
 function Section({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,11 @@ function Home() {
      rather than three sections settling at different moments. Sorting and
      counting are the server's job now — nothing here filters a local array. */
   const { data, loading, error, reload } = useApi(fetchDashboard, []);
+
+  /* One request means one definition of "first load": that call with nothing back
+     yet. Hold the branded loader over the viewport until it lands, so the page
+     arrives complete rather than as three empty sections. */
+  usePageGate(loading && !data);
 
   const recent = data?.recent ?? [];
   const categories = data?.categories ?? [];

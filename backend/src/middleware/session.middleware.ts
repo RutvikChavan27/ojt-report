@@ -7,6 +7,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import type { RequestHandler } from "express";
 import { config } from "../config/env";
+import { getPool } from "../config/database";
 
 /** Fields this app stores on a session. */
 declare module "express-session" {
@@ -26,7 +27,14 @@ export function buildSessionMiddleware(): RequestHandler {
     name: "bazaar.sid",
     secret: config.sessionSecret,
     store: new PgStore({
-      conString: config.databaseUrl,
+      /* Share the app's pool rather than handing the store a connection string.
+         Given one, connect-pg-simple builds a second pool of its own — unwarmed,
+         and separate from the one startup pre-opens — so a session read on an
+         otherwise idle server paid a fresh TLS handshake to the database. That
+         put seconds onto requests whose own query took milliseconds. Sessions
+         are touched on nearly every request, so this is the pool that most
+         needed to be warm. */
+      pool: getPool(),
       tableName: "user_sessions",
       // Created by the migration; this only guards a fresh database.
       createTableIfMissing: true,

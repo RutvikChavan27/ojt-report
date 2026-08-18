@@ -1,8 +1,7 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import {
   FiAlertTriangle,
-  FiArrowLeft,
   FiCalendar,
   FiEye,
   FiHeart,
@@ -11,12 +10,15 @@ import {
 } from "react-icons/fi";
 import Breadcrumbs from "../../components/common/Breadcrumbs";
 import EmptyState from "../../components/common/EmptyState";
+import ListingDetailsSkeleton from "../../components/common/ListingDetailsSkeleton";
 import ListingGallery from "../../components/listings/ListingGallery";
 import ListingGrid from "../../components/listings/ListingGrid";
 import SellerCard from "../../components/listings/SellerCard";
 import { formatPrice, placeLabel, relativeTime } from "../../lib/format";
 import { fetchListing, searchListings } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { usePageGate } from "../../store/RouteGate";
+import BackLink from "../../components/common/BackLink";
 import { useSavedListings } from "../../store/SavedListingsContext";
 
 /** How many other listings from the same category to show underneath. */
@@ -31,7 +33,6 @@ const RELATED_COUNT = 4;
  */
 function ListingDetails() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { isSaved, toggle } = useSavedListings();
 
   /* Fetched by id rather than carried over from the grid: opening a listing
@@ -43,6 +44,12 @@ function ListingDetails() {
     loading,
     error,
   } = useApi(() => fetchListing(id ?? ""), [id]);
+
+  /* Opening a listing is a fresh page, so the branded loader holds until the
+     listing itself is in. Only the listing gates it, not the related row below:
+     that is secondary content and its own grid skeleton covers it, so waiting on
+     a second request here would keep the page hidden longer than it needs to be. */
+  usePageGate(loading && !listing);
 
   /* Same category, excluding this one — plain category navigation, not a
      recommendation engine (which the brief puts out of scope). Asks for one
@@ -65,10 +72,7 @@ function ListingDetails() {
   if (loading) {
     return (
       <Container className="py-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
-          <div className="aspect-[4/3] w-full animate-pulse rounded-2xl bg-gray-200" />
-          <div className="h-64 animate-pulse rounded-2xl bg-gray-200" />
-        </div>
+        <ListingDetailsSkeleton />
       </Container>
     );
   }
@@ -126,14 +130,13 @@ function ListingDetails() {
         ]}
       />
 
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="mb-6 mt-4 flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-900"
-      >
-        <FiArrowLeft size={16} />
-        Back to results
-      </button>
+      {/* Falls back to this listing's own category when opened from a shared
+          link, which is nearer than the homepage to where "results" implies. */}
+      <BackLink
+        label="Back to results"
+        fallbackTo={`/search?category=${listing.category}`}
+        className="mb-6 mt-4"
+      />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
         {/* Left: photos, then the detail */}

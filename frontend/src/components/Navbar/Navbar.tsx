@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import {
   FiBookmark,
   FiChevronDown,
@@ -37,6 +43,13 @@ function Navbar() {
   const showSearch = pathname !== "/";
   const { count: savedCount } = useSavedListings();
   const { searches } = useSavedSearches();
+
+  /* Seed the box from the URL, so the header shows the search that produced the
+     page you are looking at. Without this, opening or reloading /search?q=car
+     left the box blank while the results below were plainly filtered by "car" —
+     and there was nothing for the clear button to act on. */
+  const [searchParams] = useSearchParams();
+  const activeQuery = searchParams.get("q") ?? "";
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -88,7 +101,7 @@ function Navbar() {
             /* Capped rather than flex-1: stretched across a wide header the box
                was far longer than any query anyone types. */
             <div className="hidden min-w-0 flex-1 md:block md:max-w-md lg:max-w-lg">
-              <SearchBar />
+              <SearchBar initialQuery={activeQuery} />
             </div>
           )}
 
@@ -223,7 +236,7 @@ function Navbar() {
             uselessness beside the logo. Same homepage exception. */}
         {showSearch && (
           <div className="pb-3 md:hidden">
-            <SearchBar />
+            <SearchBar initialQuery={activeQuery} />
           </div>
         )}
       </Container>

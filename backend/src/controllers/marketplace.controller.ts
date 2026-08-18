@@ -5,7 +5,10 @@ import {
   listListingCategories,
   listListings,
 } from "../services/marketplace.service";
-import { searchListings } from "../services/listingSearch.service";
+import {
+  searchListings,
+  suggestSearches,
+} from "../services/listingSearch.service";
 import { parseSearchRequest } from "../validators/listingSearch.validator";
 import { persistUploads, uploadListingPhotos } from "../middleware/upload.middleware";
 import { sendError, sendSuccess } from "../utils/response";
@@ -142,6 +145,29 @@ export async function getListingSearch(
   try {
     const results = await searchListings(parseSearchRequest(req.query));
     sendSuccess(res, results);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/search/suggest?q=bicy&limit=6 — type-ahead suggestions.
+ *
+ * Open, like the rest of search. Answers an empty list rather than a 400 for a
+ * too-short query: the box calls this while someone types, and "you have not
+ * typed enough yet" is a normal state, not a client error.
+ */
+export async function getSearchSuggestions(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q : "";
+    const rawLimit = Number(req.query.limit);
+    const limit = Number.isInteger(rawLimit) && rawLimit > 0 ? rawLimit : undefined;
+
+    sendSuccess(res, await suggestSearches(q, limit));
   } catch (err) {
     next(err);
   }

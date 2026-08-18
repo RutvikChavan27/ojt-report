@@ -1,6 +1,15 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { CATEGORIES } from "../../data/marketplace";
 
+type CategoryStripProps = {
+  /**
+   * Drop the bottom border, for when the strip shares a row with something else
+   * (the saved-searches menu) and the border belongs to the row instead. Without
+   * this the two sit above a doubled rule.
+   */
+  bare?: boolean;
+};
+
 /**
  * A single scrolling row of category links, sitting under the search box.
  *
@@ -9,12 +18,15 @@ import { CATEGORIES } from "../../data/marketplace";
  * search results rather than on the homepage. Highlights the current category so
  * it doubles as an indicator of where you are.
  */
-function CategoryStrip() {
+function CategoryStrip({ bare = false }: CategoryStripProps) {
   const [search] = useSearchParams();
   const active = search.get("category");
 
   return (
-    <nav aria-label="Categories" className="border-b border-gray-200">
+    <nav
+      aria-label="Categories"
+      className={bare ? "" : "border-b border-gray-200"}
+    >
       {/* Horizontal scroll rather than wrapping: thirteen categories on two or
           three wrapped lines pushes the results themselves off the screen. */}
       <ul className="flex gap-1 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

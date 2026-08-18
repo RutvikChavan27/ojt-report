@@ -10,6 +10,8 @@
 export const STORAGE_KEYS = {
   savedListings: "bazaar.saved-listings.v1",
   savedSearches: "bazaar.saved-searches.v1",
+  /** Automatic history of queries run, distinct from the curated saved list. */
+  recentSearches: "bazaar.recent-searches.v1",
 } as const;
 
 export function loadJSON<T>(key: string, fallback: T): T {

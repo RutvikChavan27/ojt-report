@@ -8,6 +8,7 @@ import {
   searchListingsExact,
   searchListingsFuzzy,
   suggestCorrection,
+  suggestListings,
   type FacetCountRow,
 } from "../repositories/listingSearch.repository";
 import type { SortKey } from "../db/queries/listingSearch.sql";
@@ -101,6 +102,37 @@ const toDTO = (row: {
   image: resolveImagePath(row.image ?? PLACEHOLDER_IMAGE),
 });
 
+/** A type-ahead suggestion, as the dropdown needs it. */
+export type SuggestionDTO = {
+  title: string;
+  price: number;
+  category: string;
+  categoryLabel: string;
+};
+
+/**
+ * Type-ahead suggestions for a partial query.
+ *
+ * Kept separate from `searchListings` rather than reusing it with a small
+ * `perPage`: a search runs the count and every facet alongside the page of
+ * results, and none of that is wanted for a dropdown that fires while someone is
+ * still typing. This is one indexed query, so it stays cheap enough to run per
+ * keystroke-after-debounce.
+ */
+export async function suggestSearches(
+  q: string,
+  limit?: number,
+): Promise<SuggestionDTO[]> {
+  const rows = await suggestListings(q, limit);
+
+  return rows.map((row) => ({
+    title: row.title,
+    price: Number(row.price),
+    category: row.category_slug,
+    categoryLabel: row.category_label,
+  }));
+}
+
 /**
  * One page of search results.
  *
@@ -117,7 +149,24 @@ export async function searchListings(
 
   const options = { ...request, limit: perPage, offset };
 
-  let rows = await searchListingsExact(options);
+  /* All three queries are dispatched together rather than the page first and the
+     count/facets after it.
+
+     They do not depend on each other — only on `fuzzy`, which is false for every
+     search that matches something. So the count and facets are started
+     optimistically on that assumption, and the endpoint costs one round trip
+     instead of two. Over a link to the database that dominates: the queries
+     themselves are milliseconds, the round trip is not.
+
+     The bet is wrong only when a supplied query matches nothing, and the cost
+     of losing it is two superseded queries whose results are dropped. Rare
+     enough, and cheap enough, to be worth halving the latency of every search
+     that does match. */
+  const pageRows = searchListingsExact(options);
+  const optimisticTotal = countSearchMatches({ ...request, fuzzy: false });
+  const optimisticFacets = fetchFacetCounts({ ...request, fuzzy: false });
+
+  let rows = await pageRows;
   let fuzzy = false;
   let suggestion: string | null = null;
 
@@ -131,12 +180,24 @@ export async function searchListings(
     }
   }
 
-  // Independent of each other, so run them together rather than in sequence —
-  // the endpoint's latency is then the slower of the two, not their sum.
-  const [total, facetRows] = await Promise.all([
-    countSearchMatches({ ...request, fuzzy }),
-    fetchFacetCounts({ ...request, fuzzy }),
-  ]);
+  let total: number;
+  let facetRows: FacetCountRow[];
+
+  if (fuzzy) {
+    // The optimistic pair counted the exact match set, which is empty here, so
+    // they are re-run against the fuzzy one. Their rejections still need
+    // claiming: an ignored rejected promise is an unhandled rejection, which
+    // takes the process down under Node's default policy.
+    void optimisticTotal.catch(() => undefined);
+    void optimisticFacets.catch(() => undefined);
+
+    [total, facetRows] = await Promise.all([
+      countSearchMatches({ ...request, fuzzy: true }),
+      fetchFacetCounts({ ...request, fuzzy: true }),
+    ]);
+  } else {
+    [total, facetRows] = await Promise.all([optimisticTotal, optimisticFacets]);
+  }
 
   return {
     items: rows.map(toDTO),

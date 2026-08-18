@@ -160,6 +160,61 @@ export async function fetchFacetCounts(
   return rows;
 }
 
+export type SuggestionRow = {
+  title: string;
+  price: string;
+  category_slug: string;
+  category_label: string;
+};
+
+/**
+ * Type-ahead suggestions for a partial query.
+ *
+ * Matched with a prefix `ILIKE` rather than the `tsvector`, because a person
+ * halfway through typing "bicy" has not finished a word yet and full-text search
+ * matches whole lexemes — "bicy" would find nothing until the "cle" arrived. The
+ * trigram index on title serves the leading-wildcard pattern that a plain B-tree
+ * could not.
+ *
+ * Distinct on title: at a hundred thousand listings the same phrase recurs across
+ * many rows, and a dropdown repeating "iPhone 13" six times is worse than useless.
+ * The cheapest row per title wins, which is the one a searcher most wants to see.
+ *
+ * @param q partial query; under two characters returns nothing, since a single
+ *          letter matches most of the table and the list would be noise.
+ * @param limit how many suggestions to return, capped to keep the dropdown short.
+ * @returns titles with price and category, ordered shortest first — a shorter
+ *          title containing the query is the closer match to what was typed.
+ */
+export async function suggestListings(
+  q: string,
+  limit = 6,
+): Promise<SuggestionRow[]> {
+  const trimmed = q.trim();
+  if (trimmed.length < 2) return [];
+
+  const { rows } = await query<SuggestionRow>(
+    `SELECT DISTINCT ON (l.title)
+            l.title,
+            l.price,
+            l.category_slug,
+            c.label AS category_label
+       FROM listings l
+       JOIN listing_categories c ON c.slug = l.category_slug
+      WHERE l.status = 'active'
+        AND l.title ILIKE '%' || $1 || '%'
+      ORDER BY l.title, l.price ASC
+      LIMIT $2`,
+    [trimmed, Math.min(Math.max(limit, 1), 10)],
+  );
+
+  /* DISTINCT ON forces ordering by title, so the useful ordering — shortest
+     first — is applied here rather than in SQL. The row count is at most ten, so
+     sorting in Node costs nothing and avoids wrapping the query in a subselect
+     purely to re-order it. */
+  return rows.sort((a, b) => a.title.length - b.title.length);
+}
+
 /**
  * The closest existing title to a misspelled query, for a "did you mean"
  * prompt. Limited to active rows and ordered by similarity.

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiX } from "react-icons/fi";
 import SearchSuggestions from "./SearchSuggestions";
-import { suggestTitles } from "../../lib/search";
-import type { Listing } from "../../data/marketplace";
+import { fetchSuggestions, type ApiSuggestion } from "../../lib/api";
+import { useRecentSearches } from "../../store/RecentSearchesContext";
 
 type SearchBarProps = {
   /** Seeds the box, e.g. when landing on /search?q=iphone. */
@@ -17,12 +17,19 @@ type SearchBarProps = {
 /** Typing should not fire a lookup per keystroke. */
 const DEBOUNCE_MS = 250;
 
+/** Below this, a query matches too much of the table to be a useful hint. */
+const MIN_QUERY = 2;
+
 /**
- * The search box, with debounced type-ahead suggestions.
+ * The search box, with debounced type-ahead suggestions from the database.
  *
  * Submitting navigates to /search with the query in the URL rather than holding
  * it in state — the URL is the source of truth for a search, which is what makes
  * a result page shareable and survive a reload.
+ *
+ * Suggestions come from `/api/search/suggest`, so they reflect the listings that
+ * actually exist. Focusing an empty box shows this browser's recent searches
+ * instead, which is the only useful thing to offer before anything is typed.
  */
 function SearchBar({
   initialQuery = "",
@@ -31,25 +38,61 @@ function SearchBar({
   placeholder = "Search for cars, phones, furniture, clothes...",
 }: SearchBarProps) {
   const navigate = useNavigate();
+  const { recent, record, remove, clear } = useRecentSearches();
   const [value, setValue] = useState(initialQuery);
-  const [suggestions, setSuggestions] = useState<Listing[]>([]);
+  const [suggestions, setSuggestions] = useState<ApiSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Keep in step when the URL changes underneath (back button, a chip cleared).
   useEffect(() => setValue(initialQuery), [initialQuery]);
 
+  /* Debounced, aborted lookup.
+   *
+   * The AbortController is the important half: a debounce alone still allows a
+   * slow reply for "iph" to arrive after a fast one for "iphone" and repopulate
+   * the list with matches for text no longer in the box. Cancelling the previous
+   * request on each change makes the last one typed the last one applied. */
   useEffect(() => {
-    const timeout = setTimeout(
-      () => setSuggestions(suggestTitles(value)),
-      DEBOUNCE_MS,
-    );
-    return () => clearTimeout(timeout);
+    const trimmed = value.trim();
+    if (trimmed.length < MIN_QUERY) {
+      setSuggestions([]);
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
+
+    const timeout = setTimeout(() => {
+      fetchSuggestions(trimmed, controller.signal)
+        .then(setSuggestions)
+        .catch(() => {
+          // Aborted, or the lookup failed. Either way the box shows nothing
+          // extra rather than an error while someone is mid-word.
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [value]);
 
   const runSearch = (query: string) => {
+    const trimmed = query.trim();
     const search = new URLSearchParams();
-    if (query.trim()) search.set("q", query.trim());
+    if (trimmed) search.set("q", trimmed);
     if (city) search.set("city", city);
+
+    // Recorded here rather than on the results page: this is the one place that
+    // knows the search was deliberately started, as opposed to a URL being
+    // opened, reloaded or arrived at with the back button.
+    record(trimmed);
 
     setOpen(false);
     navigate(`/search?${search.toString()}`);
@@ -74,6 +117,7 @@ function SearchBar({
         <FiSearch size={tall ? 17 : 15} className="flex-shrink-0 text-gray-400" />
 
         <input
+          ref={inputRef}
           type="text"
           value={value}
           onChange={(event) => {
@@ -90,6 +134,27 @@ function SearchBar({
           }`}
         />
 
+        {/* Only present when there is something to clear, so the pill does not
+            carry a dead control. Focus returns to the input afterwards: clearing
+            is nearly always the start of typing something else, and a cleared box
+            that has lost focus makes you click it again. */}
+        {value !== "" && (
+          <button
+            type="button"
+            onClick={() => {
+              setValue("");
+              setSuggestions([]);
+              inputRef.current?.focus();
+              setOpen(true);
+            }}
+            aria-label="Clear search"
+            title="Clear search"
+            className="flex-shrink-0 rounded-full p-1.5 text-gray-400 transition hover:bg-black/5 hover:text-gray-900"
+          >
+            <FiX size={tall ? 17 : 15} />
+          </button>
+        )}
+
         <button
           type="submit"
           className={`flex-shrink-0 rounded-full bg-gray-900 font-bold text-white transition hover:bg-black ${
@@ -103,10 +168,16 @@ function SearchBar({
       {open && (
         <SearchSuggestions
           suggestions={suggestions}
-          onPick={(title) => {
-            setValue(title);
-            runSearch(title);
+          // Only offered when the box is empty; once there is text, live matches
+          // are the more useful list.
+          recent={value.trim() ? [] : recent}
+          loading={loading}
+          onPick={(query) => {
+            setValue(query);
+            runSearch(query);
           }}
+          onRemoveRecent={remove}
+          onClearRecent={clear}
         />
       )}
     </form>

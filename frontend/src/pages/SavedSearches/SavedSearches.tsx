@@ -4,6 +4,7 @@ import { FiBookmark, FiTrash2 } from "react-icons/fi";
 import EmptyState from "../../components/common/EmptyState";
 import { describeFilters, paramsFromSearch } from "../../lib/search";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
+import BackLink from "../../components/common/BackLink";
 
 /**
  * Saved searches, each with how many listings have appeared since it was last
@@ -38,6 +39,8 @@ function SavedSearches() {
 
   return (
     <Container className="py-8" narrow="lg">
+      <BackLink className="mb-4" />
+
       <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
         Saved searches
       </h1>

@@ -42,6 +42,36 @@ body {
   }
 }
 
+/* The brand mark breathing on the full-screen route loader.
+
+   Deliberately small — 1.06 at the top of the swing, not a bounce. A splash
+   screen is a held moment, so the motion has to survive being looked at for a
+   second or two without becoming the thing you notice. Paired with a faint
+   halo (below) that breathes in the opposite phase, so the mark reads as lit
+   rather than as moving. */
+@keyframes brand-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* The halo behind the badge, expanding as the mark settles back. */
+@keyframes brand-halo {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.1;
+    transform: scale(1.5);
+  }
+}
+
 /* Light sweeps across the logo badge, pausing between passes. */
 @keyframes logo-shine {
   0% {
@@ -156,5 +186,97 @@ body {
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+/* Leaving is quicker than arriving and does not travel: a dialog that drifts
+   back down on the way out delays the answer the person just gave. It shrinks
+   very slightly so the dismissal still registers as deliberate. */
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* The dim behind a dialog, faded rather than snapped on so the page recedes
+   instead of being covered. Paired with a backdrop blur at the call site. */
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* --- Loading / skeleton system -------------------------------------------
+   One idiom for every placeholder on the site, so skeletons read as the same
+   surface the real content will occupy rather than as a different component.
+
+   The block breathes between a blue-grey and a near-white instead of sweeping a
+   highlight across. `alternate` is what makes it read as breathing: the colour
+   walks to the light end and back rather than snapping to the start on each
+   cycle, so there is no visible seam. One second linear is slow enough not to
+   nag and quick enough to look alive.
+
+   Colour is carried by an animated `background-color`, so the markup stays a
+   plain box that degrades to a flat grey under reduced motion. */
+@keyframes skeleton-pulse {
+  0% {
+    background-color: rgb(194, 207, 214);
+  }
+  100% {
+    background-color: rgb(240, 243, 245);
+  }
+}
+
+.skeleton-block {
+  background-color: rgb(217, 225, 230);
+  animation: skeleton-pulse 1s linear infinite alternate;
+}
+
+/* Real content replacing its skeleton: a plain fade so data arrives rather
+   than snapping in. Held at the end with fill-mode `both` at the call site. */
+@keyframes content-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The indeterminate bar under the page loader, sweeping while a route chunk
+   or its first data are still in flight. */
+@keyframes route-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+/* Motion is decoration here: a static grey block still says "loading" to
+   anyone who has asked the system to calm down. The mid-tone is held so the
+   placeholder stays visible rather than resting on either extreme. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block {
+    animation: none;
+    background-color: rgb(217, 225, 230);
   }
 }

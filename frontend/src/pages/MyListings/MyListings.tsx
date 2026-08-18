@@ -10,7 +10,8 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import EmptyState from "../../components/common/EmptyState";
-import LoadingSkeleton from "../../components/common/LoadingSkeleton";
+import ListingRowSkeleton from "../../components/common/ListingRowSkeleton";
+import ImageWithLoader from "../../components/common/ImageWithLoader";
 import { formatPrice, relativeTime } from "../../lib/format";
 import {
   deleteListing,
@@ -19,6 +20,9 @@ import {
   renewListing,
 } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { usePageGate } from "../../store/RouteGate";
+import { useConfirm } from "../../store/ConfirmContext";
+import BackLink from "../../components/common/BackLink";
 
 type ListingStatus = "active" | "sold" | "expired";
 
@@ -63,8 +67,15 @@ function MyListings() {
   const [tab, setTab] = useState<ListingStatus>("active");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const { data, loading, error, reload } = useApi(fetchMyListings, []);
+
+  /* First load only. The refetch after each sold/renew/delete leaves the table on
+     screen, so gating on `loading` alone would black out the dashboard every time
+     a seller pressed a button. */
+  usePageGate(loading && !data);
+
   const listings = data ?? [];
 
   const visible = listings.filter((listing) => listing.status === tab);
@@ -93,11 +104,29 @@ function MyListings() {
     }
   };
 
-  const markSold = (id: string) => run(id, () => markListingSold(id));
   const renew = (id: string) => run(id, () => renewListing(id));
 
-  const remove = (id: string) => {
-    if (!window.confirm("Delete this listing? This cannot be undone.")) return;
+  /* Marking sold takes a listing out of the marketplace, so it asks first — but
+     it is reversible from the Renew button, which is why it is not `danger`. */
+  const markSold = async (id: string) => {
+    const ok = await confirm({
+      title: "Mark as sold?",
+      message:
+        "This removes the listing from search results. You can put it back later with Renew.",
+      confirmLabel: "Mark as sold",
+    });
+    if (!ok) return;
+    return run(id, () => markListingSold(id));
+  };
+
+  const remove = async (id: string) => {
+    const ok = await confirm({
+      title: "Delete listing?",
+      message: "Are you sure you want to delete this listing? This cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     return run(id, () => deleteListing(id));
   };
 
@@ -106,6 +135,8 @@ function MyListings() {
 
   return (
     <Container className="py-8" narrow="lg">
+      <BackLink className="mb-4" />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
@@ -161,7 +192,7 @@ function MyListings() {
       {loading ? (
         <div className="mt-6 space-y-4">
           {Array.from({ length: 3 }).map((_, index) => (
-            <LoadingSkeleton key={index} />
+            <ListingRowSkeleton key={index} />
           ))}
         </div>
       ) : error ? (
@@ -206,11 +237,12 @@ function MyListings() {
               <div className="flex flex-col gap-4 p-4 sm:flex-row">
                 <Link
                   to={`/listing/${listing.id}`}
-                  className="h-28 w-full flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:w-40"
+                  className="relative h-28 w-full flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:w-40"
                 >
-                  <img
+                  <ImageWithLoader
                     src={listing.image}
                     alt={listing.title}
+                    skeletonRounded="xl"
                     className="h-full w-full object-cover"
                   />
                 </Link>

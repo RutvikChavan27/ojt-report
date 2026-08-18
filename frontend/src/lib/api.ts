@@ -37,12 +37,27 @@ async function apiRequest<T>(
   path: string,
   init?: { method?: string; body?: unknown },
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: init?.method ?? "GET",
-    credentials: "include",
-    headers: init?.body ? { "Content-Type": "application/json" } : undefined,
-    body: init?.body ? JSON.stringify(init.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: init?.method ?? "GET",
+      credentials: "include",
+      headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+      body: init?.body ? JSON.stringify(init.body) : undefined,
+    });
+  } catch {
+    /* fetch rejects — rather than resolving with a status — when the request
+       never reached a server at all: the API is down, the machine is offline, or
+       the origin was refused by CORS. The browser's own wording for all of that
+       is "Failed to fetch", which every page then displayed verbatim, and it
+       reads like the app is broken rather than the server being unreachable.
+       Nothing here can distinguish those causes (the browser deliberately
+       withholds the detail), so this names the likely one and points at
+       something checkable. */
+    throw new Error(
+      `Cannot reach the server at ${API_BASE}. Check that the backend is running, then try again.`
+    );
+  }
 
   // A 500 behind a proxy, or a dropped connection, can produce a body that is
   // not JSON at all. Falling back keeps the thrown error readable either way.
@@ -73,6 +88,44 @@ export const fetchAuthProviders = () =>
 
 /** A link, not a fetch: the browser itself must visit Google. */
 export const googleSignInUrl = `${API_BASE}/api/auth/google`;
+
+/** One type-ahead suggestion. Mirrors the server's SuggestionDTO. */
+export type ApiSuggestion = {
+  title: string;
+  price: number;
+  category: string;
+  categoryLabel: string;
+};
+
+/**
+ * Type-ahead suggestions for a partial query, from the database.
+ *
+ * Takes an AbortSignal because these fire while someone types: without one, a
+ * slow reply for "iph" can land after the reply for "iphone" and repopulate the
+ * dropdown with staler matches than what is in the box.
+ *
+ * Its own fetch rather than `apiRequest` so an abort can be told apart from a
+ * real failure — cancelling is the expected outcome for most of these calls, and
+ * must not surface as an error.
+ */
+export async function fetchSuggestions(
+  q: string,
+  signal?: AbortSignal,
+): Promise<ApiSuggestion[]> {
+  const res = await fetch(
+    `${API_BASE}/api/search/suggest?q=${encodeURIComponent(q)}`,
+    { signal },
+  );
+
+  const body = (await res.json().catch(() => null)) as ApiEnvelope<
+    ApiSuggestion[]
+  > | null;
+
+  // A failed suggestion lookup is not worth interrupting typing over; the box
+  // simply shows nothing.
+  if (!res.ok || !body?.success) return [];
+  return body.data;
+}
 
 /* ------------------------------------------------------------------ listings */
 
@@ -211,11 +264,40 @@ export const fetchDashboard = async (): Promise<ApiDashboard> => {
   };
 };
 
+/**
+ * Category list cache.
+ *
+ * The category tree is reference data asked for by almost every page, and the
+ * search page requests it alongside its results — so without this the two
+ * compete for the same database connections and each makes the other slower.
+ *
+ * Keyed by audience, and the in-flight promise is what gets stored rather than
+ * the resolved value: two components mounting in the same tick then share one
+ * request instead of firing two. Held for a minute, because the counts on each
+ * category do move as listings are posted — long enough to take the request off
+ * the path of a browsing session, short enough that the numbers stay honest.
+ */
+const CATEGORIES_TTL_MS = 60_000;
+const categoriesCache = new Map<
+  string,
+  { at: number; value: Promise<ApiCategory[]> }
+>();
+
 export const fetchCategories = async (audience?: string) => {
-  const data = await apiRequest<ApiCategory[]>(
+  const key = audience ?? "";
+  const hit = categoriesCache.get(key);
+  if (hit && Date.now() - hit.at < CATEGORIES_TTL_MS) return hit.value;
+
+  const value = apiRequest<ApiCategory[]>(
     `/api/listing-categories${audience ? `?audience=${encodeURIComponent(audience)}` : ""}`,
-  );
-  return data.map(withImage);
+  ).then((data) => data.map(withImage));
+
+  // A failed request must not be cached, or one blip disables categories for a
+  // minute. Dropping the entry lets the next caller retry immediately.
+  value.catch(() => categoriesCache.delete(key));
+
+  categoriesCache.set(key, { at: Date.now(), value });
+  return value;
 };
 
 export const fetchListings = async (params: {
@@ -372,11 +454,19 @@ export async function uploadListingImages(
   const form = new FormData();
   for (const file of files) form.append("photos", file);
 
-  const res = await fetch(`${API_BASE}/api/listings/images`, {
-    method: "POST",
-    credentials: "include",
-    body: form,
-  });
+  // Same unreachable-server case as apiRequest — see the note there.
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/listings/images`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+  } catch {
+    throw new Error(
+      `Cannot reach the server at ${API_BASE}. Check that the backend is running, then try again.`
+    );
+  }
 
   const body = (await res.json().catch(() => null)) as ApiEnvelope<{
     images: UploadedImage[];

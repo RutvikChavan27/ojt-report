@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import Container from "./components/layout/Container";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar/Navbar";
@@ -6,18 +6,37 @@ import Footer from "./components/Footer/Footer";
 import EmptyState from "./components/common/EmptyState";
 import MobilePostBar from "./components/common/MobilePostBar";
 import RequireAuth from "./components/common/RequireAuth";
+import BrandLoader from "./components/common/BrandLoader";
+import { RouteGateProvider } from "./store/RouteGate";
+import { prefetchLikelyRoutes, routeChunks } from "./lib/routeChunks";
 import Welcome from "./pages/Welcome/Welcome";
-import Home from "./pages/Home/Home";
-import SearchResults from "./pages/Search/SearchResults";
-import ListingDetails from "./pages/Listing/ListingDetails";
-import CategoryPage from "./pages/Category/CategoryPage";
-import PostAd from "./pages/PostAd/PostAd";
-import MyListings from "./pages/MyListings/MyListings";
-import SavedSearches from "./pages/SavedSearches/SavedSearches";
-import SavedListings from "./pages/SavedListings/SavedListings";
-import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
-import Profile from "./pages/Profile/Profile";
+
+/*
+ * The landing page is imported eagerly: it is the site's entry point, it opens
+ * with its own staged entrance, and putting a loader in front of the very first
+ * paint would be the one place a spinner is genuinely unwelcome.
+ *
+ * Every other page is code-split with React.lazy, so a route's JavaScript is
+ * only fetched when someone actually goes there. The Suspense boundary below
+ * shows the branded BrandLoader for the moment a chunk is in flight.
+ *
+ * That is the first of two waits a navigation can have. The second is the page's
+ * own first data fetch, held by the RouteGate — and because both stages render
+ * the same BrandLoader, the two read as one continuous screen rather than a
+ * loader that blinks out and comes back. Only once real data is in does the page
+ * appear, at which point its skeletons cover anything still trickling in.
+ */
+const Home = lazy(routeChunks.home);
+const SearchResults = lazy(routeChunks.search);
+const ListingDetails = lazy(routeChunks.listing);
+const CategoryPage = lazy(routeChunks.category);
+const PostAd = lazy(routeChunks.postAd);
+const MyListings = lazy(routeChunks.myListings);
+const SavedSearches = lazy(routeChunks.savedSearches);
+const SavedListings = lazy(routeChunks.savedListings);
+const Login = lazy(routeChunks.login);
+const Register = lazy(routeChunks.register);
+const Profile = lazy(routeChunks.profile);
 
 /**
  * Returns to the top when the path changes.
@@ -59,13 +78,23 @@ function App() {
      and a refresh shows the same thing. */
   const onboarding = pathname === "/" || pathname === "/welcome";
 
+  /* Pull the browsing chunks down while the browser is idle, so the first click
+     into search or a listing does not wait on a download. React holds the
+     current page on screen while a lazy chunk loads, which makes a cold one feel
+     like a click that did nothing — this is what removes that. */
+  useEffect(prefetchLikelyRoutes, []);
 
   return (
+    <RouteGateProvider>
     <div className="flex min-h-screen flex-col">
       <ScrollToTop />
       {!onboarding && <Navbar />}
 
       <main className="flex-1">
+        {/* One boundary around every route. A lazy page suspends while its chunk
+            loads and the branded loader covers the viewport, so there is never a
+            blank or half-built page between a link click and the next screen. */}
+        <Suspense fallback={<BrandLoader />}>
         <Routes>
           {/* The site opens here. Choosing a role pushes, so Back from the
               marketplace returns to the introduction rather than leaving the
@@ -142,11 +171,13 @@ function App() {
             }
           />
         </Routes>
+        </Suspense>
       </main>
 
       {!onboarding && <MobilePostBar />}
       {!onboarding && <Footer />}
     </div>
+    </RouteGateProvider>
   );
 }
 

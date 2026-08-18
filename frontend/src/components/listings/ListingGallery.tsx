@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import ImageWithLoader from "../common/ImageWithLoader";
 
 type ListingGalleryProps = {
   images: string[];
@@ -31,9 +32,11 @@ function ListingGallery({ images, alt }: ListingGalleryProps) {
   return (
     <div>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
-        <img
+        <ImageWithLoader
           src={images[active]}
           alt={alt}
+          loading="eager"
+          skeletonRounded="2xl"
           className="h-full w-full object-cover"
         />
 
@@ -74,13 +77,18 @@ function ListingGallery({ images, alt }: ListingGalleryProps) {
               onClick={() => setActive(index)}
               aria-label={`View photo ${index + 1}`}
               aria-pressed={active === index}
-              className={`h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-gray-100 transition ${
+              className={`relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-gray-100 transition ${
                 active === index
                   ? "border-gray-900"
                   : "border-transparent hover:border-gray-300"
               }`}
             >
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <ImageWithLoader
+                src={src}
+                alt=""
+                skeletonRounded="lg"
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>

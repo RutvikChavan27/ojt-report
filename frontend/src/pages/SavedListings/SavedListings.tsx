@@ -4,7 +4,9 @@ import EmptyState from "../../components/common/EmptyState";
 import ListingGrid from "../../components/listings/ListingGrid";
 import { fetchListing, type ApiListingDetail } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { usePageGate } from "../../store/RouteGate";
 import { useSavedListings } from "../../store/SavedListingsContext";
+import BackLink from "../../components/common/BackLink";
 
 /**
  * Listings the visitor has saved.
@@ -32,10 +34,14 @@ function SavedListings() {
       .map((result) => result.value);
   }, [ids.join(",")]);
 
+  usePageGate(loading && !data);
+
   const saved = data ?? [];
 
   return (
     <Container className="py-8">
+      <BackLink className="mb-4" />
+
       <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
         Saved listings
       </h1>

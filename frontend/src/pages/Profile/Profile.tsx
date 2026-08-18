@@ -5,6 +5,7 @@ import { MY_LISTINGS } from "../../data/marketplace";
 import { useAuth } from "../../store/AuthContext";
 import { useSavedListings } from "../../store/SavedListingsContext";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
+import BackLink from "../../components/common/BackLink";
 
 /**
  * The signed-in user's own page: who they are, and the counts that lead into
@@ -45,6 +46,8 @@ function Profile() {
 
   return (
     <Container className="py-8" narrow="md">
+      <BackLink className="mb-4" />
+
       <div className="rounded-2xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-4">
           <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-white">

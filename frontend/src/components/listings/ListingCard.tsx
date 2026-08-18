@@ -3,6 +3,7 @@ import { FiHeart, FiMapPin } from "react-icons/fi";
 import { formatPrice, placeLabel, relativeTime } from "../../lib/format";
 import type { ListingCardData } from "../../lib/api";
 import { useSavedListings } from "../../store/SavedListingsContext";
+import ImageWithLoader from "../common/ImageWithLoader";
 
 type ListingCardProps = {
   listing: ListingCardData;
@@ -24,7 +25,7 @@ function ListingCard({ listing }: ListingCardProps) {
     <article className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:border-gray-400">
       <Link to={`/listing/${listing.id}`} className="block">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-          <img
+          <ImageWithLoader
             src={listing.image}
             alt={listing.title}
             loading="lazy"

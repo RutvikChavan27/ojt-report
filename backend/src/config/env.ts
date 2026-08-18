@@ -19,6 +19,36 @@ function requireEnv(name: string): string {
 }
 
 /**
+ * Origins allowed to call the API with credentials.
+ *
+ * A list rather than a single value because the frontend legitimately runs on
+ * more than one local port — 5173 for `npm run dev`, 4173 for `vite preview` of
+ * a production build — and allowing only one makes the other fail as an opaque
+ * "Failed to fetch" in the browser, with nothing logged server-side to explain
+ * it.
+ *
+ * Set CLIENT_URL to a comma-separated list to override. In production that is
+ * normally one real origin. A wildcard is not an option: browsers refuse to send
+ * cookies to one, and the session depends on them.
+ */
+const LOCAL_ORIGINS = [
+  // `npm run dev`, then `vite preview` of a production build. Both hostnames are
+  // listed for each: to a browser `localhost` and `127.0.0.1` are different
+  // origins, so a page opened on one while only the other is allowed has every
+  // request refused — and a CORS refusal is indistinguishable in the browser from
+  // the server being down.
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+].join(",");
+
+const clientUrls = (process.env.CLIENT_URL ?? LOCAL_ORIGINS)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+/**
  * Centralised, typed access to environment configuration.
  * Reads once at startup so the rest of the app never touches process.env directly.
  */
@@ -31,7 +61,13 @@ export const config = {
    * failing where the mistake is visible.
    */
   databaseUrl: requireEnv("DATABASE_URL"),
-  clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
+  /** Every origin CORS will accept. See the note above. */
+  clientUrls,
+  /**
+   * Where to send someone after the Google round trip. The first configured
+   * origin, since a redirect has to name exactly one.
+   */
+  clientUrl: clientUrls[0],
   /**
    * Signs the session cookie. The development fallback exists so the app runs
    * out of the box; `npm start` refuses to boot without a real value set.

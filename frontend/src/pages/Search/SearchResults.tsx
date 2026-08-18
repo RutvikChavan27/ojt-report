@@ -4,7 +4,10 @@ import { useSearchParams } from "react-router-dom";
 import { FiBookmark, FiSliders, FiX } from "react-icons/fi";
 import Breadcrumbs from "../../components/common/Breadcrumbs";
 import CategoryStrip from "../../components/categories/CategoryStrip";
+import SavedSearchesMenu from "../../components/search/SavedSearchesMenu";
 import EmptyState from "../../components/common/EmptyState";
+import ListingGridSkeleton from "../../components/common/ListingGridSkeleton";
+import LoadingOverlay from "../../components/common/LoadingOverlay";
 import FilterDrawer from "../../components/filters/FilterDrawer";
 import FilterSidebar from "../../components/filters/FilterSidebar";
 import ListingGrid from "../../components/listings/ListingGrid";
@@ -19,6 +22,8 @@ import {
 import { searchListingsViaApi } from "../../lib/searchApi";
 import { fetchCategories } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
+import { useLoadingState } from "../../hooks/useLoadingState";
+import { usePageGate } from "../../store/RouteGate";
 import { useAuth } from "../../store/AuthContext";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
 
@@ -44,7 +49,22 @@ function SearchResults() {
      remains the only place the search is stored, so its query string is what
      the request is rebuilt from whenever it changes. */
   const key = search.toString();
-  const { data } = useApi(() => searchListingsViaApi(params), [key]);
+  const { data, loading } = useApi(() => searchListingsViaApi(params), [key]);
+
+  /* Two distinct loading shapes. The very first search has nothing to show, so
+     it renders a skeleton grid. Every search after that (a new filter, sort or
+     page) already has results on screen, so those stay and are dimmed under an
+     "updating" overlay rather than being thrown away and rebuilt — which is
+     what made each filter click feel like a full reload. The overlay is gated
+     on a short delay so an instant refetch never flashes it. */
+  const { showSkeleton, showOverlay } = useLoadingState(loading, Boolean(data));
+
+  /* Arriving from a category tile or the search box is a fresh page with nothing
+     to show, so the branded loader covers the viewport until the first results
+     are in. Gated on showSkeleton rather than `loading`: a filter, sort or page
+     change already has results on screen and keeps the dimmed overlay below,
+     which a full-screen takeover on every click would replace. */
+  usePageGate(showSkeleton);
 
   const { data: categories } = useApi(() => fetchCategories(), []);
 
@@ -145,9 +165,15 @@ function SearchResults() {
       {/* No search box here: the header carries one on every page except the
          homepage, and two on a narrow screen was one too many. */}
 
-      {/* Switch category without losing the rest of the search */}
-      <div>
-        <CategoryStrip />
+      {/* Switch category without losing the rest of the search, with saved
+          searches beside it. `min-w-0` lets the strip scroll inside the flex row
+          rather than forcing the row wider than the page and pushing the menu
+          off-screen. */}
+      <div className="flex items-start gap-2 border-b border-gray-200">
+        <div className="min-w-0 flex-1">
+          <CategoryStrip bare />
+        </div>
+        <SavedSearchesMenu />
       </div>
 
       <div className="mt-5">
@@ -247,7 +273,9 @@ function SearchResults() {
         </aside>
 
         <div className="min-w-0">
-          {results.total === 0 ? (
+          {showSkeleton ? (
+            <ListingGridSkeleton count={12} />
+          ) : results.total === 0 ? (
             <EmptyState
               title="No listings found"
               description={
@@ -292,7 +320,7 @@ function SearchResults() {
               </div>
             </EmptyState>
           ) : (
-            <>
+            <LoadingOverlay active={showOverlay}>
               <ListingGrid listings={results.items} />
               <Pagination
                 page={results.page}
@@ -302,7 +330,7 @@ function SearchResults() {
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               />
-            </>
+            </LoadingOverlay>
           )}
         </div>
       </div>

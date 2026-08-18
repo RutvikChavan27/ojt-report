@@ -5,6 +5,8 @@ import App from "./App";
 import { AuthProvider } from "./store/AuthContext";
 import { SavedListingsProvider } from "./store/SavedListingsContext";
 import { SavedSearchesProvider } from "./store/SavedSearchesContext";
+import { RecentSearchesProvider } from "./store/RecentSearchesContext";
+import { ConfirmProvider } from "./store/ConfirmContext";
 import "./index.css";
 
 /**
@@ -20,7 +22,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <SavedListingsProvider>
           <SavedSearchesProvider>
-            <App />
+            <RecentSearchesProvider>
+              {/* Innermost, so its dialog renders above the app's own layers. */}
+              <ConfirmProvider>
+                <App />
+              </ConfirmProvider>
+            </RecentSearchesProvider>
           </SavedSearchesProvider>
         </SavedListingsProvider>
       </AuthProvider>
