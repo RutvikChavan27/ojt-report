@@ -152,7 +152,7 @@ function MyListings() {
           className="flex items-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
         >
           <FiPlus size={15} />
-          Post an ad
+          Sell Something
         </Link>
       </div>
 
@@ -213,7 +213,7 @@ function MyListings() {
             title={`No ${STATUS_LABEL[tab].toLowerCase()} listings`}
             description={
               tab === "active"
-                ? "Post an ad and it will show up here."
+                ? "Sell something and it will show up here."
                 : `Nothing here yet.`
             }
           >
@@ -222,7 +222,7 @@ function MyListings() {
                 to="/post-ad"
                 className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
               >
-                Post an ad
+                Sell Something
               </Link>
             )}
           </EmptyState>

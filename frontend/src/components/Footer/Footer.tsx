@@ -16,8 +16,8 @@ function Footer() {
               BAZAAR
             </p>
             <p className="mt-2 max-w-xs text-sm leading-relaxed text-gray-500">
-              Buy and sell second-hand things near you. Post an ad in minutes, or
-              search thousands of listings from people in your city.
+              Buy and sell second-hand things near you. Sell something in
+              minutes, or search thousands of listings from people in your city.
             </p>
           </div>
 
@@ -49,7 +49,7 @@ function Footer() {
                   to="/post-ad"
                   className="text-sm text-gray-500 transition hover:text-gray-900"
                 >
-                  Post an ad
+                  Sell something
                 </Link>
               </li>
               <li>

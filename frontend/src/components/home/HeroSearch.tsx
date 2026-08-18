@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { FiStar } from "react-icons/fi";
 import Container from "../layout/Container";
 import type { ApiListing } from "../../lib/api";
-import LocationSelector from "../search/LocationSelector";
-import SearchBar from "../search/SearchBar";
 
 type HeroSearchProps = {
   /** Live listing count from the API, shown in the reassurance line. */
@@ -14,10 +12,10 @@ type HeroSearchProps = {
 };
 
 /**
- * Quick searches under the box — the things people most often buy second-hand,
- * spread across categories (phones, electronics, furniture, women's fashion,
- * bikes). Every term is verified to return results in the seed data, because a
- * shortcut that lands on "no results" reads as a broken site on the first click.
+ * Quick searches — the things people most often buy second-hand, spread across
+ * categories (phones, electronics, furniture, women's fashion, bikes). Every
+ * term is verified to return results in the seed data, because a shortcut that
+ * lands on "no results" reads as a broken site on the first click.
  */
 const POPULAR = [
   "iPhone",
@@ -32,16 +30,15 @@ const POPULAR = [
 
 
 /**
- * The homepage hero: one headline, one search box, and the shortcuts most
- * people want.
+ * The homepage hero: one headline and the searches most people want. The
+ * search box itself lives in the header now, not here — one search experience
+ * for the whole site rather than a second copy in the middle of the page.
  *
  * Monochrome, on the page's own off-white background. Emphasis comes from
  * weight and scale rather than from colour — the only strong tone in this
- * design is the black of the Search button.
+ * design is the black of the header's Search button.
  */
 function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
-  const [city, setCity] = useState<string | null>(null);
-
   /** Entry animation, staggered so the eye lands on the headline first. */
   const rise = (delayMs: number) =>
     `animate-[rise-in_0.6s_ease-out_both] [animation-delay:${delayMs}ms] motion-reduce:animate-none`;
@@ -159,12 +156,15 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
 
         <h1
           /* Tighter leading as the type grows: at this scale the default line
-             height opens a gap wide enough to read as two separate headings. */
+             height opens a gap wide enough to read as two separate headings.
+             Built on the brand name itself rather than a generic "buy & sell"
+             line — that sentence works on any classifieds site; this one only
+             makes sense on Bazaar. */
           className={`text-3xl font-black italic leading-[1.05] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl ${rise(90)}`}
         >
-          Buy &amp; Sell Used Things
+          Your City,
           <br />
-          Near You
+          One Big Bazaar
         </h1>
 
         <p
@@ -177,35 +177,15 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
           longer need — free to browse, no account needed.
         </p>
 
-        {/* `relative z-30` here is load-bearing, not decoration.
-
-            Every element in this hero carries `rise(...)`, and an animated
-            transform creates a stacking context of its own. That makes the search
-            row, the popular chips and the post-ad link three sibling contexts —
-            with no z-index the later two paint over the first, so the suggestions
-            dropdown appeared *under* the chips however high its own z-index went.
-            A child cannot escape its parent's stacking context, so the parent is
-            what has to be lifted. */}
-        <div
-          className={`relative z-30 mx-auto mt-9 flex max-w-2xl flex-col gap-2.5 sm:flex-row ${rise(280)}`}
-        >
-          <LocationSelector value={city} onChange={setCity} className="sm:w-44" />
-          <div className="min-w-0 flex-1">
-            <SearchBar size="large" city={city} />
-          </div>
-        </div>
-
         {/* Popular searches — commonly bought second-hand items. */}
         <div
-          className={`mt-6 flex flex-wrap items-center justify-center gap-2 ${rise(370)}`}
+          className={`mt-8 flex flex-wrap items-center justify-center gap-2 ${rise(280)}`}
         >
           <span className="text-sm text-gray-400">Popular:</span>
           {POPULAR.map((term) => (
             <Link
               key={term}
-              to={`/search?q=${encodeURIComponent(term)}${
-                city ? `&city=${encodeURIComponent(city)}` : ""
-              }`}
+              to={`/search?q=${encodeURIComponent(term)}`}
               className="rounded-full border border-gray-300 bg-white px-3 py-1 text-[13px] text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-900 hover:text-gray-900 motion-reduce:hover:translate-y-0"
             >
               {term}
@@ -217,7 +197,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
             link (posting still lives in the header). The <p> keeps the staggered
             rise-in entrance; the inner span carries the blink — two animations on
             one element would overwrite each other, so they are split across two. */}
-        <p className={`mt-8 ${rise(450)}`}>
+        <p className={`mt-9 ${rise(480)}`}>
           <span className="animate-[blink_1.8s_ease-in-out_infinite] text-base font-black italic tracking-tight text-gray-900 motion-reduce:animate-none sm:text-lg">
             Second-hand, not second-best — give your things a new home, and find
             your next find nearby. ♻️

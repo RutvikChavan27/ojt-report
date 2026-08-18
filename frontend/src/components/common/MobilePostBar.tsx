@@ -5,7 +5,7 @@ import { FiPlus } from "react-icons/fi";
 const HIDDEN_ON = ["/post-ad", "/login", "/register"];
 
 /**
- * A fixed "Post an Ad" bar on phones.
+ * A fixed "Sell Something" bar on phones.
  *
  * The navbar button shrinks to an icon on small screens, and posting is the one
  * action the marketplace depends on — this keeps it reachable without scrolling
@@ -22,7 +22,7 @@ function MobilePostBar() {
         className="pointer-events-auto flex items-center justify-center gap-2 rounded-full bg-gray-900 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:bg-black"
       >
         <FiPlus size={17} />
-        Post an Ad
+        Sell Something
       </Link>
     </div>
   );

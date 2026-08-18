@@ -128,7 +128,7 @@ function App() {
           <Route
             path="/post-ad"
             element={
-              <RequireAuth action="post an ad">
+              <RequireAuth action="sell something">
                 <PostAd />
               </RequireAuth>
             }

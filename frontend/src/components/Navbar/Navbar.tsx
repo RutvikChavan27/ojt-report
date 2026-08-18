@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Link,
-  NavLink,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiBookmark,
   FiChevronDown,
@@ -20,46 +14,31 @@ import {
 import Container from "../layout/Container";
 import Logo from "../common/Logo";
 import SearchBar from "../search/SearchBar";
+import LocationSelector from "../search/LocationSelector";
 import { CATEGORIES } from "../../data/marketplace";
 import { useAuth } from "../../store/AuthContext";
 import { useSavedListings } from "../../store/SavedListingsContext";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
 
 /**
- * A few popular categories shown as quick links across the header, filling the
- * space the search box leaves on the pages that carry their own (the home page).
- * Short labels only — this is a shortcut strip, not the full taxonomy, which
- * lives behind the "Categories" button and in the mobile menu.
- */
-const QUICK_CATEGORIES: { slug: string; label: string }[] = [
-  { slug: "mobiles", label: "Mobiles" },
-  { slug: "cars", label: "Cars" },
-  { slug: "bikes", label: "Bikes" },
-  { slug: "furniture", label: "Furniture" },
-  { slug: "electronics", label: "Electronics" },
-  { slug: "sports", label: "Sports" },
-];
-
-/**
  * The marketplace header: brand, search, categories, and the actions a
  * classifieds site needs — save, saved searches, and posting an ad.
  *
- * "Post an Ad" is the only filled button, because it is the one action the
+ * "Sell Something" is the only filled button, because it is the one action the
  * marketplace depends on and everything else is navigation.
  */
 function Navbar() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const { user, signOut } = useAuth();
 
-  /* The pages that carry their own big search box in the body — the welcome
-     screen ("/") and the marketplace home ("/home", which has the hero — do not
-     repeat one in the header, or two search boxes sit on screen at once. Every
-     other page (results, a listing, a category) has no other search, so the
-     header carries it there. */
-  const showSearch = pathname !== "/" && pathname !== "/home";
   const { count: savedCount } = useSavedListings();
   const { searches } = useSavedSearches();
+
+  /* The one search experience for the whole marketplace: it lives in the
+     header on every page, including the home page, rather than the home page
+     also carrying its own copy in the hero. Location travels with it, since a
+     search and the place it is scoped to are one decision, not two. */
+  const [city, setCity] = useState<string | null>(null);
 
   /* Seed the box from the URL, so the header shows the search that produced the
      page you are looking at. Without this, opening or reloading /search?q=car
@@ -116,13 +95,19 @@ function Navbar() {
         <div className="flex h-18 items-center gap-3 sm:gap-5 lg:gap-7">
           <Logo />
 
-          {showSearch && (
-            /* Capped rather than flex-1: stretched across a wide header the box
-               was far longer than any query anyone types. */
-            <div className="hidden min-w-0 flex-1 md:block md:max-w-md lg:max-w-lg">
-              <SearchBar initialQuery={activeQuery} />
+          {/* The search cluster: capped rather than flex-1, since stretched
+              across a wide header the box was far longer than any query anyone
+              types. Location only joins it from lg — at md there is barely room
+              for the box itself, and a location picker with no search room to
+              act on would be worse than not showing it. */}
+          <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex md:max-w-md lg:max-w-xl">
+            <div className="hidden flex-shrink-0 lg:block lg:w-36 xl:w-40">
+              <LocationSelector value={city} onChange={setCity} className="w-full" />
             </div>
-          )}
+            <div className="min-w-0 flex-1">
+              <SearchBar initialQuery={activeQuery} city={city} />
+            </div>
+          </div>
 
           <div ref={categoriesRef} className="relative hidden lg:block">
             {/* A bordered pill with a small dark icon-badge echoing the logo, so
@@ -170,33 +155,12 @@ function Navbar() {
             )}
           </div>
 
-          {/* Quick category links fill the centre on pages without a header
-              search box (the home page). They sit behind the same lg breakpoint
-              as the Categories button, and give the header a useful, browseable
-              middle instead of an empty gap. */}
-          {!showSearch && (
-            <nav
-              aria-label="Popular categories"
-              className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex"
-            >
-              {QUICK_CATEGORIES.map((category) => (
-                <NavLink
-                  key={category.slug}
-                  to={`/category/${category.slug}`}
-                  className="rounded-full px-3.5 py-2 text-sm font-medium text-gray-600 transition-all duration-150 hover:bg-black/[0.06] hover:text-gray-900"
-                >
-                  {category.label}
-                </NavLink>
-              ))}
-            </nav>
-          )}
-
           <div className="ml-auto flex items-center gap-1.5">
             {/* Icon shortcuts from tablet up; on a phone they live in the menu,
                 so the top bar stays uncrowded. */}
             <NavLink
               to="/saved-searches"
-              className={`${iconLink} hidden sm:flex`}
+              className={`${iconLink} max-sm:hidden`}
               aria-label="Saved searches"
             >
               <FiBookmark size={18} />
@@ -205,7 +169,7 @@ function Navbar() {
 
             <NavLink
               to="/saved"
-              className={`${iconLink} hidden sm:flex`}
+              className={`${iconLink} max-sm:hidden`}
               aria-label="Saved listings"
             >
               <FiHeart size={18} />
@@ -286,7 +250,7 @@ function Navbar() {
               className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 ease-out hover:bg-black hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6 sm:py-3"
             >
               <FiPlus size={17} />
-              <span className="hidden sm:inline">Post an Ad</span>
+              <span className="hidden sm:inline">Sell Something</span>
               <span className="sm:hidden">Sell</span>
             </Link>
 
@@ -302,13 +266,16 @@ function Navbar() {
           </div>
         </div>
 
-        {/* On narrow screens the box gets its own row rather than shrinking into
-            uselessness beside the logo. Same homepage exception. */}
-        {showSearch && (
-          <div className="pb-3 md:hidden">
-            <SearchBar initialQuery={activeQuery} />
+        {/* On narrow screens the search cluster gets its own row rather than
+            shrinking into uselessness beside the logo, with location above the
+            box rather than beside it — side by side, neither had room to say
+            what it was. */}
+        <div className="flex flex-col gap-2 pb-3 sm:flex-row md:hidden">
+          <LocationSelector value={city} onChange={setCity} className="sm:w-40" />
+          <div className="min-w-0 flex-1">
+            <SearchBar initialQuery={activeQuery} city={city} />
           </div>
-        )}
+        </div>
       </Container>
 
       {mobileOpen && (

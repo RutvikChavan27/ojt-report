@@ -43,6 +43,14 @@ export const PRICE_BANDS: { id: string; label: string; min?: number; max?: numbe
     { id: "50000-", label: "Above ₹50,000", min: 50000 },
   ];
 
+/**
+ * The condition values the backend actually returns (see `listing_condition`
+ * in the schema and the facet response) — used to validate a condition arriving
+ * from the URL. Kept separate from the `CONDITIONS` fixture import below, which
+ * is an older sample dataset's wording and does not match live values.
+ */
+const REAL_CONDITIONS = ["New with tags", "Like new", "Good", "Fair"];
+
 export type SearchParams = {
   q: string;
   category: string | null;
@@ -391,9 +399,14 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
     category: search.get("category"),
     city: search.get("city"),
     // Repeated keys, so a value containing a comma survives the round trip.
+    // Validated against the real backend enum, not the CONDITIONS fixture
+    // above (an older sample dataset's wording — "New", "Like New"). Filtering
+    // against that stale list silently dropped "Like new" and "New with tags"
+    // arriving from a link, a reload, or the filter checkboxes themselves,
+    // since those are the server's actual values and never matched it.
     conditions: search
       .getAll("condition")
-      .filter((value) => CONDITIONS.includes(value as Condition)),
+      .filter((value) => REAL_CONDITIONS.includes(value)),
     priceBand: search.get("price"),
     minPrice: number("minPrice"),
     maxPrice: number("maxPrice"),

@@ -5,7 +5,7 @@ import { FiLogIn, FiUserPlus } from "react-icons/fi";
 import { useAuth } from "../../store/AuthContext";
 
 type RequireAuthProps = {
-  /** What the account is needed for, e.g. "post an ad". */
+  /** What the account is needed for, e.g. "sell something". */
   action: string;
   children: ReactNode;
 };

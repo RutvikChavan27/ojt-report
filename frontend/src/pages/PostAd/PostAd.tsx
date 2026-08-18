@@ -208,7 +208,7 @@ function PostAd() {
       <BackLink className="mb-4" />
 
       <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
-        Post an ad
+        Sell Something
       </h1>
       <p className="mt-1 text-sm text-gray-500">
         Add a few clear photos and an honest description — those two things sell
