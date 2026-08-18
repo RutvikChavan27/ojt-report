@@ -8,9 +8,11 @@
 
 /** Versioned, so a change of shape can be ignored rather than crash on read. */
 export const STORAGE_KEYS = {
-  savedListings: "bazaar.saved-listings.v1",
-  savedSearches: "bazaar.saved-searches.v1",
-  /** Automatic history of queries run, distinct from the curated saved list. */
+  /* Saved listings and saved searches used to live here, per-browser. They are
+     now stored in the database against the user account, so they persist across
+     browsers and devices and never exist for a logged-out visitor. Only the
+     recent-search history remains local: it is a device convenience, not a saved
+     record, and needs no account. */
   recentSearches: "bazaar.recent-searches.v1",
 } as const;
 

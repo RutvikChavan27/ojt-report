@@ -146,16 +146,43 @@ CREATE TABLE IF NOT EXISTS listing_photos (
 );
 
 -- A named search plus the filters it was saved with. last_viewed_at is what
--- "how many new listings since you last looked" is measured against.
+-- "how many new listings since you last looked" is measured against, and
+-- seen_count is the result total captured at that moment — the badge is
+-- (current total − seen_count). Storing it on the row, not per-browser, is what
+-- makes the count survive a login from a different browser or device.
 CREATE TABLE IF NOT EXISTS saved_searches (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   query TEXT NOT NULL DEFAULT '',
   filters JSONB NOT NULL DEFAULT '{}'::jsonb,
+  seen_count INTEGER NOT NULL DEFAULT 0,
   last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Existing databases predate seen_count; add it in place so a re-run of this
+-- file on an already-migrated database picks it up rather than silently lacking
+-- the column the saved-search endpoints write to.
+ALTER TABLE saved_searches
+  ADD COLUMN IF NOT EXISTS seen_count INTEGER NOT NULL DEFAULT 0;
+
+-- Listings a user has saved (the wishlist). A join row per (user, listing), so
+-- ownership is the primary key itself — a user can only ever read or delete
+-- their own rows, and saving the same listing twice is a no-op rather than a
+-- duplicate. The listing itself is never copied; only its id is kept, so a saved
+-- listing always reflects the seller's current price and status.
+CREATE TABLE IF NOT EXISTS saved_listings (
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  listing_id BIGINT NOT NULL REFERENCES listings (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, listing_id)
+);
+
+-- Newest-first listing of a user's saved items, and the lookup behind the
+-- wishlist page and the heart's saved/not-saved state.
+CREATE INDEX IF NOT EXISTS saved_listings_user_idx
+  ON saved_listings (user_id, created_at DESC);
 
 -- === Indexes ===============================================================
 

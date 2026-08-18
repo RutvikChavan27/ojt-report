@@ -13,6 +13,8 @@
     "explain:facets": "tsx src/scripts/explainFacets.ts",
     "typecheck": "tsc --noEmit",
     "seed:marketplace": "tsx src/db/seeds/seedMarketplace.ts",
+    "seed:marketplace100k": "tsx src/db/seeds/seedMarketplace100k.ts",
+    "images:pexels": "tsx src/scripts/fetchPexelsImages.ts",
     "images:items": "tsx src/scripts/fetchItemImages.ts",
     "images:upload": "tsx src/scripts/uploadImagesToStorage.ts",
     "images:repoint": "tsx src/scripts/rewritePhotoPaths.ts"

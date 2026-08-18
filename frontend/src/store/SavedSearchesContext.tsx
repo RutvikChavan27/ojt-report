@@ -7,21 +7,21 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { loadJSON, saveJSON, STORAGE_KEYS } from "../lib/storage";
+import { useNavigate } from "react-router-dom";
+import {
+  createSavedSearch,
+  deleteSavedSearch,
+  fetchSavedSearches,
+  markSavedSearchViewed,
+  type ApiSavedSearch,
+} from "../lib/api";
 import { paramsFromSearch } from "../lib/search";
 import { searchListingsViaApi } from "../lib/searchApi";
+import { useAuth } from "./AuthContext";
+import { useConfirm } from "./ConfirmContext";
 
-export type SavedSearch = {
-  id: string;
-  /** The name the user chose, e.g. "iPhone under ₹50,000 in Pune". */
-  name: string;
-  /** The search as a query string, so it restores exactly. */
-  query: string;
-  createdAt: string;
-  lastCheckedAt: string;
-  /** How many results there were when it was last checked. */
-  seenCount: number;
-};
+/** A saved search, exactly as the API returns it. */
+export type SavedSearch = ApiSavedSearch;
 
 type SavedSearchesValue = {
   searches: SavedSearch[];
@@ -36,15 +36,15 @@ type SavedSearchesValue = {
 const SavedSearchesContext = createContext<SavedSearchesValue | null>(null);
 
 /**
- * How many results a saved search returns right now, from the server.
+ * How many results a saved search returns right now.
  *
  * Goes through the same bridge the results page uses rather than a bespoke count
  * query, so "new matches" is counted by exactly the rules that decide what the
- * page will show. A count derived differently from the listing it points at is
- * the kind of subtly wrong number that is worse than no number at all.
+ * page will show — a count derived differently from the listing it points at is
+ * worse than no count at all.
  *
- * @returns the total, or null when the request fails — null means "unknown",
- *          which the badge treats as nothing new rather than inventing a count.
+ * @returns the total, or null when the request fails (treated as "unknown",
+ *          i.e. nothing new, rather than inventing a number).
  */
 async function currentTotal(query: string): Promise<number | null> {
   try {
@@ -58,31 +58,51 @@ async function currentTotal(query: string): Promise<number | null> {
 }
 
 /**
- * Searches a user has saved, with a count of what has appeared since.
+ * Searches the signed-in user has saved, with a count of what has appeared since.
  *
- * The search is stored as its query string rather than as a parsed object. The
- * URL is already the canonical form of a search, so storing anything else would
- * be a second format to keep in step with it.
+ * The database is the source of truth: the list is fetched on login and re-fetched
+ * when the account changes, so a search saved in one browser shows up when the
+ * same account logs in anywhere. `seen_count` is stored on each row server-side,
+ * so the "N new" badge is correct across devices too — not just on the browser
+ * that saved it.
  *
- * Totals live in a cache refreshed from the server, which keeps `newCount`
- * synchronous for callers that render a badge inline. The alternative — awaiting
- * a request inside render — is not something a component can do.
+ * Nothing is stored for a logged-out visitor: `save` opens the login prompt.
  */
 export function SavedSearchesProvider({ children }: { children: ReactNode }) {
-  const [searches, setSearches] = useState<SavedSearch[]>(() =>
-    loadJSON<SavedSearch[]>(STORAGE_KEYS.savedSearches, []),
-  );
+  const { user } = useAuth();
+  const confirm = useConfirm();
+  const navigate = useNavigate();
 
-  /** Live totals by saved-search id, as last fetched. */
+  const [searches, setSearches] = useState<SavedSearch[]>([]);
+  /** Live totals by saved-search id, as last fetched — drives the badge. */
   const [totals, setTotals] = useState<Record<string, number>>({});
 
+  /* Load on login, clear on logout so the next visitor never sees the last
+     user's saved searches. */
   useEffect(() => {
-    saveJSON(STORAGE_KEYS.savedSearches, searches);
-  }, [searches]);
+    if (!user) {
+      setSearches([]);
+      setTotals({});
+      return;
+    }
 
-  /* Refresh every saved search's total when the set of them changes. Keyed on
-     the ids and queries rather than the array identity, so re-saving the same
-     list (which happens whenever a badge is cleared) does not refetch. */
+    let live = true;
+    fetchSavedSearches()
+      .then((list) => {
+        if (live) setSearches(list);
+      })
+      .catch(() => {
+        if (live) setSearches([]);
+      });
+
+    return () => {
+      live = false;
+    };
+  }, [user]);
+
+  /* Refresh each saved search's current total when the set changes, so the badge
+     reflects what exists now. Keyed on ids+queries, not array identity, so a
+     re-render does not refetch. */
   const fingerprint = searches.map((entry) => `${entry.id}:${entry.query}`).join("|");
 
   useEffect(() => {
@@ -106,53 +126,65 @@ export function SavedSearchesProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fingerprint]);
 
-  const save = useCallback(async (name: string, query: string) => {
-    // Baseline is what exists now, so the badge starts at zero instead of
-    // announcing every existing listing as new.
-    const total = await currentTotal(query);
-    const now = new Date().toISOString();
-    const id = `s-${Date.now().toString(36)}`;
+  const promptLogin = useCallback(async () => {
+    const ok = await confirm({
+      title: "Log in to save searches",
+      message:
+        "Saving a search keeps it to your account and tells you when new matching listings appear. It only takes a moment.",
+      confirmLabel: "Log in",
+      cancelLabel: "Not now",
+    });
+    if (ok) navigate("/login");
+  }, [confirm, navigate]);
 
-    setSearches((current) => [
-      {
-        id,
-        name,
-        query,
-        createdAt: now,
-        lastCheckedAt: now,
-        seenCount: total ?? 0,
-      },
-      ...current,
-    ]);
-    if (total !== null) setTotals((current) => ({ ...current, [id]: total }));
-  }, []);
+  const save = useCallback(
+    async (name: string, query: string) => {
+      if (!user) {
+        await promptLogin();
+        return;
+      }
+
+      // Baseline is what exists now, so the badge starts at zero rather than
+      // announcing every existing listing as new.
+      const total = (await currentTotal(query)) ?? 0;
+      const row = await createSavedSearch({ name, query, seenCount: total });
+
+      setSearches((current) => [row, ...current]);
+      setTotals((current) => ({ ...current, [row.id]: total }));
+    },
+    [user, promptLogin],
+  );
 
   const remove = useCallback((id: string) => {
-    setSearches((current) => current.filter((entry) => entry.id !== id));
-    setTotals((current) => {
-      const next = { ...current };
-      delete next[id];
-      return next;
+    // Optimistic removal, rolled back if the server refuses.
+    let removed: SavedSearch | undefined;
+    setSearches((current) => {
+      removed = current.find((entry) => entry.id === id);
+      return current.filter((entry) => entry.id !== id);
+    });
+
+    deleteSavedSearch(id).catch(() => {
+      if (removed) setSearches((current) => [removed as SavedSearch, ...current]);
     });
   }, []);
 
   const markChecked = useCallback(async (id: string) => {
-    setSearches((current) => {
-      const entry = current.find((item) => item.id === id);
-      if (!entry) return current;
-      return current.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              lastCheckedAt: new Date().toISOString(),
-              // Rebaseline to the last known total; the effect above keeps it
-              // current, so this is the number the badge was just showing.
-              seenCount: totals[id] ?? item.seenCount,
-            }
-          : item,
-      );
-    });
-  }, [totals]);
+    const total = (await currentTotal(
+      searches.find((entry) => entry.id === id)?.query ?? "",
+    )) ?? 0;
+
+    // Persist the new baseline so the badge stays cleared on other devices too,
+    // then reflect it locally.
+    void markSavedSearchViewed(id, total).catch(() => undefined);
+    setSearches((current) =>
+      current.map((entry) =>
+        entry.id === id
+          ? { ...entry, lastCheckedAt: new Date().toISOString(), seenCount: total }
+          : entry,
+      ),
+    );
+    setTotals((current) => ({ ...current, [id]: total }));
+  }, [searches]);
 
   const value = useMemo<SavedSearchesValue>(
     () => ({
@@ -160,8 +192,8 @@ export function SavedSearchesProvider({ children }: { children: ReactNode }) {
       save,
       remove,
       markChecked,
-      // Clamped at zero: listings expire and get sold, so the total can fall
-      // below the baseline, and "-2 new listings" is not a thing.
+      // Clamped at zero: listings expire and sell, so the total can fall below
+      // the baseline, and "-2 new listings" is not a thing.
       newCount: (search) =>
         Math.max(0, (totals[search.id] ?? search.seenCount) - search.seenCount),
     }),

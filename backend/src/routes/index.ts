@@ -16,6 +16,15 @@ import {
   postListingSold,
   removeListing,
 } from "../controllers/listing.controller";
+import {
+  deleteSavedListing,
+  deleteSavedSearchById,
+  getSavedListings,
+  getSavedSearches,
+  postSavedListing,
+  postSavedSearch,
+  postSavedSearchViewed,
+} from "../controllers/saved.controller";
 import { requireAuth, requireListingOwner } from "../middleware/auth.middleware";
 
 /**
@@ -61,5 +70,19 @@ router.patch("/listings/:id", requireAuth, requireListingOwner, patchListing);
 router.delete("/listings/:id", requireAuth, requireListingOwner, removeListing);
 router.post("/listings/:id/sold", requireAuth, requireListingOwner, postListingSold);
 router.post("/listings/:id/renew", requireAuth, requireListingOwner, postListingRenew);
+
+/* Saved listings and saved searches. Every one is behind requireAuth: these are
+   per-user records, so there is no anonymous version of any of them. The handlers
+   scope every query to the session's user id, which is what enforces that a user
+   only ever touches their own rows — the guard here refuses a stranger, the
+   query refuses another user. */
+router.get("/saved-listings", requireAuth, getSavedListings);
+router.post("/saved-listings", requireAuth, postSavedListing);
+router.delete("/saved-listings/:id", requireAuth, deleteSavedListing);
+
+router.get("/saved-searches", requireAuth, getSavedSearches);
+router.post("/saved-searches", requireAuth, postSavedSearch);
+router.delete("/saved-searches/:id", requireAuth, deleteSavedSearchById);
+router.post("/saved-searches/:id/viewed", requireAuth, postSavedSearchViewed);
 
 export default router;

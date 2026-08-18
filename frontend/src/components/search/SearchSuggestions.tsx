@@ -16,10 +16,6 @@ type SearchSuggestionsProps = {
   onClearRecent: () => void;
 };
 
-/** Indian-format price, matching how the rest of the site writes them. */
-const price = (value: number) =>
-  `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-
 /**
  * The dropdown under the search box: past searches, or live suggestions.
  *
@@ -27,9 +23,11 @@ const price = (value: number) =>
  * the person has not said what they want yet, so their own history is the most
  * useful thing to offer; once there is text, matches from the database are.
  *
- * Suggestions show a title with its price and category rather than a bare
- * keyword, because that tells you whether the search is worth running before you
- * run it.
+ * Suggestions show only the listing name — a plain list to pick from. Sellers
+ * write titles as "<item> — <descriptor>" ("… — Excellent Condition", "… —
+ * Plum"), so the descriptor after the em-dash is dropped for display, leaving
+ * the item itself. The API still returns price and category (used elsewhere);
+ * the dropdown keeps to the name so it reads as suggestions rather than results.
  */
 function SearchSuggestions({
   suggestions,
@@ -40,6 +38,15 @@ function SearchSuggestions({
   onClearRecent,
 }: SearchSuggestionsProps) {
   const showingRecent = suggestions.length === 0 && recent.length > 0;
+
+  /* The name shown for a suggestion: the title up to its first em-dash, so the
+     seller's trailing descriptor drops off. Only the em-dash (—) is cut, never a
+     plain hyphen, so names like "Wi-Fi" survive. Two titles can trim to the same
+     name (two "Used iPhone 13 Pro 128GB" listings), so the list is deduped while
+     keeping the order the server returned. */
+  const suggestionNames = Array.from(
+    new Set(suggestions.map((item) => item.title.split("—")[0].trim())),
+  );
 
   // Nothing to offer, and nothing in flight worth announcing.
   if (suggestions.length === 0 && recent.length === 0 && !loading) return null;
@@ -101,24 +108,20 @@ function SearchSuggestions({
             </li>
           ))}
 
-        {suggestions.map((item) => (
-          <li key={`${item.title}-${item.category}`}>
+        {suggestionNames.map((name) => (
+          <li key={name}>
             <button
               type="button"
               role="option"
               aria-selected={false}
-              onMouseDown={() => onPick(item.title)}
+              // Picks the trimmed name, so the box and the search that runs match
+              // what was shown rather than the longer stored title.
+              onMouseDown={() => onPick(name)}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-black/[0.03]"
             >
               <FiSearch size={14} className="flex-shrink-0 text-gray-400" />
               <span className="min-w-0 flex-1 truncate text-sm text-gray-900">
-                {item.title}
-              </span>
-              <span className="flex-shrink-0 text-xs text-gray-400">
-                {item.categoryLabel}
-              </span>
-              <span className="flex-shrink-0 text-xs font-semibold text-gray-500">
-                {price(item.price)}
+                {name}
               </span>
             </button>
           </li>

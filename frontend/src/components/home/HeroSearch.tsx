@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiPlus, FiStar } from "react-icons/fi";
+import { FiStar } from "react-icons/fi";
 import Container from "../layout/Container";
 import type { ApiListing } from "../../lib/api";
 import LocationSelector from "../search/LocationSelector";
@@ -14,20 +14,22 @@ type HeroSearchProps = {
 };
 
 /**
- * Quick searches under the box.
- *
- * Every one is checked against the seed data, because a shortcut that lands on
- * "no results" is worse than no shortcut — it reads as a broken site on the
- * first thing a visitor clicks.
+ * Quick searches under the box — the things people most often buy second-hand,
+ * spread across categories (phones, electronics, furniture, women's fashion,
+ * bikes). Every term is verified to return results in the seed data, because a
+ * shortcut that lands on "no results" reads as a broken site on the first click.
  */
 const POPULAR = [
   "iPhone",
-  "Royal Enfield",
-  "Laptop",
-  "Sofa",
-  "Bicycle",
   "Samsung",
+  "Laptop",
+  "Camera",
+  "Sofa",
+  "Dress",
+  "Saree",
+  "Bicycle",
 ];
+
 
 /**
  * The homepage hero: one headline, one search box, and the shortcuts most
@@ -193,7 +195,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
           </div>
         </div>
 
-        {/* Popular searches */}
+        {/* Popular searches — commonly bought second-hand items. */}
         <div
           className={`mt-6 flex flex-wrap items-center justify-center gap-2 ${rise(370)}`}
         >
@@ -211,15 +213,12 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
           ))}
         </div>
 
-        <Link
-          to="/post-ad"
-          className={`mt-8 inline-flex items-center gap-2 text-sm font-bold text-gray-900 transition hover:gap-3 ${rise(450)}`}
-        >
-          <FiPlus size={15} />
-          <span className="border-b border-gray-400 pb-0.5">
-            Got something to sell? Post a free ad
-          </span>
-        </Link>
+        {/* A line about what the place is for, in place of the old post-an-ad
+            link (posting still lives in the header). */}
+        <p className={`mt-8 text-sm font-semibold text-gray-500 ${rise(450)}`}>
+          Second-hand, not second-best — give your things a new home, and find
+          your next find nearby. ♻️
+        </p>
       </Container>
     </section>
   );

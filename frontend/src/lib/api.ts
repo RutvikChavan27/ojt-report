@@ -434,6 +434,68 @@ export const renewListing = (id: string) =>
     method: "POST",
   });
 
+/* ------------------------------------------------------------- saved data */
+
+/*
+ * Saved listings and saved searches. All of these require a session; the server
+ * answers 401 otherwise, which surfaces here as a thrown error the caller treats
+ * as "not signed in". The data is keyed to the account server-side, which is what
+ * makes it appear on any browser the user logs in from.
+ */
+
+/** The ids of the listings the signed-in user has saved. */
+export const fetchSavedListingIds = async (): Promise<string[]> => {
+  const data = await apiRequest<{ ids: string[] }>("/api/saved-listings");
+  return data.ids;
+};
+
+export const saveListing = (listingId: string) =>
+  apiRequest<{ saved: boolean }>("/api/saved-listings", {
+    method: "POST",
+    body: { listingId },
+  });
+
+export const unsaveListing = (listingId: string) =>
+  apiRequest<{ saved: boolean }>(
+    `/api/saved-listings/${encodeURIComponent(listingId)}`,
+    { method: "DELETE" },
+  );
+
+/** A saved search as the API returns it. Mirrors the server's toDTO. */
+export type ApiSavedSearch = {
+  id: string;
+  name: string;
+  query: string;
+  seenCount: number;
+  lastCheckedAt: string;
+  createdAt: string;
+};
+
+export const fetchSavedSearches = () =>
+  apiRequest<ApiSavedSearch[]>("/api/saved-searches");
+
+export const createSavedSearch = (input: {
+  name: string;
+  query: string;
+  seenCount: number;
+}) =>
+  apiRequest<ApiSavedSearch>("/api/saved-searches", {
+    method: "POST",
+    body: input,
+  });
+
+export const deleteSavedSearch = (id: string) =>
+  apiRequest<{ deleted: boolean }>(
+    `/api/saved-searches/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
+
+export const markSavedSearchViewed = (id: string, seenCount: number) =>
+  apiRequest<{ viewed: boolean }>(
+    `/api/saved-searches/${encodeURIComponent(id)}/viewed`,
+    { method: "POST", body: { seenCount } },
+  );
+
 /* -------------------------------------------------------------------- upload */
 
 export type UploadedImage = { path: string };

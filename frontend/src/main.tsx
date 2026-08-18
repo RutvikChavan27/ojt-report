@@ -15,21 +15,25 @@ import "./index.css";
  * BrowserRouter is outermost so every provider below it can navigate, and the
  * auth provider wraps the rest because whether someone is signed in decides what
  * the navbar and the seller pages show.
+ *
+ * ConfirmProvider sits above the saved-data providers on purpose: those two ask
+ * it to show the "log in to save" prompt when a logged-out visitor tries to save,
+ * so it has to be an ancestor of them. Its dialog is `fixed` and high z-index, so
+ * being higher in the tree does not stop it rendering above everything.
  */
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <SavedListingsProvider>
-          <SavedSearchesProvider>
-            <RecentSearchesProvider>
-              {/* Innermost, so its dialog renders above the app's own layers. */}
-              <ConfirmProvider>
+        <ConfirmProvider>
+          <SavedListingsProvider>
+            <SavedSearchesProvider>
+              <RecentSearchesProvider>
                 <App />
-              </ConfirmProvider>
-            </RecentSearchesProvider>
-          </SavedSearchesProvider>
-        </SavedListingsProvider>
+              </RecentSearchesProvider>
+            </SavedSearchesProvider>
+          </SavedListingsProvider>
+        </ConfirmProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
