@@ -27,11 +27,11 @@ function ListingGallery({ images, alt }: ListingGalleryProps) {
     setActive((current) => (current + direction + images.length) % images.length);
 
   const arrow =
-    "absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-md transition hover:scale-105";
+    "absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-r from-cyan-50/95 to-mint-50/95 text-charcoal-700 shadow-md transition hover:scale-105";
 
   return (
     <div>
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-taupe bg-sand">
         <ImageWithLoader
           src={images[active]}
           alt={alt}
@@ -77,10 +77,10 @@ function ListingGallery({ images, alt }: ListingGalleryProps) {
               onClick={() => setActive(index)}
               aria-label={`View photo ${index + 1}`}
               aria-pressed={active === index}
-              className={`relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-gray-100 transition ${
+              className={`relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-sand transition ${
                 active === index
-                  ? "border-gray-900"
-                  : "border-transparent hover:border-gray-300"
+                  ? "border-mint-500"
+                  : "border-transparent hover:border-taupe"
               }`}
             >
               <ImageWithLoader

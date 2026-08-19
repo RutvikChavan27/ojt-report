@@ -87,7 +87,7 @@ function ListingDetails() {
         >
           <Link
             to="/search"
-            className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+            className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
           >
             Browse all listings
           </Link>
@@ -144,29 +144,29 @@ function ListingDetails() {
           <ListingGallery images={listing.images} alt={listing.title} />
 
           <div className="mt-8">
-            <h1 className="text-xl font-black leading-snug tracking-tight text-gray-900 sm:text-2xl">
+            <h1 className="text-xl font-black leading-snug tracking-tight text-charcoal-900 sm:text-2xl">
               {listing.title}
             </h1>
-            <p className="mt-2 text-2xl font-black tracking-tight text-gray-900">
+            <p className="mt-2 text-2xl font-black tracking-tight text-charcoal-900">
               {formatPrice(listing.price)}
             </p>
 
             <Link
               to={`/category/${listing.category}`}
-              className="mt-3 inline-flex rounded-full bg-black/[0.06] px-3 py-1 text-xs font-semibold text-gray-900 transition hover:bg-black/[0.1]"
+              className="mt-3 inline-flex rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100"
             >
               {listing.categoryLabel}
             </Link>
           </div>
 
-          <dl className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-gray-200 bg-black/[0.03] p-5 sm:grid-cols-4">
+          <dl className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5 sm:grid-cols-4">
             {facts.map((fact) => (
               <div key={fact.label}>
-                <dt className="flex items-center gap-1.5 text-xs text-gray-400">
+                <dt className="flex items-center gap-1.5 text-xs text-charcoal-400">
                   {fact.icon}
                   {fact.label}
                 </dt>
-                <dd className="mt-1 text-sm font-bold text-gray-900">
+                <dd className="mt-1 text-sm font-bold text-charcoal-900">
                   {fact.value}
                 </dd>
               </div>
@@ -174,22 +174,22 @@ function ListingDetails() {
           </dl>
 
           <section className="mt-8">
-            <h2 className="text-sm font-black uppercase tracking-wide text-gray-900">
+            <h2 className="text-sm font-black uppercase tracking-wide text-charcoal-900">
               Description
             </h2>
-            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-gray-600">
+            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-charcoal-600">
               {listing.description}
             </p>
           </section>
 
-          <section className="mt-8 flex items-start gap-3 rounded-2xl border border-gray-200 p-5">
+          <section className="mt-8 flex items-start gap-3 rounded-2xl border border-taupe p-5">
             <FiAlertTriangle
               size={18}
-              className="mt-0.5 flex-shrink-0 text-gray-900"
+              className="mt-0.5 flex-shrink-0 text-amber-600"
             />
             <div>
-              <h2 className="text-sm font-bold text-gray-900">Stay safe</h2>
-              <ul className="mt-2 space-y-1 text-sm leading-relaxed text-gray-600">
+              <h2 className="text-sm font-bold text-charcoal-900">Stay safe</h2>
+              <ul className="mt-2 space-y-1 text-sm leading-relaxed text-charcoal-600">
                 <li>Meet the seller in a public place.</li>
                 <li>Check the item thoroughly before paying.</li>
                 <li>Never pay a deposit or advance before seeing the item.</li>
@@ -208,8 +208,8 @@ function ListingDetails() {
             aria-pressed={saved}
             className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full border py-3 text-sm font-bold transition ${
               saved
-                ? "border-gray-900 bg-gray-900 text-white"
-                : "border-gray-300 text-gray-900 hover:border-gray-900"
+                ? "border-mint-500 bg-mint-500 text-charcoal-900"
+                : "border-taupe text-charcoal-900 hover:border-mint-400 hover:text-mint-700"
             }`}
           >
             <FiHeart size={15} fill={saved ? "currentColor" : "none"} />
@@ -221,12 +221,12 @@ function ListingDetails() {
       {related.length > 0 && (
         <section className="mt-16">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="text-lg font-black tracking-tight text-gray-900">
+            <h2 className="text-lg font-black tracking-tight text-charcoal-900">
               More in {listing.categoryLabel}
             </h2>
             <Link
               to={`/category/${listing.category}`}
-              className="text-sm font-bold text-gray-900 transition hover:underline"
+              className="text-sm font-bold text-charcoal-900 transition hover:underline"
             >
               See all
             </Link>

@@ -41,7 +41,7 @@ function BackLink({
     <button
       type="button"
       onClick={() => (canGoBack ? navigate(-1) : navigate(fallbackTo))}
-      className={`flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-gray-900 ${className}`}
+      className={`flex items-center gap-2 text-sm font-semibold text-charcoal-500 transition hover:text-charcoal-900 ${className}`}
     >
       <FiArrowLeft size={16} />
       {label}

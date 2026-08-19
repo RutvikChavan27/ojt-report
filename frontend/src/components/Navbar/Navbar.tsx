@@ -71,91 +71,89 @@ function Navbar() {
   };
 
   const iconLink =
-    "relative flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition-all duration-150 hover:bg-black/[0.06] hover:text-gray-900 hover:scale-105 active:scale-95 motion-reduce:transform-none";
+    "relative flex h-11 w-11 items-center justify-center rounded-full text-charcoal-600 transition-all duration-150 hover:bg-sand hover:text-charcoal-900 hover:scale-105 active:scale-95 motion-reduce:transform-none";
 
   const badge = (count: number) =>
     count > 0 ? (
-      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] font-bold text-white">
+      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-mint-500 px-1 text-[10px] font-bold text-charcoal-900">
         {count > 99 ? "99+" : count}
       </span>
     ) : null;
 
   const menuPanel =
-    "absolute right-0 top-full mt-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none";
+    "absolute right-0 top-full mt-2 rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-2 shadow-xl shadow-charcoal-900/5 animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none";
   const menuItem =
-    "block rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-black/[0.03] hover:text-gray-900";
+    "block rounded-xl px-3 py-2 text-sm text-charcoal-700 transition hover:bg-sand hover:text-charcoal-900";
 
   return (
-    /* Translucent rather than solid: the page has a subtle noise texture, and a
-       flat white bar would cut a hard line across it while scrolling. A hair of
-       shadow under the border gives the bar a little lift off the page, and the
-       whole thing settles in on load rather than snapping. */
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-[#f2f1ee]/85 shadow-[0_1px_12px_rgba(0,0,0,0.04)] backdrop-blur-md animate-[header-in_400ms_ease-out_both] motion-reduce:animate-none">
+    /* Transparent rather than a solid bar: no border and no shadow, so it reads
+       as part of the same gradient surface as the hero beneath it rather than a
+       block sitting on top of it. Blur plus a light tint is what keeps nav text
+       readable once the page is scrolled and real content is passing underneath
+       — a fully see-through bar would let card text collide with nav text. */
+    <header className="sticky top-0 z-50 bg-gradient-to-r from-cyan-50/50 to-mint-50/50 backdrop-blur-md animate-[header-in_400ms_ease-out_both] motion-reduce:animate-none">
       <Container>
         <div className="flex h-18 items-center gap-3 sm:gap-5 lg:gap-7">
           <Logo />
 
-          {/* The search cluster: capped rather than flex-1, since stretched
-              across a wide header the box was far longer than any query anyone
-              types. Location only joins it from lg — at md there is barely room
-              for the box itself, and a location picker with no search room to
-              act on would be worse than not showing it. */}
-          <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex md:max-w-md lg:max-w-xl">
+          {/* The search cluster now carries most of the header's width and the
+              "large" size of the box itself — once the header blends into the
+              hero visually, this is the one thing in that whole band worth
+              making the largest. Location only joins it from lg — at md there
+              is barely room for the box itself, and a location picker with no
+              search room to act on would be worse than not showing it. */}
+          <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex md:max-w-xl lg:max-w-2xl xl:max-w-3xl">
             <div className="hidden flex-shrink-0 lg:block lg:w-36 xl:w-40">
               <LocationSelector value={city} onChange={setCity} className="w-full" />
             </div>
             <div className="min-w-0 flex-1">
-              <SearchBar initialQuery={activeQuery} city={city} />
+              <SearchBar initialQuery={activeQuery} city={city} size="large" />
             </div>
           </div>
 
-          <div ref={categoriesRef} className="relative hidden lg:block">
-            {/* A bordered pill with a small dark icon-badge echoing the logo, so
-                it reads as a deliberate control rather than plain text. It lifts
-                on hover and fills solid when its menu is open. */}
-            <button
-              type="button"
-              onClick={() => setCategoriesOpen((open) => !open)}
-              aria-expanded={categoriesOpen}
-              className={`group flex items-center gap-2.5 rounded-full border py-2 pl-2 pr-4 text-[15px] font-semibold transition-all duration-200 ease-out motion-reduce:transform-none ${
-                categoriesOpen
-                  ? "border-gray-900 bg-gray-900 text-white shadow-md"
-                  : "border-gray-300 text-gray-700 hover:-translate-y-px hover:border-gray-400 hover:bg-black/[0.06] hover:shadow-sm"
-              }`}
-            >
-              <span
-                className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors duration-200 ${
-                  categoriesOpen
-                    ? "bg-white/15 text-white"
-                    : "bg-gray-900 text-white"
+          {/* Everything that is not the search itself lives in one cluster
+              pinned to the right edge — categories, saved items, the account
+              menu and the primary action — rather than categories floating in
+              the middle of the bar on its own. */}
+          <div className="ml-auto flex items-center gap-1.5">
+            <div ref={categoriesRef} className="relative hidden lg:block">
+              {/* Filled mint at rest — the accent pair's "active navigation"
+                  half — rather than only turning solid once opened, so it
+                  reads as a deliberate control from the first paint. */}
+              <button
+                type="button"
+                onClick={() => setCategoriesOpen((open) => !open)}
+                aria-expanded={categoriesOpen}
+                className={`group flex items-center gap-2.5 rounded-full border border-mint-500 bg-mint-500 py-2 pl-2 pr-4 text-[15px] font-semibold text-charcoal-900 shadow-md shadow-mint-500/20 transition-all duration-200 ease-out hover:-translate-y-px hover:border-mint-600 hover:bg-mint-600 hover:shadow-lg motion-reduce:transform-none ${
+                  categoriesOpen ? "border-mint-600 bg-mint-600" : ""
                 }`}
               >
-                <FiGrid size={14} />
-              </span>
-              Categories
-              <FiChevronDown
-                size={16}
-                className={`transition-transform duration-200 ${categoriesOpen ? "rotate-180" : ""}`}
-              />
-            </button>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal-900/10 text-charcoal-900">
+                  <FiGrid size={14} />
+                </span>
+                Categories
+                <FiChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${categoriesOpen ? "rotate-180" : ""}`}
+                />
+              </button>
 
-            {categoriesOpen && (
-              <div className={`${menuPanel} grid w-64 gap-0.5`}>
-                {CATEGORIES.map((category) => (
-                  <Link
-                    key={category.slug}
-                    to={`/category/${category.slug}`}
-                    onClick={closeAll}
-                    className={menuItem}
-                  >
-                    {category.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+              {categoriesOpen && (
+                <div className={`${menuPanel} grid w-64 gap-0.5`}>
+                  {CATEGORIES.map((category) => (
+                    <Link
+                      key={category.slug}
+                      to={`/category/${category.slug}`}
+                      onClick={closeAll}
+                      className={menuItem}
+                    >
+                      {category.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <div className="ml-auto flex items-center gap-1.5">
             {/* Icon shortcuts from tablet up; on a phone they live in the menu,
                 so the top bar stays uncrowded. */}
             <NavLink
@@ -176,7 +174,7 @@ function Navbar() {
               {badge(savedCount)}
             </NavLink>
 
-            <span aria-hidden className="mx-1 hidden h-6 w-px bg-gray-300 sm:block" />
+            <span aria-hidden className="mx-1 hidden h-6 w-px bg-taupe sm:block" />
 
             {user ? (
               <div ref={profileRef} className="relative">
@@ -184,11 +182,11 @@ function Navbar() {
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
                   aria-expanded={profileOpen}
-                  className={`flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4 text-sm font-semibold transition-all duration-150 hover:bg-black/[0.06] ${
-                    profileOpen ? "bg-black/[0.06] text-gray-900" : "text-gray-700"
+                  className={`flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4 text-sm font-semibold transition-all duration-150 hover:bg-sand ${
+                    profileOpen ? "bg-sand text-charcoal-900" : "text-charcoal-700"
                   }`}
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-charcoal-900 text-sm font-bold text-white">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                   <span className="hidden sm:inline">
@@ -203,7 +201,7 @@ function Navbar() {
                 {profileOpen && (
                   <div className={`${menuPanel} w-52`}>
                     <div className="px-3 py-2">
-                      <p className="truncate text-xs text-gray-400">
+                      <p className="truncate text-xs text-charcoal-400">
                         {user.email}
                       </p>
                     </div>
@@ -247,7 +245,7 @@ function Navbar() {
                 on a button that was hidden from them. */}
             <Link
               to="/post-ad"
-              className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-150 ease-out hover:bg-black hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6 sm:py-3"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-4 py-2.5 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-mint-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6 sm:py-3"
             >
               <FiPlus size={17} />
               <span className="hidden sm:inline">Sell Something</span>
@@ -273,19 +271,19 @@ function Navbar() {
         <div className="flex flex-col gap-2 pb-3 sm:flex-row md:hidden">
           <LocationSelector value={city} onChange={setCity} className="sm:w-40" />
           <div className="min-w-0 flex-1">
-            <SearchBar initialQuery={activeQuery} city={city} />
+            <SearchBar initialQuery={activeQuery} city={city} size="large" />
           </div>
         </div>
       </Container>
 
       {mobileOpen && (
-        <div className="border-t border-gray-200 bg-[#f2f1ee] lg:hidden">
+        <div className="border-t border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 lg:hidden">
           <Container className="grid gap-1 py-3">
             {!user && (
               <Link
                 to="/login"
                 onClick={closeAll}
-                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-gray-900 transition hover:bg-black/[0.03]"
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-charcoal-900 transition hover:bg-sand"
               >
                 <FiUser size={15} />
                 Login / Sign Up
@@ -301,7 +299,7 @@ function Navbar() {
               Saved searches
             </Link>
 
-            <p className="mt-2 px-3 text-xs font-bold uppercase tracking-wide text-gray-400">
+            <p className="mt-2 px-3 text-xs font-bold uppercase tracking-wide text-charcoal-400">
               Categories
             </p>
             {CATEGORIES.map((category) => (

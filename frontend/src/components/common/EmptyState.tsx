@@ -33,17 +33,21 @@ function EmptyState({
   children,
 }: EmptyStateProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-black/[0.03] px-6 py-16 text-center">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-gray-900">
+    <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-6 py-16 text-center">
+      <span
+        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-50 to-mint-50 ${
+          variant === "error" ? "text-rose-600" : "text-charcoal-500"
+        }`}
+      >
         {variant === "error" ? <FiAlertCircle size={22} /> : <FiInbox size={22} />}
       </span>
 
-      <Heading className="mt-5 text-lg font-black tracking-tight text-gray-900">
+      <Heading className="mt-5 text-lg font-black tracking-tight text-charcoal-900">
         {title}
       </Heading>
 
       {description && (
-        <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-gray-500">
+        <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-charcoal-500">
           {description}
         </p>
       )}
@@ -54,7 +58,7 @@ function EmptyState({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
         >
           <FiRefreshCw size={14} />
           Try again

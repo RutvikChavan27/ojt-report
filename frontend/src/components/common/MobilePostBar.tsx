@@ -19,7 +19,7 @@ function MobilePostBar() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:hidden">
       <Link
         to="/post-ad"
-        className="pointer-events-auto flex items-center justify-center gap-2 rounded-full bg-gray-900 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:bg-black"
+        className="pointer-events-auto flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 shadow-lg shadow-cyan-500/30 transition hover:shadow-mint-500/40 hover:brightness-105"
       >
         <FiPlus size={17} />
         Sell Something

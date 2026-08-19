@@ -107,16 +107,16 @@ function Welcome() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
-      {/* Two faint washes drifting behind everything, the same treatment as the
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-cyan-200 via-cream to-mint-200">
+      {/* Two glow blobs drifting over the gradient, the same treatment as the
           homepage hero so this reads as the same product. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-40 -top-40 h-[32rem] w-[32rem] animate-[glow-drift_18s_ease-in-out_infinite] rounded-full bg-black/[0.05] blur-3xl motion-reduce:animate-none"
+        className="pointer-events-none absolute -left-40 -top-40 h-[32rem] w-[32rem] animate-[glow-drift_18s_ease-in-out_infinite] rounded-full bg-cyan-300/40 blur-3xl motion-reduce:animate-none"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-52 -right-32 h-[30rem] w-[30rem] animate-[glow-drift_22s_ease-in-out_infinite_reverse] rounded-full bg-black/[0.04] blur-3xl motion-reduce:animate-none"
+        className="pointer-events-none absolute -bottom-52 -right-32 h-[30rem] w-[30rem] animate-[glow-drift_22s_ease-in-out_infinite_reverse] rounded-full bg-mint-300/40 blur-3xl motion-reduce:animate-none"
       />
 
       {/* Floating listings. Desktop only — on a narrow screen there is no room
@@ -137,10 +137,10 @@ function Welcome() {
             card.wide ? "hidden xl:block" : ""
           } ${card.near ? "w-44" : "w-36 opacity-70"}`}
         >
-          <div className="overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:opacity-100 group-hover:shadow-[0_20px_45px_rgba(0,0,0,0.14)]">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-50 to-mint-50 shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-charcoal-900/[0.04] transition-all duration-500 ease-out group-hover:-translate-y-2 group-hover:opacity-100 group-hover:shadow-[0_20px_45px_rgba(0,0,0,0.14)]">
             {/* Square crop, so six different photographs still line up as a set
                 — mixed aspect ratios were most of why this read as clutter. */}
-            <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-cream to-sand">
               {/* Empty alt: decoration around the hero, and the page's own copy
                   already says what the site is. */}
               <ImageWithLoader
@@ -151,11 +151,11 @@ function Welcome() {
               />
               {/* Price as a floating chip on the image rather than a second row
                   of text — it is the one number worth reading at this size. */}
-              <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-black text-gray-900 shadow-sm backdrop-blur-sm">
+              <span className="absolute bottom-2 left-2 rounded-full bg-gradient-to-r from-cyan-50/95 to-mint-50/95 px-2.5 py-1 text-[12px] font-black text-charcoal-900 shadow-sm backdrop-blur-sm">
                 {formatPrice(card.listing.price)}
               </span>
             </div>
-            <p className="truncate px-3 py-2 text-[11px] font-semibold text-gray-500">
+            <p className="truncate px-3 py-2 text-[11px] font-semibold text-charcoal-500">
               {card.listing.title}
             </p>
           </div>
@@ -165,7 +165,7 @@ function Welcome() {
       <Container className="relative flex flex-1 flex-col justify-center py-16">
         <div className="animate-[fade-in_0.5s_ease-out_both] text-center motion-reduce:animate-none">
           {/* Brand mark, with the light sweep the header logo carries */}
-          <span className="relative mx-auto flex h-16 w-16 animate-[pop-in_0.6s_ease-out_both] items-center justify-center overflow-hidden rounded-2xl bg-gray-900 text-2xl font-black text-white shadow-lg motion-reduce:animate-none">
+          <span className="relative mx-auto flex h-16 w-16 animate-[pop-in_0.6s_ease-out_both] items-center justify-center overflow-hidden rounded-2xl bg-charcoal-900 text-2xl font-black text-white shadow-lg motion-reduce:animate-none">
             B
             <span
               aria-hidden
@@ -173,13 +173,13 @@ function Welcome() {
             />
           </span>
 
-          <h1 className="mt-7 animate-[pop-in_0.55s_ease-out_both] text-5xl font-black uppercase leading-none tracking-[0.2em] text-gray-900 [animation-delay:120ms] motion-reduce:animate-none sm:text-7xl">
+          <h1 className="mt-7 animate-[pop-in_0.55s_ease-out_both] text-5xl font-black uppercase leading-none tracking-[0.2em] text-charcoal-900 [animation-delay:120ms] motion-reduce:animate-none sm:text-7xl">
             Bazaar
           </h1>
 
           {/* The tagline, assembled word by word so it arrives rather than
               simply appearing. inline-block is what lets each be transformed. */}
-          <p className="mt-6 text-2xl font-black tracking-tight text-gray-900 sm:text-4xl">
+          <p className="mt-6 text-2xl font-black tracking-tight text-charcoal-900 sm:text-4xl">
             {["Buy.", "Sell.", "Discover."].map((word, index) => (
               <span
                 key={word}
@@ -192,11 +192,11 @@ function Welcome() {
             ))}
           </p>
 
-          <p className="mx-auto mt-5 max-w-xl animate-[pop-in_0.6s_ease-out_both] text-lg leading-relaxed text-gray-500 [animation-delay:560ms] motion-reduce:animate-none">
+          <p className="mx-auto mt-5 max-w-xl animate-[pop-in_0.6s_ease-out_both] text-lg leading-relaxed text-charcoal-500 [animation-delay:560ms] motion-reduce:animate-none">
             Your marketplace for second-hand finds — buy and sell{" "}
             <span
               key={wordIndex}
-              className="inline-block animate-[word-swap_0.4s_ease-out_both] font-bold text-gray-900 motion-reduce:animate-none"
+              className="inline-block animate-[word-swap_0.4s_ease-out_both] font-bold text-cyan-600 motion-reduce:animate-none"
             >
               {CYCLE_WORDS[wordIndex]}
             </span>{" "}
@@ -206,7 +206,7 @@ function Welcome() {
           <div className="mt-10 flex animate-[pop-in_0.5s_ease-out_both] justify-center [animation-delay:680ms] motion-reduce:animate-none">
             <Link
               to="/home"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gray-900 px-10 py-4 text-base font-bold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-black motion-reduce:hover:scale-100"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-10 py-4 text-base font-bold text-charcoal-900 shadow-lg shadow-cyan-500/30 transition-all duration-200 hover:scale-105 hover:shadow-mint-500/40 hover:brightness-105 motion-reduce:hover:scale-100"
             >
               Browse marketplace
               <FiArrowRight
@@ -217,12 +217,12 @@ function Welcome() {
           </div>
 
           {!user && (
-            <p className="mt-5 animate-[fade-in_0.5s_ease-out_both] text-sm text-gray-500 [animation-delay:780ms] motion-reduce:animate-none">
-              <Link to="/login" className="font-bold text-gray-900 hover:underline">
+            <p className="mt-5 animate-[fade-in_0.5s_ease-out_both] text-sm text-charcoal-500 [animation-delay:780ms] motion-reduce:animate-none">
+              <Link to="/login" className="font-bold text-charcoal-900 hover:underline">
                 Log in
               </Link>{" "}
               or{" "}
-              <Link to="/register" className="font-bold text-gray-900 hover:underline">
+              <Link to="/register" className="font-bold text-charcoal-900 hover:underline">
                 create an account
               </Link>{" "}
               to sell — browsing needs neither.
@@ -230,7 +230,7 @@ function Welcome() {
           )}
 
           {activeCount > 0 && (
-            <p className="mt-4 animate-[fade-in_0.5s_ease-out_both] text-xs text-gray-400 [animation-delay:860ms] motion-reduce:animate-none">
+            <p className="mt-4 animate-[fade-in_0.5s_ease-out_both] text-xs text-charcoal-400 [animation-delay:860ms] motion-reduce:animate-none">
               {activeCount.toLocaleString("en-IN")} listings live right now
             </p>
           )}
@@ -244,9 +244,9 @@ function Welcome() {
                 <Link
                   key={listing.id}
                   to={`/listing/${listing.id}`}
-                  className="overflow-hidden rounded-2xl border border-gray-200 bg-white text-left shadow-sm transition hover:border-gray-900"
+                  className="overflow-hidden rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 text-left shadow-sm transition hover:border-charcoal-300"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-sand">
                     <ImageWithLoader
                       src={listing.image}
                       alt=""
@@ -255,10 +255,10 @@ function Welcome() {
                     />
                   </div>
                   <div className="p-2">
-                    <p className="truncate text-[11px] text-gray-600">
+                    <p className="truncate text-[11px] text-charcoal-600">
                       {listing.title}
                     </p>
-                    <p className="text-xs font-black text-gray-900">
+                    <p className="text-xs font-black text-charcoal-900">
                       {formatPrice(listing.price)}
                     </p>
                   </div>

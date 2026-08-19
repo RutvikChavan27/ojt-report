@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FiPlus } from "react-icons/fi";
 import {
   LuBike,
   LuBookOpen,
@@ -74,22 +75,24 @@ const ICONS: Record<string, React.ReactNode> = {
  * like a settings screen.
  */
 const ICON_COLOURS: Record<string, string> = {
-  mobiles: "bg-gradient-to-br from-blue-400 to-blue-600",
-  electronics: "bg-gradient-to-br from-cyan-400 to-cyan-600",
-  computers: "bg-gradient-to-br from-violet-400 to-violet-600",
-  cars: "bg-gradient-to-br from-sky-400 to-sky-600",
-  bikes: "bg-gradient-to-br from-amber-400 to-amber-600",
-  furniture: "bg-gradient-to-br from-orange-400 to-orange-600",
-  "home-kitchen": "bg-gradient-to-br from-teal-400 to-teal-600",
-  "mens-fashion": "bg-gradient-to-br from-indigo-400 to-indigo-600",
-  "womens-fashion": "bg-gradient-to-br from-pink-400 to-pink-600",
-  "books-stationery": "bg-gradient-to-br from-emerald-400 to-emerald-600",
-  sports: "bg-gradient-to-br from-lime-500 to-green-600",
-  toys: "bg-gradient-to-br from-yellow-400 to-amber-500",
-  music: "bg-gradient-to-br from-purple-400 to-purple-600",
-  cameras: "bg-gradient-to-br from-fuchsia-400 to-fuchsia-600",
-  pets: "bg-gradient-to-br from-rose-400 to-rose-600",
-  accessories: "bg-gradient-to-br from-slate-400 to-slate-600",
+  mobiles: "bg-gradient-to-br from-red-500 to-red-700",
+  electronics: "bg-gradient-to-br from-stone-500 to-stone-700",
+  computers: "bg-gradient-to-br from-violet-500 to-violet-700",
+  cars: "bg-gradient-to-br from-lime-500 to-lime-700",
+  bikes: "bg-gradient-to-br from-amber-500 to-amber-700",
+  furniture: "bg-gradient-to-br from-orange-500 to-orange-700",
+  "home-kitchen": "bg-gradient-to-br from-teal-500 to-teal-700",
+  "mens-fashion": "bg-gradient-to-br from-cyan-500 to-cyan-700",
+  "womens-fashion": "bg-gradient-to-br from-pink-500 to-pink-700",
+  "books-stationery": "bg-gradient-to-br from-emerald-500 to-emerald-700",
+  sports: "bg-gradient-to-br from-green-500 to-green-700",
+  toys: "bg-gradient-to-br from-yellow-500 to-amber-600",
+  music: "bg-gradient-to-br from-purple-500 to-purple-700",
+  cameras: "bg-gradient-to-br from-fuchsia-500 to-fuchsia-700",
+  pets: "bg-gradient-to-br from-rose-500 to-rose-700",
+  // Gold rather than the neutral it used to be: on the panel's dark charcoal
+  // background a charcoal chip nearly disappeared, and gold suits a watch icon.
+  accessories: "bg-gradient-to-br from-yellow-500 to-yellow-700",
 };
 
 /**
@@ -98,9 +101,13 @@ const ICON_COLOURS: Record<string, string> = {
  * Counts are derived from the active listings rather than written into the data,
  * so a tile can never advertise more than a search would actually return.
  *
- * Sits directly under the hero, so anyone who does not yet know what to type has
- * a browsing route without scrolling. White cards on the off-white page rather
- * than overlapping the hero — white on white needed a shadow to read at all.
+ * Sits directly under the hero, in its own dark panel rather than loose on the
+ * page — the one deliberately dark surface on an otherwise light site, so the
+ * sixteen colour chips get real contrast to sit against and the panel reads as
+ * a showcase rather than another plain strip. Inset with rounded corners and a
+ * shadow instead of running full-bleed, so it sits as a card *on* the page's
+ * own gradient rather than a hard block cutting across it — the light margin
+ * above and below is what keeps the transition soft.
  */
 /**
  * Sixteen tiles, laid out 2/3/4/5 across the breakpoints so the last row is
@@ -113,50 +120,92 @@ function CategoryTiles({ categories }: CategoryTilesProps) {
 
   return (
     <Container className="pt-10">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {tiles.map((category, index) => (
-          <Link
-            key={category.slug}
-            to={`/search?category=${category.slug}`}
-            /* Stagger kept short on purpose: at 35ms a step the last of
-               thirteen tiles did not begin until 840ms, which is a long time
-               for content to sit mid-fade. 18ms tops out under 550ms. */
-            style={{ animationDelay: `${320 + index * 18}ms` }}
-            className="group relative flex animate-[rise-in_0.5s_ease-out_both] flex-col items-center gap-3 overflow-hidden rounded-2xl border border-gray-200 bg-white px-3 py-7 text-center transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-gray-900 hover:shadow-xl motion-reduce:animate-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-          >
-            {/* A wash of the tile's own colour, revealed on hover. Sits behind
-                the content and is inert, so it tints without touching layout. */}
-            <span
-              aria-hidden
-              className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-10 ${
-                ICON_COLOURS[category.slug] ?? "bg-gray-500"
-              }`}
-            />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900 px-4 py-8 shadow-xl shadow-charcoal-900/20 sm:px-8 sm:py-12">
+        {/* Two faint warm glows, the same idea as the hero's — enough to keep a
+            very dark panel from reading as a flat black rectangle. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-mint-600/15 blur-3xl"
+        />
 
-            <span
-              className={`relative flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-sm transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-110 group-hover:rotate-6 motion-reduce:transform-none ${
-                ICON_COLOURS[category.slug] ?? "bg-gradient-to-br from-gray-400 to-gray-600"
-              }`}
+        <div className="relative mb-7 text-center sm:text-left">
+          <h2 className="text-lg font-black tracking-tight text-cream sm:text-xl">
+            Browse by category
+          </h2>
+          <p className="mt-1 text-sm text-charcoal-300">
+            Sixteen ways in — pick one, or search for anything.
+          </p>
+        </div>
+
+        <div className="relative grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {tiles.map((category, index) => (
+            <Link
+              key={category.slug}
+              to={`/search?category=${category.slug}`}
+              /* Stagger kept short on purpose: at 35ms a step the last of
+                 thirteen tiles did not begin until 840ms, which is a long time
+                 for content to sit mid-fade. 18ms tops out under 550ms. */
+              style={{ animationDelay: `${320 + index * 18}ms` }}
+              className="group relative flex animate-[rise-in_0.5s_ease-out_both] flex-col items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-3 py-7 text-center transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-cyan-400/40 hover:bg-white/10 hover:shadow-lg hover:shadow-cyan-500/30 motion-reduce:animate-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
-              {ICONS[category.slug]}
-              {/* Light sweep across the chip, the same treatment the header
-                  logo carries. Only on hover, so the grid is still at rest. */}
+              {/* A wash of the tile's own colour, revealed on hover. Sits behind
+                  the content and is inert, so it tints without touching layout. */}
               <span
                 aria-hidden
-                className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 rounded-2xl bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full motion-reduce:hidden"
+                className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-20 ${
+                  ICON_COLOURS[category.slug] ?? "bg-cyan-500"
+                }`}
               />
-            </span>
 
-            <span className="relative min-w-0">
-              <span className="block text-sm font-bold leading-tight text-gray-900">
-                {category.label}
+              <span
+                className={`relative flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-sm transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-110 group-hover:rotate-6 motion-reduce:transform-none ${
+                  ICON_COLOURS[category.slug] ?? "bg-gradient-to-br from-cyan-500 to-cyan-700"
+                }`}
+              >
+                {ICONS[category.slug]}
+                {/* Light sweep across the chip, the same treatment the header
+                    logo carries. Only on hover, so the grid is still at rest. */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 rounded-2xl bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full motion-reduce:hidden"
+                />
               </span>
-              <span className="mt-1 block text-xs text-gray-400 transition-colors duration-300 group-hover:text-gray-600">
-                {category.total.toLocaleString("en-IN")} ads
+
+              <span className="relative min-w-0">
+                <span className="block text-sm font-bold leading-tight text-cream">
+                  {category.label}
+                </span>
+                <span className="mt-1 block text-xs text-charcoal-300 transition-colors duration-300 group-hover:text-taupe">
+                  {category.total.toLocaleString("en-IN")} ads
+                </span>
               </span>
-            </span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Same dark panel, same "Sell Something" every button on the site
+            carries — the one thing here that is not a browsing shortcut. */}
+        <div className="relative mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-7 sm:flex-row sm:text-left">
+          <div className="text-center sm:text-left">
+            <p className="text-base font-bold text-cream">
+              Have something to sell?
+            </p>
+            <p className="mt-1 text-sm text-charcoal-300">
+              List it in minutes — it shows up in search right away.
+            </p>
+          </div>
+          <Link
+            to="/post-ad"
+            className="flex flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-mint-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none"
+          >
+            <FiPlus size={17} />
+            Sell Something
           </Link>
-        ))}
+        </div>
       </div>
     </Container>
   );

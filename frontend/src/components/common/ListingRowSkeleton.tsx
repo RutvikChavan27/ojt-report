@@ -11,7 +11,7 @@ import Skeleton from "./Skeleton";
  */
 function ListingRowSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50">
       <div className="flex flex-col gap-4 p-4 sm:flex-row">
         <Skeleton
           rounded="xl"
@@ -32,7 +32,7 @@ function ListingRowSkeleton() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-gray-200 px-4 py-3">
+      <div className="flex flex-wrap gap-2 border-t border-taupe px-4 py-3">
         <Skeleton rounded="full" className="h-7 w-20" />
         <Skeleton rounded="full" className="h-7 w-28" />
         <Skeleton rounded="full" className="h-7 w-20" />

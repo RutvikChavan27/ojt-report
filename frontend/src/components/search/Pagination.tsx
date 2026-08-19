@@ -22,7 +22,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
   const pages = Array.from({ length: to - from + 1 }, (_, index) => from + index);
 
   const button =
-    "flex h-9 min-w-9 items-center justify-center rounded-full border border-gray-300 px-3 text-sm font-semibold text-gray-900 transition hover:border-gray-900 disabled:opacity-40 disabled:hover:border-gray-300";
+    "flex h-9 min-w-9 items-center justify-center rounded-full border border-taupe px-3 text-sm font-semibold text-charcoal-700 transition hover:border-charcoal-300 hover:text-charcoal-900 disabled:opacity-40 disabled:hover:border-taupe disabled:hover:text-charcoal-700";
 
   return (
     <nav
@@ -44,7 +44,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
           <button type="button" onClick={() => onChange(1)} className={button}>
             1
           </button>
-          {from > 2 && <span className="px-1 text-gray-400">…</span>}
+          {from > 2 && <span className="px-1 text-charcoal-400">…</span>}
         </>
       )}
 
@@ -56,7 +56,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
           aria-current={entry === page ? "page" : undefined}
           className={
             entry === page
-              ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-gray-900 px-3 text-sm font-bold text-white"
+              ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-mint-500 px-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-mint-500/30"
               : button
           }
         >
@@ -66,7 +66,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
 
       {to < pageCount && (
         <>
-          {to < pageCount - 1 && <span className="px-1 text-gray-400">…</span>}
+          {to < pageCount - 1 && <span className="px-1 text-charcoal-400">…</span>}
           <button
             type="button"
             onClick={() => onChange(pageCount)}

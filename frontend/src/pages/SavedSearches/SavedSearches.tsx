@@ -28,7 +28,7 @@ function SavedSearches() {
         >
           <Link
             to="/search"
-            className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+            className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
           >
             Start searching
           </Link>
@@ -41,10 +41,10 @@ function SavedSearches() {
     <Container className="py-8" narrow="lg">
       <BackLink className="mb-4" />
 
-      <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+      <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
         Saved searches
       </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-charcoal-500">
         {searches.length} saved. New matches are counted since you last opened
         each one.
       </p>
@@ -58,24 +58,24 @@ function SavedSearches() {
           return (
             <li
               key={entry.id}
-              className="rounded-2xl border border-gray-200 bg-white p-5"
+              className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                  <h2 className="flex items-center gap-2 text-sm font-bold text-charcoal-900">
                     <FiBookmark size={14} className="flex-shrink-0" />
                     {entry.name}
                   </h2>
 
                   {params.q && (
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-charcoal-500">
                       Keyword: <span className="font-semibold">{params.q}</span>
                     </p>
                   )}
                 </div>
 
                 {fresh > 0 && (
-                  <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                  <span className="rounded-full bg-mint-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
                     {fresh} new
                   </span>
                 )}
@@ -86,7 +86,7 @@ function SavedSearches() {
                   {chips.map((chip) => (
                     <span
                       key={chip.key}
-                      className="rounded-full bg-black/[0.06] px-2.5 py-1 text-xs font-semibold text-gray-700"
+                      className="rounded-full bg-sand px-2.5 py-1 text-xs font-semibold text-charcoal-700"
                     >
                       {chip.label}
                     </span>
@@ -94,7 +94,7 @@ function SavedSearches() {
                 </div>
               )}
 
-              <p className="mt-3 text-xs text-gray-400">
+              <p className="mt-3 text-xs text-charcoal-400">
                 Last checked{" "}
                 {new Date(entry.lastCheckedAt).toLocaleDateString("en-IN", {
                   day: "numeric",
@@ -110,7 +110,7 @@ function SavedSearches() {
                     markChecked(entry.id);
                     navigate(`/search?${entry.query}`);
                   }}
-                  className="rounded-full bg-gray-900 px-5 py-2 text-xs font-bold text-white transition hover:bg-black"
+                  className="rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-5 py-2 text-xs font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
                 >
                   View results
                 </button>
@@ -118,7 +118,7 @@ function SavedSearches() {
                 <button
                   type="button"
                   onClick={() => remove(entry.id)}
-                  className="flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-2 text-xs font-bold text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                  className="flex items-center gap-1.5 rounded-full border border-taupe px-4 py-2 text-xs font-bold text-charcoal-500 transition hover:border-rose-300 hover:text-rose-600"
                 >
                   <FiTrash2 size={12} />
                   Delete

@@ -57,17 +57,17 @@ function Register() {
   };
 
   const field =
-    "w-full rounded-xl border border-gray-300 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10";
+    "w-full rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20";
   const icon =
-    "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400";
+    "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400";
 
   return (
     <Container className="py-12" narrow="sm">
-      <div className="rounded-2xl border border-gray-200 bg-white p-7">
-        <h1 className="text-xl font-black tracking-tight text-gray-900">
+      <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-7">
+        <h1 className="text-xl font-black tracking-tight text-charcoal-900">
           Create your account
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-charcoal-500">
           Free, and takes less than a minute. One account covers browsing,
           saving searches and posting listings.
         </p>
@@ -137,7 +137,7 @@ function Register() {
           {error && (
             <p
               role="alert"
-              className="mt-4 rounded-xl border border-gray-300 bg-black/[0.03] px-4 py-2.5 text-sm text-gray-900"
+              className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700"
             >
               {error}
             </p>
@@ -146,7 +146,7 @@ function Register() {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 py-3 text-sm font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Please wait…" : "Create account"}
             {!submitting && <FiArrowRight size={16} />}
@@ -156,16 +156,16 @@ function Register() {
         {googleEnabled && (
           <>
             <div className="my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-gray-200" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <span className="h-px flex-1 bg-taupe" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-charcoal-400">
                 or
               </span>
-              <span className="h-px flex-1 bg-gray-200" />
+              <span className="h-px flex-1 bg-taupe" />
             </div>
 
             <a
               href={googleSignInUrl}
-              className="flex w-full items-center justify-center gap-2.5 rounded-full border border-gray-300 py-3 text-sm font-semibold text-gray-900 transition hover:bg-black/[0.03]"
+              className="flex w-full items-center justify-center gap-2.5 rounded-full border border-taupe py-3 text-sm font-semibold text-charcoal-900 transition hover:bg-sand"
             >
               <FcGoogle size={18} />
               Sign up with Google
@@ -173,9 +173,9 @@ function Register() {
           </>
         )}
 
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-6 text-center text-sm text-charcoal-500">
           Already have an account?{" "}
-          <Link to="/login" className="font-bold text-gray-900 hover:underline">
+          <Link to="/login" className="font-bold text-charcoal-900 hover:underline">
             Log in
           </Link>
         </p>

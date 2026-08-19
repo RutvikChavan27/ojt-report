@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Container from "../../components/layout/Container";
 import { useSearchParams } from "react-router-dom";
 import { FiBookmark, FiSliders, FiX } from "react-icons/fi";
@@ -65,6 +65,18 @@ function SearchResults() {
      change already has results on screen and keeps the dimmed overlay below,
      which a full-screen takeover on every click would replace. */
   usePageGate(showSkeleton);
+
+  /* A page past the last real one (e.g. a bookmarked or hand-edited URL) comes
+     back from the API pointing at the last real page instead. The URL is
+     corrected to match so it stays the single source of truth — a reload or a
+     share of the link lands on the same page actually being shown, rather than
+     the out-of-range one that was asked for. */
+  useEffect(() => {
+    if (data && data.page !== params.page) {
+      setSearch(searchToParams({ ...params, page: data.page }), { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const { data: categories } = useApi(() => fetchCategories(), []);
 
@@ -174,7 +186,7 @@ function SearchResults() {
           searches beside it. `min-w-0` lets the strip scroll inside the flex row
           rather than forcing the row wider than the page and pushing the menu
           off-screen. */}
-      <div className="flex items-start gap-2 border-b border-gray-200">
+      <div className="flex items-start gap-2 border-b border-taupe">
         <div className="min-w-0 flex-1">
           <CategoryStrip bare />
         </div>
@@ -186,12 +198,12 @@ function SearchResults() {
       </div>
 
       <div className="mt-3">
-        <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+        <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
           {params.q ? `Results for "${params.q}"` : "All listings"}
         </h1>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-charcoal-500">
             {results.total.toLocaleString("en-IN")}{" "}
             {results.total === 1 ? "listing" : "listings"}
             {params.city ? ` in ${params.city}` : ""}
@@ -201,7 +213,7 @@ function SearchResults() {
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 lg:hidden"
+              className="flex items-center gap-2 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-4 py-2 text-sm font-semibold text-charcoal-900 lg:hidden"
             >
               <FiSliders size={14} />
               Filters{chips.length > 0 && ` (${chips.length})`}
@@ -226,7 +238,7 @@ function SearchResults() {
             <button
               type="button"
               onClick={() => update({ q: "" })}
-              className="flex items-center gap-1.5 rounded-full bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-black"
+              className="flex items-center gap-1.5 rounded-full bg-mint-500 px-3 py-1.5 text-xs font-semibold text-charcoal-900 transition hover:bg-mint-600"
             >
               “{params.q}”
               <FiX size={12} />
@@ -238,7 +250,7 @@ function SearchResults() {
               key={chip.key}
               type="button"
               onClick={() => clearChip(chip.key)}
-              className="flex items-center gap-1.5 rounded-full bg-black/[0.06] px-3 py-1.5 text-xs font-semibold text-gray-900 transition hover:bg-black/[0.1]"
+              className="flex items-center gap-1.5 rounded-full bg-mint-50 px-3 py-1.5 text-xs font-semibold text-mint-800 transition hover:bg-mint-100"
             >
               {chip.label}
               <FiX size={12} />
@@ -248,7 +260,7 @@ function SearchResults() {
           <button
             type="button"
             onClick={clearAll}
-            className="px-2 text-xs font-semibold text-gray-500 transition hover:text-gray-900"
+            className="px-2 text-xs font-semibold text-charcoal-500 transition hover:text-charcoal-900"
           >
             Clear all
           </button>
@@ -266,9 +278,9 @@ function SearchResults() {
           />
 
           {/* Saving a search needs an account (§4A) */}
-          <div className="mt-6 border-t border-gray-200 pt-5">
+          <div className="mt-6 border-t border-taupe pt-5">
             {savedNotice ? (
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-emerald-700">
                 Saved. See it under Saved searches.
               </p>
             ) : (
@@ -277,14 +289,14 @@ function SearchResults() {
                 onClick={handleSaveSearch}
                 disabled={!user}
                 title={user ? undefined : "Log in to save a search"}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-900 py-2.5 text-sm font-bold text-gray-900 transition hover:bg-gray-900 hover:text-white disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-transparent"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-2.5 text-sm font-bold text-cyan-700 transition hover:border-transparent hover:bg-gradient-to-r hover:from-[#00c9ff] hover:to-[#92fe9d] hover:text-charcoal-900 disabled:cursor-not-allowed disabled:border-taupe disabled:text-charcoal-400 disabled:hover:border-taupe disabled:hover:bg-none"
               >
                 <FiBookmark size={14} />
                 Save this search
               </button>
             )}
             {!user && (
-              <p className="mt-2 text-xs text-gray-400">
+              <p className="mt-2 text-xs text-charcoal-400">
                 Log in to save searches and get a count of new matches.
               </p>
             )}
@@ -305,12 +317,12 @@ function SearchResults() {
             >
               <div className="space-y-4">
                 {results.suggestion && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-charcoal-500">
                     Did you mean{" "}
                     <button
                       type="button"
                       onClick={() => update({ q: results.suggestion ?? "" })}
-                      className="font-bold text-gray-900 underline decoration-gray-400 underline-offset-2 transition hover:decoration-gray-900"
+                      className="font-bold text-cyan-600 underline decoration-cyan-300 underline-offset-2 transition hover:decoration-cyan-600"
                     >
                       {results.suggestion}
                     </button>
@@ -320,14 +332,14 @@ function SearchResults() {
 
                 {chips.length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-500">Try removing a filter:</p>
+                    <p className="text-sm text-charcoal-500">Try removing a filter:</p>
                     <div className="mt-3 flex flex-wrap justify-center gap-2">
                       {chips.map((chip) => (
                         <button
                           key={chip.key}
                           type="button"
                           onClick={() => clearChip(chip.key)}
-                          className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 transition hover:border-gray-900"
+                          className="flex items-center gap-1.5 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3 py-1.5 text-xs font-semibold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
                         >
                           {chip.label}
                           <FiX size={12} />

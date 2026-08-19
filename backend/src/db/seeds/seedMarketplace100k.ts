@@ -1,21 +1,25 @@
 /**
- * Seeds the classifieds marketplace with 100,000+ realistic listings.
+ * Seeds the classifieds marketplace with 100,000+ realistic, browsable listings.
  *
- * Run with:  npm run seed:marketplace100k            (default 100000)
+ * Run with:  npm run seed:marketplace100k            (default 145000)
  *            npm run seed:marketplace100k -- 5000     (smaller set while developing)
  *
- * The brief requires this volume: search behaviour at a hundred thousand rows is
- * nothing like search behaviour at two hundred, and that gap is the whole point
- * of the exercise. Everything is generated from a deterministic PRNG, so a given
- * size always produces the same catalogue and query-plan comparisons stay
- * meaningful between runs.
+ * The brief requires 100,000+ listings, and about three in ten generated rows
+ * are sold or expired (see the status roll below) — real states search already
+ * excludes by design, not padding. So the row count this generates is scaled up
+ * from 100,000 by that same ratio, which is what keeps the *active*, searchable
+ * count — the number a shopper actually sees — at 100,000+ rather than the raw
+ * table size. Everything is generated from a deterministic PRNG, so a given size
+ * always produces the same catalogue and query-plan comparisons stay meaningful
+ * between runs.
  *
- * The catalogue is built by multiplying a committed set of ~150 real listing
- * templates (marketplaceTemplates.json — one per genuine product photo, with the
- * exact category, subcategory and working image paths that product uses) across
- * many sellers, cities, prices, dates and conditions. That keeps every generated
- * row internally consistent — an iPhone listing stays in Mobiles with a phone
- * photo and a phone-shaped price — while making each row distinct in the fields
+ * The catalogue is built by multiplying a committed set of templates
+ * (marketplaceTemplates.json — one per genuine product, with the exact category,
+ * subcategory, condition and a realistic second-hand price that product should
+ * carry) across many sellers, cities, prices, dates and conditions. That keeps
+ * every generated row internally consistent — an iPhone listing stays in Mobiles
+ * with a phone-shaped price, a used hatchback stays priced like a used hatchback
+ * rather than a showroom one — while making each row distinct in the fields
  * search and filtering actually range over. It is emphatically not the same
  * listing inserted a hundred thousand times: price, city, area, seller, age,
  * status, view count and often condition all vary per row.
@@ -23,8 +27,8 @@
  * Self-contained: the templates are a committed fixture, not read from the live
  * database, so this can populate a completely fresh database. Rows go in as
  * batched multi-row INSERTs to keep a run over the network to a hosted database
- * in the region of a minute rather than an hour, and ANALYZE runs at the end so
- * the planner has real statistics.
+ * in the region of a couple of minutes rather than an hour, and ANALYZE runs at
+ * the end so the planner has real statistics.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -38,7 +42,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 type SeedValue = string | number | boolean | null;
 
-const DEFAULT_COUNT = 100_000;
+/* ~70% of rows land "active" (see the status roll below); 145,000 total keeps
+   that active slice comfortably past the 100,000 requirement with headroom for
+   the PRNG's natural spread, rather than landing right on the line. */
+const DEFAULT_COUNT = 145_000;
 const SELLER_COUNT = 2_000;
 
 /** Postgres caps a statement at 65,535 bound parameters; batch under that. */

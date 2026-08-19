@@ -48,7 +48,7 @@ function ImageWithLoader({
 
   if (status === "error") {
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-100 text-gray-400">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-sand text-charcoal-400">
         <FiImage size={22} />
         <span className="text-[10px] font-semibold uppercase tracking-wide">
           No image

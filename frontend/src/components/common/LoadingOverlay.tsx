@@ -41,9 +41,9 @@ function LoadingOverlay({
         <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center pt-6">
           <span
             role="status"
-            className="flex items-center gap-2 rounded-full border border-gray-200 bg-white/95 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm backdrop-blur-sm"
+            className="flex items-center gap-2 rounded-full border border-taupe bg-gradient-to-r from-cyan-50/95 to-mint-50/95 px-4 py-2 text-sm font-semibold text-charcoal-700 shadow-sm backdrop-blur-sm"
           >
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900 motion-reduce:animate-none" />
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-taupe border-t-charcoal-900 motion-reduce:animate-none" />
             {label}…
           </span>
         </div>

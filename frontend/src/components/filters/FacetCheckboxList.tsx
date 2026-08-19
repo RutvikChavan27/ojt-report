@@ -23,7 +23,7 @@ function FacetCheckboxList({
   emptyLabel = "Nothing matches the other filters",
 }: FacetCheckboxListProps) {
   if (options.length === 0) {
-    return <p className="text-xs text-gray-400">{emptyLabel}</p>;
+    return <p className="text-xs text-charcoal-400">{emptyLabel}</p>;
   }
 
   return (
@@ -31,18 +31,18 @@ function FacetCheckboxList({
       {options.map((option) => (
         <label
           key={option.value}
-          className="flex cursor-pointer items-center justify-between gap-2 text-sm text-gray-700"
+          className="flex cursor-pointer items-center justify-between gap-2 text-sm text-charcoal-700"
         >
           <span className="flex min-w-0 items-center gap-2">
             <input
               type="checkbox"
               checked={selected.has(option.value)}
               onChange={() => onToggle(option.value)}
-              className="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              className="h-4 w-4 flex-shrink-0 rounded border-taupe text-mint-600 focus:ring-mint-500"
             />
             <span className="truncate">{option.label}</span>
           </span>
-          <span className="flex-shrink-0 text-gray-400">
+          <span className="flex-shrink-0 text-charcoal-400">
             ({option.count.toLocaleString("en-IN")})
           </span>
         </label>

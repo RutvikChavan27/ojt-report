@@ -34,9 +34,9 @@ const POPULAR = [
  * search box itself lives in the header now, not here — one search experience
  * for the whole site rather than a second copy in the middle of the page.
  *
- * Monochrome, on the page's own off-white background. Emphasis comes from
- * weight and scale rather than from colour — the only strong tone in this
- * design is the black of the header's Search button.
+ * Mostly neutral on the page's own off-white background, with the brand
+ * colour reserved for the handful of things worth drawing the eye to — the
+ * live count, the trust pill, and hover states.
  */
 function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
   /** Entry animation, staggered so the eye lands on the headline first. */
@@ -106,29 +106,31 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
   const live = recent[tickerIndex];
 
   return (
-    <section className="relative overflow-hidden border-b border-gray-200">
-      {/* Two faint washes drifting behind the content, for a little depth on a
-          flat background. Decorative and pointer-events-none, so they can never
-          interfere with the search box. */}
+    /* The identity gradient itself, as a soft pastel wash rather than the
+       button's full saturation — visible at a glance as the same cyan-to-mint
+       pair, without the vivid strength that would fight the dark headline for
+       attention or read as a gaming/crypto banner. */
+    <section className="relative overflow-hidden bg-gradient-to-br from-cyan-200 via-cream to-mint-200">
+      {/* Two glow blobs drifting over the gradient — one of each accent colour
+          — for a little extra depth and movement. Decorative and
+          pointer-events-none, so they can never interfere with the search box. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-40 -top-40 h-[30rem] w-[30rem] animate-[glow-drift_18s_ease-in-out_infinite] rounded-full bg-black/[0.04] blur-3xl motion-reduce:animate-none"
+        className="pointer-events-none absolute -left-40 -top-40 h-[30rem] w-[30rem] animate-[glow-drift_18s_ease-in-out_infinite] rounded-full bg-cyan-300/40 blur-3xl motion-reduce:animate-none"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-52 -right-32 h-[28rem] w-[28rem] animate-[glow-drift_22s_ease-in-out_infinite_reverse] rounded-full bg-black/[0.03] blur-3xl motion-reduce:animate-none"
+        className="pointer-events-none absolute -bottom-52 -right-32 h-[28rem] w-[28rem] animate-[glow-drift_22s_ease-in-out_infinite_reverse] rounded-full bg-mint-300/40 blur-3xl motion-reduce:animate-none"
       />
 
       <Container className="relative pb-10 pt-16 text-center sm:pt-20 lg:pt-24">
-        {/* Trust pill. The reference uses bg-white/10 for a dark hero; on this
-            off-white one the same idea needs a black wash to read at all. */}
         {/* Live ticker. A real listing rather than a slogan — a marketplace
             claiming to be busy should be able to show it, and this is the one
             thing on the page that could not be faked with static copy. */}
         {live ? (
           <Link
             to={`/listing/${live.id}`}
-            className={`group mb-6 inline-flex max-w-full items-center gap-2.5 rounded-full border border-gray-200 bg-white/80 py-1.5 pl-1.5 pr-4 text-sm text-gray-600 shadow-sm backdrop-blur-sm transition hover:border-gray-900 ${rise(0)}`}
+            className={`group mb-6 inline-flex max-w-full items-center gap-2.5 rounded-full border border-taupe bg-gradient-to-r from-cyan-50/80 to-mint-50/80 py-1.5 pl-1.5 pr-4 text-sm text-charcoal-600 shadow-sm backdrop-blur-sm transition hover:border-charcoal-300 ${rise(0)}`}
           >
             <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center">
               <span
@@ -142,14 +144,14 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
             </span>
             <span key={live.id} className="min-w-0 animate-[fade-in_0.4s_ease-out_both] truncate motion-reduce:animate-none">
               Just listed in {live.city} —{" "}
-              <span className="font-bold text-gray-900">{live.title}</span>
+              <span className="font-bold text-charcoal-900">{live.title}</span>
             </span>
           </Link>
         ) : (
           <p
-            className={`mb-6 inline-flex items-center gap-2 rounded-full bg-black/[0.05] px-4 py-2 text-sm font-medium text-gray-600 backdrop-blur-sm ${rise(0)}`}
+            className={`mb-6 inline-flex items-center gap-2 rounded-full bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 backdrop-blur-sm ${rise(0)}`}
           >
-            <FiStar size={14} className="flex-shrink-0 text-gray-900" />
+            <FiStar size={14} className="flex-shrink-0 text-cyan-600" />
             Trusted by buyers and sellers across India
           </p>
         )}
@@ -160,7 +162,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
              Built on the brand name itself rather than a generic "buy & sell"
              line — that sentence works on any classifieds site; this one only
              makes sense on Bazaar. */
-          className={`text-3xl font-black italic leading-[1.05] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl ${rise(90)}`}
+          className={`text-3xl font-black italic leading-[1.05] tracking-tight text-charcoal-900 sm:text-5xl lg:text-6xl ${rise(90)}`}
         >
           Your City,
           <br />
@@ -168,9 +170,9 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
         </h1>
 
         <p
-          className={`mx-auto mt-6 max-w-2xl text-base font-black italic leading-relaxed tracking-tight text-gray-500 sm:text-lg ${rise(190)}`}
+          className={`mx-auto mt-6 max-w-2xl text-base font-black italic leading-relaxed tracking-tight text-charcoal-500 sm:text-lg ${rise(190)}`}
         >
-          <span className="font-black tabular-nums text-gray-900">
+          <span className="font-black tabular-nums text-cyan-600">
             {shownCount.toLocaleString("en-IN")}
           </span>{" "}
           listings from people in your city. Find a good deal, or sell what you no
@@ -181,12 +183,12 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
         <div
           className={`mt-8 flex flex-wrap items-center justify-center gap-2 ${rise(280)}`}
         >
-          <span className="text-sm text-gray-400">Popular:</span>
+          <span className="text-sm text-charcoal-400">Popular:</span>
           {POPULAR.map((term) => (
             <Link
               key={term}
               to={`/search?q=${encodeURIComponent(term)}`}
-              className="rounded-full border border-gray-300 bg-white px-3 py-1 text-[13px] text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-900 hover:text-gray-900 motion-reduce:hover:translate-y-0"
+              className="rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3 py-1 text-[13px] text-charcoal-700 transition hover:-translate-y-0.5 hover:border-charcoal-400 hover:text-charcoal-900 motion-reduce:hover:translate-y-0"
             >
               {term}
             </Link>
@@ -198,7 +200,7 @@ function HeroSearch({ activeCount, recent = [] }: HeroSearchProps) {
             rise-in entrance; the inner span carries the blink — two animations on
             one element would overwrite each other, so they are split across two. */}
         <p className={`mt-9 ${rise(480)}`}>
-          <span className="animate-[blink_1.8s_ease-in-out_infinite] text-base font-black italic tracking-tight text-gray-900 motion-reduce:animate-none sm:text-lg">
+          <span className="animate-[blink_1.8s_ease-in-out_infinite] text-base font-black italic tracking-tight text-charcoal-900 motion-reduce:animate-none sm:text-lg">
             Second-hand, not second-best — give your things a new home, and find
             your next find nearby. ♻️
           </span>

@@ -65,16 +65,16 @@ function FilterDrawer({
         onClick={onClose}
       />
 
-      <div className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col bg-[#f2f1ee] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-          <h2 className="text-base font-black tracking-tight text-gray-900">
+      <div className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col bg-gradient-to-br from-cyan-50 to-mint-50 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-taupe px-5 py-4">
+          <h2 className="text-base font-black tracking-tight text-charcoal-900">
             Filters
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close filters"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-black/5 hover:text-gray-900"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-charcoal-500 transition hover:bg-sand hover:text-charcoal-900"
           >
             <FiX size={18} />
           </button>
@@ -90,11 +90,11 @@ function FilterDrawer({
           />
         </div>
 
-        <div className="border-t border-gray-200 px-5 py-4">
+        <div className="border-t border-taupe px-5 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-full bg-gray-900 py-3 text-sm font-bold text-white transition hover:bg-black"
+            className="w-full rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
           >
             Show {total.toLocaleString("en-IN")}{" "}
             {total === 1 ? "result" : "results"}

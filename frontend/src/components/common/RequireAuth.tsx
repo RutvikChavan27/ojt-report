@@ -36,7 +36,7 @@ function RequireAuth({ action, children }: RequireAuthProps) {
   if (loading) {
     return (
       <Container className="py-12" narrow="md">
-        <div className="h-56 animate-pulse rounded-2xl bg-gray-200" />
+        <div className="h-56 animate-pulse rounded-2xl bg-taupe" />
       </Container>
     );
   }
@@ -44,15 +44,15 @@ function RequireAuth({ action, children }: RequireAuthProps) {
   if (!user) {
     return (
       <Container className="py-16" narrow="sm">
-        <div className="rounded-2xl border border-gray-200 bg-white p-7 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-black/[0.05] text-gray-900">
+        <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-7 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-50 text-cyan-600">
             <FiLogIn size={22} />
           </span>
 
-          <h1 className="mt-5 text-lg font-black tracking-tight text-gray-900">
+          <h1 className="mt-5 text-lg font-black tracking-tight text-charcoal-900">
             Log in to {action}
           </h1>
-          <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-gray-500">
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-charcoal-500">
             Browsing and searching are always free. An account is only needed to
             post a listing, save a search, and manage what you have posted.
           </p>
@@ -62,7 +62,7 @@ function RequireAuth({ action, children }: RequireAuthProps) {
           <Link
             to="/login"
             state={{ from }}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 py-3 text-sm font-bold text-white transition hover:bg-black"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
           >
             <FiLogIn size={15} />
             Log in
@@ -71,7 +71,7 @@ function RequireAuth({ action, children }: RequireAuthProps) {
           <Link
             to="/register"
             state={{ from }}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 py-3 text-sm font-bold text-gray-900 transition hover:border-gray-900"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-taupe py-3 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
           >
             <FiUserPlus size={15} />
             Create an account
@@ -79,7 +79,7 @@ function RequireAuth({ action, children }: RequireAuthProps) {
 
           <Link
             to="/search"
-            className="mt-5 inline-block text-sm font-semibold text-gray-500 transition hover:text-gray-900"
+            className="mt-5 inline-block text-sm font-semibold text-charcoal-500 transition hover:text-charcoal-900"
           >
             Keep browsing instead
           </Link>

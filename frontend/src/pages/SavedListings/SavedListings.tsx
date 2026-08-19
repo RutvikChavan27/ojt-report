@@ -42,10 +42,10 @@ function SavedListings() {
     <Container className="py-8">
       <BackLink className="mb-4" />
 
-      <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+      <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
         Saved listings
       </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-charcoal-500">
         {saved.length} {saved.length === 1 ? "listing" : "listings"} saved on this
         device.
       </p>
@@ -60,7 +60,7 @@ function SavedListings() {
           >
             <Link
               to="/search"
-              className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+              className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
             >
               Browse listings
             </Link>

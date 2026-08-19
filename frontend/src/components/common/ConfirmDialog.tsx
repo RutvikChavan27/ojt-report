@@ -134,8 +134,8 @@ function ConfirmDialog({
 
   const confirmClasses =
     tone === "danger"
-      ? "bg-red-600 hover:bg-red-700"
-      : "bg-gray-900 hover:bg-black";
+      ? "bg-red-600 text-white hover:bg-red-700"
+      : "bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] text-charcoal-900 hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105";
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -155,7 +155,7 @@ function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby={message ? "confirm-message" : undefined}
-        className={`relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl ${
+        className={`relative w-full max-w-sm rounded-2xl bg-gradient-to-br from-cyan-50 to-mint-50 p-6 shadow-2xl ${
           closing
             ? "animate-[modal-out_150ms_ease-in_forwards]"
             : "animate-[modal-in_200ms_ease-out]"
@@ -163,13 +163,13 @@ function ConfirmDialog({
       >
         <h2
           id="confirm-title"
-          className="text-lg font-black tracking-tight text-gray-900"
+          className="text-lg font-black tracking-tight text-charcoal-900"
         >
           {title}
         </h2>
 
         {message && (
-          <p id="confirm-message" className="mt-2 text-sm text-gray-600">
+          <p id="confirm-message" className="mt-2 text-sm text-charcoal-600">
             {message}
           </p>
         )}
@@ -181,7 +181,7 @@ function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={() => setClosing("cancel")}
-            className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-900 transition hover:border-gray-900"
+            className="rounded-full border border-taupe px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-taupe-dark"
           >
             {cancelLabel}
           </button>
@@ -189,7 +189,7 @@ function ConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={() => setClosing("confirm")}
-            className={`rounded-full px-5 py-2.5 text-sm font-bold text-white transition ${confirmClasses}`}
+            className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${confirmClasses}`}
           >
             {confirmLabel}
           </button>

@@ -21,7 +21,7 @@ type BreadcrumbsProps = {
 function Breadcrumbs({ trail }: BreadcrumbsProps) {
   return (
     <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-1 text-xs text-gray-500">
+      <ol className="flex flex-wrap items-center gap-1 text-xs text-charcoal-500">
         {trail.map((crumb, index) => {
           const last = index === trail.length - 1;
 
@@ -30,13 +30,13 @@ function Breadcrumbs({ trail }: BreadcrumbsProps) {
               {crumb.to && !last ? (
                 <Link
                   to={crumb.to}
-                  className="transition hover:text-gray-900 hover:underline"
+                  className="transition hover:text-charcoal-900 hover:underline"
                 >
                   {crumb.label}
                 </Link>
               ) : (
                 <span
-                  className={last ? "truncate font-semibold text-gray-900" : ""}
+                  className={last ? "truncate font-semibold text-charcoal-900" : ""}
                   aria-current={last ? "page" : undefined}
                 >
                   {crumb.label}
@@ -44,7 +44,7 @@ function Breadcrumbs({ trail }: BreadcrumbsProps) {
               )}
 
               {!last && (
-                <FiChevronRight size={12} className="flex-shrink-0 text-gray-300" />
+                <FiChevronRight size={12} className="flex-shrink-0 text-charcoal-300" />
               )}
             </li>
           );

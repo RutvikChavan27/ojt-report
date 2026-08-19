@@ -34,7 +34,7 @@ function ListingDetailsSkeleton() {
           </div>
 
           {/* Facts panel */}
-          <div className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-gray-200 bg-black/[0.03] p-5 sm:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5 sm:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="space-y-2">
                 <Skeleton className="h-3 w-16" />
@@ -54,7 +54,7 @@ function ListingDetailsSkeleton() {
 
         {/* Right: seller card + save action */}
         <aside>
-          <div className="rounded-2xl border border-gray-200 bg-black/[0.03] p-5">
+          <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
             <Skeleton className="h-3 w-20" />
             <div className="mt-4 flex items-center gap-3">
               <Skeleton rounded="full" className="h-11 w-11 flex-shrink-0" />

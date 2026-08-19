@@ -110,11 +110,11 @@ function SearchBar({
       role="search"
     >
       <div
-        className={`flex w-full items-center gap-2 rounded-full border border-gray-300 bg-white pl-4 shadow-sm transition-all duration-200 focus-within:border-gray-900 focus-within:shadow-md focus-within:ring-2 focus-within:ring-gray-900/10 ${
+        className={`flex w-full items-center gap-2 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 pl-4 shadow-sm transition-all duration-200 focus-within:border-cyan-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-cyan-500/20 ${
           tall ? "py-1.5 pr-1.5" : "py-1 pr-1"
         }`}
       >
-        <FiSearch size={tall ? 17 : 15} className="flex-shrink-0 text-gray-400" />
+        <FiSearch size={tall ? 17 : 15} className="flex-shrink-0 text-charcoal-400" />
 
         <input
           ref={inputRef}
@@ -129,7 +129,7 @@ function SearchBar({
           placeholder={placeholder}
           aria-label="Search listings"
           autoComplete="off"
-          className={`min-w-0 flex-1 bg-transparent outline-none placeholder:text-gray-400 ${
+          className={`min-w-0 flex-1 bg-transparent outline-none placeholder:text-charcoal-400 ${
             tall ? "text-base" : "text-sm"
           }`}
         />
@@ -149,7 +149,7 @@ function SearchBar({
             }}
             aria-label="Clear search"
             title="Clear search"
-            className="flex-shrink-0 rounded-full p-1.5 text-gray-400 transition hover:bg-black/5 hover:text-gray-900"
+            className="flex-shrink-0 rounded-full p-1.5 text-charcoal-400 transition hover:bg-sand hover:text-charcoal-900"
           >
             <FiX size={tall ? 17 : 15} />
           </button>
@@ -157,7 +157,7 @@ function SearchBar({
 
         <button
           type="submit"
-          className={`flex-shrink-0 rounded-full bg-gray-900 font-bold text-white shadow-sm transition-all duration-150 ease-out hover:bg-black hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
+          className={`flex-shrink-0 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-mint-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
             tall ? "px-7 py-2.5 text-sm" : "px-5 py-2 text-sm"
           }`}
         >

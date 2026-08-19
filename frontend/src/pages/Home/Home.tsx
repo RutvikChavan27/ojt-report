@@ -76,17 +76,17 @@ function Home() {
       <Section>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black tracking-tight text-gray-900">
+            <h2 className="text-xl font-black tracking-tight text-charcoal-900">
               Fresh listings
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-charcoal-500">
               Just posted by people near you.
             </p>
           </div>
 
           <Link
             to="/search"
-            className="group flex items-center gap-1.5 text-sm font-bold text-gray-900"
+            className="group flex items-center gap-1.5 text-sm font-bold text-charcoal-900 transition hover:text-charcoal-600"
           >
             See all
             <FiArrowRight
@@ -105,7 +105,7 @@ function Home() {
               <button
                 type="button"
                 onClick={reload}
-                className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+                className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
               >
                 Try again
               </button>
@@ -122,15 +122,15 @@ function Home() {
           {assurances.map((item) => (
             <div
               key={item.title}
-              className="rounded-2xl border border-gray-200 bg-white p-5 transition duration-200 hover:border-gray-900"
+              className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5 shadow-sm shadow-charcoal-900/5 transition duration-200 hover:-translate-y-0.5 hover:border-charcoal-200 hover:shadow-md motion-reduce:hover:translate-y-0"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/[0.05] text-gray-900">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
                 {item.icon}
               </span>
-              <h3 className="mt-3 text-sm font-bold text-gray-900">
+              <h3 className="mt-3 text-sm font-bold text-charcoal-900">
                 {item.title}
               </h3>
-              <p className="mt-1 text-sm leading-relaxed text-gray-500">
+              <p className="mt-1 text-sm leading-relaxed text-charcoal-500">
                 {item.body}
               </p>
             </div>
@@ -141,7 +141,7 @@ function Home() {
       {/* Busiest categories, as plain text links for browsing and for search
           engines — a grid of tiles above, a list of words here. */}
       <Section>
-        <h2 className="text-xl font-black tracking-tight text-gray-900">
+        <h2 className="text-xl font-black tracking-tight text-charcoal-900">
           Busiest right now
         </h2>
 
@@ -150,10 +150,10 @@ function Home() {
             <Link
               key={category.slug}
               to={`/search?category=${category.slug}`}
-              className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition hover:-translate-y-0.5 hover:border-gray-900 motion-reduce:hover:translate-y-0"
+              className="rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-4 py-2 text-sm font-semibold text-charcoal-900 transition hover:-translate-y-0.5 hover:border-charcoal-400 hover:text-charcoal-900 motion-reduce:hover:translate-y-0"
             >
               {category.label}
-              <span className="ml-1.5 text-gray-400">{category.total}</span>
+              <span className="ml-1.5 text-charcoal-400">{category.total}</span>
             </Link>
           ))}
         </div>

@@ -45,7 +45,7 @@ function FilterSidebar({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-black tracking-tight text-gray-900">
+        <h2 className="text-base font-black tracking-tight text-charcoal-900">
           Filters{activeCount > 0 && ` (${activeCount})`}
         </h2>
         {/* Also offered when only a search term is set, so "sofa" with no filters
@@ -54,7 +54,7 @@ function FilterSidebar({
           <button
             type="button"
             onClick={onClearAll}
-            className="text-sm font-semibold text-gray-500 transition hover:text-gray-900"
+            className="text-sm font-semibold text-charcoal-500 transition hover:text-charcoal-900"
           >
             Clear all
           </button>
@@ -106,9 +106,9 @@ function FilterSidebar({
                 })
               }
               aria-label="Minimum price"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-900"
+              className="w-full rounded-lg border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
             />
-            <span className="text-gray-400">–</span>
+            <span className="text-charcoal-400">–</span>
             <input
               type="number"
               min={0}
@@ -121,7 +121,7 @@ function FilterSidebar({
                 })
               }
               aria-label="Maximum price"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-900"
+              className="w-full rounded-lg border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
             />
           </div>
         </FilterSection>
@@ -138,14 +138,14 @@ function FilterSidebar({
           {POSTED_WITHIN_OPTIONS.map((option) => (
             <label
               key={option.days}
-              className="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
+              className="flex cursor-pointer items-center gap-2 text-sm text-charcoal-700"
             >
               <input
                 type="radio"
                 name="posted-within"
                 checked={params.postedWithinDays === option.days}
                 onChange={() => onChange({ postedWithinDays: option.days })}
-                className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900"
+                className="h-4 w-4 border-taupe text-mint-600 focus:ring-mint-500"
               />
               {option.label}
             </label>
@@ -155,7 +155,7 @@ function FilterSidebar({
             <button
               type="button"
               onClick={() => onChange({ postedWithinDays: null })}
-              className="text-xs font-semibold text-gray-500 transition hover:text-gray-900"
+              className="text-xs font-semibold text-charcoal-500 transition hover:text-charcoal-900"
             >
               Any time
             </button>

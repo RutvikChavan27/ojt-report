@@ -31,7 +31,7 @@ const FIXTURE = path.join(__dirname, "../db/seeds/marketplaceTemplates.json");
 const OUTPUT = path.join(__dirname, "../db/seeds/pexelsImages.json");
 
 /** How many photos to keep per term. Enough to vary, few enough to stay curated. */
-const PER_TERM = 8;
+const PER_TERM = 24;
 
 /** One stored photo: the URL to serve, plus attribution. */
 type PexelsImage = {

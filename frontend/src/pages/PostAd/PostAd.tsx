@@ -150,33 +150,33 @@ function PostAd() {
   };
 
   const field =
-    "mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10";
-  const label = "text-xs font-semibold text-gray-500";
+    "mt-1.5 w-full rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3.5 py-2.5 text-sm text-charcoal-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20";
+  const label = "text-xs font-semibold text-charcoal-500";
 
   if (postedId) {
     return (
       <Container className="py-16" narrow="md">
-        <div className="rounded-2xl border border-gray-200 bg-black/[0.03] px-6 py-16 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white">
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-6 py-16 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white">
             <FiCheck size={24} />
           </span>
-          <h1 className="mt-5 text-xl font-black tracking-tight text-gray-900">
+          <h1 className="mt-5 text-xl font-black tracking-tight text-charcoal-900">
             Your listing is live
           </h1>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-500">
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-charcoal-500">
             It is saved and now appears in search, its category, and your
             listings. You can edit or remove it at any time.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
               to={`/listing/${postedId}`}
-              className="rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+              className="rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
             >
               View listing
             </Link>
             <Link
               to="/my-listings"
-              className="rounded-full border border-gray-300 px-6 py-2.5 text-sm font-bold text-gray-900 transition hover:border-gray-900"
+              className="rounded-full border border-taupe px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
             >
               Go to my listings
             </Link>
@@ -193,7 +193,7 @@ function PostAd() {
                 setCity("");
                 setArea("");
               }}
-              className="rounded-full border border-gray-300 px-6 py-2.5 text-sm font-bold text-gray-900 transition hover:border-gray-900"
+              className="rounded-full border border-taupe px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
             >
               Post another
             </button>
@@ -207,21 +207,21 @@ function PostAd() {
     <Container className="py-8" narrow="md">
       <BackLink className="mb-4" />
 
-      <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+      <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
         Sell Something
       </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-charcoal-500">
         Add a few clear photos and an honest description — those two things sell
         an item faster than the price.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         {/* Photos */}
-        <fieldset className="rounded-2xl border border-gray-200 bg-black/[0.03] p-5">
-          <legend className="px-1 text-sm font-bold text-gray-900">
+        <fieldset className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
+          <legend className="px-1 text-sm font-bold text-charcoal-900">
             Photos
           </legend>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-charcoal-500">
             Up to {MAX_PHOTOS}. The first one is used as the cover.
           </p>
 
@@ -229,7 +229,7 @@ function PostAd() {
             {photos.map((photo, index) => (
               <div
                 key={photo.id}
-                className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-white"
+                className="relative aspect-square overflow-hidden rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50"
               >
                 <img
                   src={photo.url}
@@ -237,7 +237,7 @@ function PostAd() {
                   className="h-full w-full object-cover"
                 />
                 {index === 0 && (
-                  <span className="absolute bottom-1 left-1 rounded bg-gray-900 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                  <span className="absolute bottom-1 left-1 rounded bg-mint-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-charcoal-900">
                     Cover
                   </span>
                 )}
@@ -245,7 +245,7 @@ function PostAd() {
                   type="button"
                   onClick={() => removePhoto(photo.id)}
                   aria-label={`Remove ${photo.name}`}
-                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 text-gray-900 transition hover:scale-105"
+                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-cyan-50/95 to-mint-50/95 text-charcoal-700 transition hover:scale-105"
                 >
                   <FiX size={12} />
                 </button>
@@ -256,7 +256,7 @@ function PostAd() {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 transition hover:border-gray-900 hover:text-gray-900"
+                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-taupe text-charcoal-500 transition hover:border-charcoal-400 hover:text-charcoal-900"
               >
                 <FiImage size={20} />
                 <span className="text-[11px] font-semibold">Add photo</span>
@@ -279,15 +279,15 @@ function PostAd() {
         </fieldset>
 
         {/* Details */}
-        <fieldset className="rounded-2xl border border-gray-200 bg-black/[0.03] p-5">
-          <legend className="px-1 text-sm font-bold text-gray-900">
+        <fieldset className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
+          <legend className="px-1 text-sm font-bold text-charcoal-900">
             Item details
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block sm:col-span-2">
               <span className={label}>
-                Title <span className="text-gray-900">*</span>
+                Title <span className="text-cyan-600">*</span>
               </span>
               <input
                 type="text"
@@ -302,7 +302,7 @@ function PostAd() {
 
             <label className="block sm:col-span-2">
               <span className={label}>
-                Description <span className="text-gray-900">*</span>
+                Description <span className="text-cyan-600">*</span>
               </span>
               <textarea
                 value={description}
@@ -317,7 +317,7 @@ function PostAd() {
 
             <label className="block">
               <span className={label}>
-                Category <span className="text-gray-900">*</span>
+                Category <span className="text-cyan-600">*</span>
               </span>
               <select
                 value={category}
@@ -336,7 +336,7 @@ function PostAd() {
 
             <label className="block">
               <span className={label}>
-                Condition <span className="text-gray-900">*</span>
+                Condition <span className="text-cyan-600">*</span>
               </span>
               <select
                 value={condition}
@@ -357,7 +357,7 @@ function PostAd() {
 
             <label className="block">
               <span className={label}>
-                Price (₹) <span className="text-gray-900">*</span>
+                Price (₹) <span className="text-cyan-600">*</span>
               </span>
               <input
                 type="number"
@@ -373,15 +373,15 @@ function PostAd() {
         </fieldset>
 
         {/* Location */}
-        <fieldset className="rounded-2xl border border-gray-200 bg-black/[0.03] p-5">
-          <legend className="px-1 text-sm font-bold text-gray-900">
+        <fieldset className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
+          <legend className="px-1 text-sm font-bold text-charcoal-900">
             Location
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className={label}>
-                City <span className="text-gray-900">*</span>
+                City <span className="text-cyan-600">*</span>
               </span>
               <select
                 value={city}
@@ -400,7 +400,7 @@ function PostAd() {
 
             <label className="block">
               <span className={label}>
-                Area <span className="text-gray-900">*</span>
+                Area <span className="text-cyan-600">*</span>
               </span>
               <input
                 type="text"
@@ -417,7 +417,7 @@ function PostAd() {
         {error && (
           <p
             role="alert"
-            className="rounded-xl border border-gray-900 bg-black/[0.03] px-4 py-3 text-sm font-semibold text-gray-900"
+            className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700"
           >
             {error}
           </p>
@@ -425,7 +425,7 @@ function PostAd() {
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 py-3.5 text-sm font-black uppercase tracking-wide text-white transition hover:bg-black"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
         >
           <FiPlus size={16} />
           Post listing

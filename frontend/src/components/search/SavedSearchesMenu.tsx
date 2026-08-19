@@ -88,15 +88,15 @@ function SavedSearchesMenu() {
         aria-haspopup="true"
         className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition ${
           open
-            ? "bg-gray-900 font-bold text-white"
-            : "text-gray-600 hover:bg-black/5 hover:text-gray-900"
+            ? "bg-mint-500 font-bold text-charcoal-900"
+            : "text-charcoal-600 hover:bg-mint-50 hover:text-mint-700"
         }`}
       >
         <FiBookmark size={14} />
         Searches
         {total > 0 && (
           <span
-            className={`text-xs font-bold ${open ? "text-white/70" : "text-gray-400"}`}
+            className={`text-xs font-bold ${open ? "text-white/70" : "text-charcoal-400"}`}
           >
             {total}
           </span>
@@ -108,9 +108,9 @@ function SavedSearchesMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 max-h-[26rem] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 max-h-[26rem] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 shadow-xl">
           {total === 0 && (
-            <p className="px-4 py-5 text-sm text-gray-500">
+            <p className="px-4 py-5 text-sm text-charcoal-500">
               Nothing yet. Search for something and it will appear here.
             </p>
           )}
@@ -118,19 +118,19 @@ function SavedSearchesMenu() {
           {/* Recent — fills in from the search box, no account needed. */}
           {recent.length > 0 && (
             <>
-              <p className="px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+              <p className="px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-charcoal-400">
                 Recent searches
               </p>
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-taupe">
                 {recent.map((entry) => (
                   <li key={entry.query} className="flex items-center gap-1 px-2">
                     <button
                       type="button"
                       onClick={() => runRecent(entry.query)}
-                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 py-2.5 text-left transition hover:bg-black/[0.03]"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 py-2.5 text-left transition hover:bg-sand"
                     >
-                      <FiClock size={13} className="flex-shrink-0 text-gray-400" />
-                      <span className="min-w-0 flex-1 truncate text-sm text-gray-900">
+                      <FiClock size={13} className="flex-shrink-0 text-charcoal-400" />
+                      <span className="min-w-0 flex-1 truncate text-sm text-charcoal-900">
                         {entry.query}
                       </span>
                     </button>
@@ -146,7 +146,7 @@ function SavedSearchesMenu() {
                         }
                         aria-label={`Save the search ${entry.query}`}
                         title="Save this search"
-                        className="flex-shrink-0 rounded-full p-1.5 text-gray-300 transition hover:bg-black/5 hover:text-gray-900"
+                        className="flex-shrink-0 rounded-full p-1.5 text-charcoal-300 transition hover:bg-sand hover:text-charcoal-900"
                       >
                         <FiBookmark size={13} />
                       </button>
@@ -156,7 +156,7 @@ function SavedSearchesMenu() {
                       type="button"
                       onClick={() => removeRecent(entry.query)}
                       aria-label={`Remove ${entry.query} from recent searches`}
-                      className="flex-shrink-0 rounded-full p-1.5 text-gray-300 transition hover:bg-black/5 hover:text-gray-900"
+                      className="flex-shrink-0 rounded-full p-1.5 text-charcoal-300 transition hover:bg-sand hover:text-charcoal-900"
                     >
                       <FiX size={13} />
                     </button>
@@ -167,13 +167,13 @@ function SavedSearchesMenu() {
           )}
 
           {searches.length > 0 && (
-            <p className="border-t border-gray-100 px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+            <p className="border-t border-taupe px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-charcoal-400">
               Saved searches
             </p>
           )}
 
           {searches.length > 0 && (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-taupe">
               {searches.map((entry) => {
                 const params = paramsFromSearch(new URLSearchParams(entry.query));
                 const chips = describeFilters(params);
@@ -187,7 +187,7 @@ function SavedSearchesMenu() {
                         onClick={() => openSearch(entry.id, entry.query)}
                         className="min-w-0 flex-1 text-left"
                       >
-                        <span className="block truncate text-sm font-bold text-gray-900">
+                        <span className="block truncate text-sm font-bold text-charcoal-900">
                           {params.q || entry.name || "All listings"}
                         </span>
 
@@ -196,7 +196,7 @@ function SavedSearchesMenu() {
                             {chips.map((chip) => (
                               <span
                                 key={chip.key}
-                                className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11px] font-semibold text-gray-700"
+                                className="rounded-full bg-sand px-2 py-0.5 text-[11px] font-semibold text-charcoal-700"
                               >
                                 {chip.label}
                               </span>
@@ -204,7 +204,7 @@ function SavedSearchesMenu() {
                           </span>
                         )}
 
-                        <span className="mt-1.5 block text-[11px] text-gray-400">
+                        <span className="mt-1.5 block text-[11px] text-charcoal-400">
                           Saved{" "}
                           {new Date(entry.createdAt).toLocaleString("en-IN", {
                             day: "numeric",
@@ -218,7 +218,7 @@ function SavedSearchesMenu() {
 
                       <div className="flex flex-shrink-0 items-center gap-1">
                         {fresh > 0 && (
-                          <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                          <span className="rounded-full bg-mint-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
                             {fresh} new
                           </span>
                         )}
@@ -226,7 +226,7 @@ function SavedSearchesMenu() {
                           type="button"
                           onClick={() => remove(entry.id)}
                           aria-label={`Delete saved search ${params.q || entry.name}`}
-                          className="rounded-full p-1.5 text-gray-300 transition hover:bg-black/5 hover:text-gray-900"
+                          className="rounded-full p-1.5 text-charcoal-300 transition hover:bg-sand hover:text-charcoal-900"
                         >
                           <FiTrash2 size={13} />
                         </button>

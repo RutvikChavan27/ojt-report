@@ -47,9 +47,9 @@ const STATUS_LABEL: Record<ListingStatus, string> = {
 const TABS: ListingStatus[] = ["active", "sold", "expired"];
 
 const STATUS_STYLE: Record<ListingStatus, string> = {
-  active: "bg-gray-900 text-white",
-  sold: "bg-black/[0.08] text-gray-600",
-  expired: "border border-gray-300 text-gray-500",
+  active: "bg-emerald-50 text-emerald-700",
+  sold: "bg-sand text-charcoal-600",
+  expired: "bg-amber-50 text-amber-700",
 };
 
 /**
@@ -131,7 +131,7 @@ function MyListings() {
   };
 
   const action =
-    "flex items-center gap-1.5 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-900 transition hover:border-gray-900";
+    "flex items-center gap-1.5 rounded-full border border-taupe px-3 py-1.5 text-xs font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900";
 
   return (
     <Container className="py-8" narrow="lg">
@@ -139,17 +139,17 @@ function MyListings() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+          <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
             My listings
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-charcoal-500">
             Manage what you have posted.
           </p>
         </div>
 
         <Link
           to="/post-ad"
-          className="flex items-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+          className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
         >
           <FiPlus size={15} />
           Sell Something
@@ -160,7 +160,7 @@ function MyListings() {
       <div
         role="tablist"
         aria-label="Listing status"
-        className="mt-6 flex gap-2 border-b border-gray-200"
+        className="mt-6 flex gap-2 border-b border-taupe"
       >
         {TABS.map((status) => (
           <button
@@ -171,8 +171,8 @@ function MyListings() {
             onClick={() => setTab(status)}
             className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-bold transition ${
               tab === status
-                ? "border-gray-900 text-gray-900"
-                : "border-transparent text-gray-500 hover:text-gray-900"
+                ? "border-mint-500 text-mint-700"
+                : "border-transparent text-charcoal-500 hover:text-mint-600"
             }`}
           >
             {STATUS_LABEL[status]} ({countFor(status)})
@@ -183,7 +183,7 @@ function MyListings() {
       {actionError && (
         <p
           role="alert"
-          className="mt-4 rounded-xl border border-gray-300 bg-black/[0.03] px-4 py-2.5 text-sm text-gray-900"
+          className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700"
         >
           {actionError}
         </p>
@@ -201,7 +201,7 @@ function MyListings() {
             <button
               type="button"
               onClick={reload}
-              className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+              className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
             >
               Try again
             </button>
@@ -220,7 +220,7 @@ function MyListings() {
             {tab === "active" && (
               <Link
                 to="/post-ad"
-                className="inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+                className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
               >
                 Sell Something
               </Link>
@@ -232,12 +232,12 @@ function MyListings() {
           {visible.map((listing) => (
             <li
               key={listing.id}
-              className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
+              className="overflow-hidden rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50"
             >
               <div className="flex flex-col gap-4 p-4 sm:flex-row">
                 <Link
                   to={`/listing/${listing.id}`}
-                  className="relative h-28 w-full flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:w-40"
+                  className="relative h-28 w-full flex-shrink-0 overflow-hidden rounded-xl bg-sand sm:w-40"
                 >
                   <ImageWithLoader
                     src={listing.image}
@@ -251,7 +251,7 @@ function MyListings() {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <Link
                       to={`/listing/${listing.id}`}
-                      className="text-sm font-bold text-gray-900 hover:underline"
+                      className="text-sm font-bold text-charcoal-900 hover:underline"
                     >
                       {listing.title}
                     </Link>
@@ -264,11 +264,11 @@ function MyListings() {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-base font-black text-gray-900">
+                  <p className="mt-1 text-base font-black text-charcoal-900">
                     {formatPrice(listing.price)}
                   </p>
 
-                  <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
+                  <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-charcoal-500">
                     <div className="flex items-center gap-1">
                       <FiEye size={11} />
                       <dt className="sr-only">Views</dt>
@@ -286,7 +286,7 @@ function MyListings() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 border-t border-gray-200 px-4 py-3">
+              <div className="flex flex-wrap gap-2 border-t border-taupe px-4 py-3">
                 <Link to={`/listing/${listing.id}`} className={action}>
                   <FiEdit2 size={12} />
                   View
@@ -323,7 +323,7 @@ function MyListings() {
                   type="button"
                   disabled={busyId === listing.id}
                   onClick={() => remove(listing.id)}
-                  className={`${action} text-gray-500 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50`}
+                  className={`${action} text-charcoal-500 hover:border-rose-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   <FiTrash2 size={12} />
                   {busyId === listing.id ? "Working…" : "Delete"}

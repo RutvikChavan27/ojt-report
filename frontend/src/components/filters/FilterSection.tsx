@@ -20,12 +20,12 @@ function FilterSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-200 py-5 first:pt-0">
+    <div className="border-b border-taupe py-5 first:pt-0">
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between text-sm font-bold text-gray-900"
+        className="flex w-full items-center justify-between text-sm font-bold text-charcoal-900"
       >
         {title}
         {isOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}

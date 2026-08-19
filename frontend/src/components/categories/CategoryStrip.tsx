@@ -25,7 +25,7 @@ function CategoryStrip({ bare = false }: CategoryStripProps) {
   return (
     <nav
       aria-label="Categories"
-      className={bare ? "" : "border-b border-gray-200"}
+      className={bare ? "" : "border-b border-taupe"}
     >
       {/* Horizontal scroll rather than wrapping: thirteen categories on two or
           three wrapped lines pushes the results themselves off the screen. */}
@@ -35,8 +35,8 @@ function CategoryStrip({ bare = false }: CategoryStripProps) {
             to="/search"
             className={`block rounded-full px-3.5 py-1.5 text-sm transition ${
               active === null
-                ? "bg-gray-900 font-bold text-white"
-                : "text-gray-600 hover:bg-black/5 hover:text-gray-900"
+                ? "bg-mint-500 font-bold text-charcoal-900"
+                : "text-charcoal-600 hover:bg-sand hover:text-charcoal-900"
             }`}
           >
             All
@@ -49,8 +49,8 @@ function CategoryStrip({ bare = false }: CategoryStripProps) {
               to={`/search?category=${category.slug}`}
               className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition ${
                 active === category.slug
-                  ? "bg-gray-900 font-bold text-white"
-                  : "text-gray-600 hover:bg-black/5 hover:text-gray-900"
+                  ? "bg-mint-500 font-bold text-charcoal-900"
+                  : "text-charcoal-600 hover:bg-sand hover:text-charcoal-900"
               }`}
             >
               {category.label}

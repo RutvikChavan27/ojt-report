@@ -19,14 +19,14 @@ function LocationSelector({
 }: LocationSelectorProps) {
   return (
     <label
-      className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white px-3.5 py-2 ${className}`}
+      className={`flex items-center gap-2 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3.5 py-2 transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 ${className}`}
     >
-      <FiMapPin size={16} className="flex-shrink-0 text-gray-400" />
+      <FiMapPin size={16} className="flex-shrink-0 text-charcoal-400" />
       <span className="sr-only">Location</span>
       <select
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value || null)}
-        className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none"
+        className="min-w-0 flex-1 bg-transparent text-sm text-charcoal-900 outline-none"
       >
         <option value="">All India</option>
         {CITY_NAMES.map((city) => (

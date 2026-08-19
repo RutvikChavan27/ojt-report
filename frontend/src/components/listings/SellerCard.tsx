@@ -27,20 +27,20 @@ function SellerCard({ seller }: SellerCardProps) {
   const [revealed, setRevealed] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-black/[0.03] p-5">
-      <h2 className="text-xs font-bold uppercase tracking-wide text-gray-500">
+    <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
+      <h2 className="text-xs font-bold uppercase tracking-wide text-charcoal-500">
         Posted by
       </h2>
 
       <div className="mt-3 flex items-center gap-3">
-        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-white">
+        <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-charcoal-900 text-white">
           <FiUser size={18} />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-gray-900">
+          <p className="truncate text-sm font-bold text-charcoal-900">
             {seller.name}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-charcoal-500">
             Member since {monthYear(seller.memberSince)}
           </p>
         </div>
@@ -52,7 +52,7 @@ function SellerCard({ seller }: SellerCardProps) {
             <a
               href={`tel:${seller.phoneMasked}`}
               onClick={(event) => event.preventDefault()}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-gray-900 py-3 text-sm font-bold text-gray-900"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-mint-500 py-3 text-sm font-bold text-mint-700"
             >
               <FiPhone size={15} />
               {seller.phoneMasked}
@@ -61,19 +61,19 @@ function SellerCard({ seller }: SellerCardProps) {
             <button
               type="button"
               onClick={() => setRevealed(true)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 py-3 text-sm font-bold text-white transition hover:bg-black"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
             >
               <FiPhone size={15} />
               Contact seller
             </button>
           )}
 
-          <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
+          <p className="mt-3 text-[11px] leading-relaxed text-charcoal-400">
             Only the last digits are shown until the seller shares the rest.
           </p>
         </>
       ) : (
-        <p className="mt-4 text-[11px] leading-relaxed text-gray-400">
+        <p className="mt-4 text-[11px] leading-relaxed text-charcoal-400">
           This seller has not added a contact number.
         </p>
       )}

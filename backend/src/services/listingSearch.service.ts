@@ -144,8 +144,8 @@ export async function searchListings(
   request: SearchRequest,
 ): Promise<ListingSearchDTO> {
   const perPage = Math.min(Math.max(request.perPage, 1), 60);
-  const page = Math.max(request.page, 1);
-  const offset = (page - 1) * perPage;
+  const requestedPage = Math.max(request.page, 1);
+  const offset = (requestedPage - 1) * perPage;
 
   const options = { ...request, limit: perPage, offset };
 
@@ -172,7 +172,7 @@ export async function searchListings(
 
   // Only reach for the fuzzy path on a genuine miss: a later page legitimately
   // comes back empty, and retrying there would silently mix the two rankings.
-  if (rows.length === 0 && request.q && page === 1) {
+  if (rows.length === 0 && request.q && requestedPage === 1) {
     rows = await searchListingsFuzzy(options);
     if (rows.length > 0) {
       fuzzy = true;
@@ -197,6 +197,17 @@ export async function searchListings(
     ]);
   } else {
     [total, facetRows] = await Promise.all([optimisticTotal, optimisticFacets]);
+  }
+
+  // A page past the last real one — someone jumping straight to a high page
+  // number, or a filter narrowing the results out from under an already-open
+  // one — comes back with no rows even though matches exist. Re-fetch the
+  // last real page instead of handing back a blank grid over a nonzero total.
+  let page = requestedPage;
+  const pageCount = Math.max(1, Math.ceil(total / perPage));
+  if (rows.length === 0 && total > 0 && requestedPage > pageCount) {
+    page = pageCount;
+    rows = await searchListingsExact({ ...options, offset: (page - 1) * perPage });
   }
 
   return {
