@@ -124,7 +124,7 @@ function Navbar() {
                 type="button"
                 onClick={() => setCategoriesOpen((open) => !open)}
                 aria-expanded={categoriesOpen}
-                className={`group flex items-center gap-2.5 rounded-full border border-cyan-500 bg-mist py-2 pl-2 pr-4 text-[15px] font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out hover:-translate-y-px hover:border-cyan-600 hover:bg-mist-dark hover:shadow-lg motion-reduce:transform-none ${
+                className={`group flex h-11 items-center gap-2.5 rounded-full border border-cyan-500 bg-mist pl-2 pr-4 text-sm font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out hover:-translate-y-px hover:border-cyan-600 hover:bg-mist-dark hover:shadow-lg motion-reduce:transform-none ${
                   categoriesOpen ? "border-cyan-600 bg-mist-dark" : ""
                 }`}
               >
@@ -182,7 +182,7 @@ function Navbar() {
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
                   aria-expanded={profileOpen}
-                  className={`flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4 text-sm font-semibold transition-all duration-150 hover:bg-sand ${
+                  className={`flex h-11 items-center gap-2 rounded-full pl-2 pr-4 text-sm font-semibold transition-all duration-150 hover:bg-sand ${
                     profileOpen ? "bg-sand text-charcoal-900" : "text-charcoal-700"
                   }`}
                 >
@@ -245,7 +245,7 @@ function Navbar() {
                 on a button that was hidden from them. */}
             <Link
               to="/post-ad"
-              className="flex items-center gap-2 rounded-full bg-mist px-4 py-2.5 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6 sm:py-3"
+              className="flex h-11 items-center gap-2 rounded-full bg-mist px-4 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6"
             >
               <FiPlus size={17} />
               <span className="hidden sm:inline">Sell Something</span>
@@ -268,7 +268,7 @@ function Navbar() {
             shrinking into uselessness beside the logo, with location above the
             box rather than beside it — side by side, neither had room to say
             what it was. */}
-        <div className="flex flex-col gap-2 pb-3 sm:flex-row md:hidden">
+        <div className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center md:hidden">
           <LocationSelector value={city} onChange={setCity} className="sm:w-40" />
           <div className="min-w-0 flex-1">
             <SearchBar initialQuery={activeQuery} city={city} size="large" />
