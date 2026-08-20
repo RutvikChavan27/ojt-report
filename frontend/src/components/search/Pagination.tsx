@@ -1,9 +1,15 @@
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
+/** A resume point from the current page, handed back on the next request. */
+type Cursor = { value: string; dir: "next" | "prev" };
+
 type PaginationProps = {
   page: number;
   pageCount: number;
-  onChange: (page: number) => void;
+  /** From the current page's response — see `SearchParams.cursor`. */
+  nextCursor: string | null;
+  prevCursor: string | null;
+  onChange: (page: number, cursor?: Cursor) => void;
 };
 
 /**
@@ -12,8 +18,15 @@ type PaginationProps = {
  * Shows a window around the current page rather than every page number: at a
  * hundred thousand listings there are thousands of pages, and rendering them all
  * would be a wall of numbers nobody can use.
+ *
+ * Previous/Next hand back the cursor the current page arrived with, so that
+ * step seeks by index instead of by OFFSET — the one navigation someone
+ * actually takes hundreds of times in a row, and so the one worth being cheap
+ * regardless of how deep it has gone. Jumping to a numbered, first, or last
+ * page is not adjacent to what is on screen, so those fall back to a plain
+ * page number and let the server OFFSET to it directly.
  */
-function Pagination({ page, pageCount, onChange }: PaginationProps) {
+function Pagination({ page, pageCount, nextCursor, prevCursor, onChange }: PaginationProps) {
   if (pageCount <= 1) return null;
 
   const window = 2;
@@ -31,7 +44,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
     >
       <button
         type="button"
-        onClick={() => onChange(page - 1)}
+        onClick={() => onChange(page - 1, prevCursor ? { value: prevCursor, dir: "prev" } : undefined)}
         disabled={page <= 1}
         aria-label="Previous page"
         className={button}
@@ -48,21 +61,32 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
         </>
       )}
 
-      {pages.map((entry) => (
-        <button
-          key={entry}
-          type="button"
-          onClick={() => onChange(entry)}
-          aria-current={entry === page ? "page" : undefined}
-          className={
-            entry === page
-              ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-mist px-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30"
-              : button
-          }
-        >
-          {entry}
-        </button>
-      ))}
+      {pages.map((entry) => {
+        // A number adjacent to the current page is the same request the
+        // chevron next to it would make — worth the same cursor seek.
+        const seek =
+          entry === page - 1 && prevCursor
+            ? ({ value: prevCursor, dir: "prev" } as const)
+            : entry === page + 1 && nextCursor
+              ? ({ value: nextCursor, dir: "next" } as const)
+              : undefined;
+
+        return (
+          <button
+            key={entry}
+            type="button"
+            onClick={() => onChange(entry, seek)}
+            aria-current={entry === page ? "page" : undefined}
+            className={
+              entry === page
+                ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-mist px-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30"
+                : button
+            }
+          >
+            {entry}
+          </button>
+        );
+      })}
 
       {to < pageCount && (
         <>
@@ -79,7 +103,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
 
       <button
         type="button"
-        onClick={() => onChange(page + 1)}
+        onClick={() => onChange(page + 1, nextCursor ? { value: nextCursor, dir: "next" } : undefined)}
         disabled={page >= pageCount}
         aria-label="Next page"
         className={button}

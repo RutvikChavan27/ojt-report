@@ -82,6 +82,8 @@ export async function searchListingsViaApi(
     postedWithin: params.postedWithinDays ?? undefined,
     sort: SORT_MAP[params.sort] ?? params.sort,
     page: params.page,
+    cursor: params.cursor ?? undefined,
+    cursorDir: params.cursorDir ?? undefined,
   });
 
   return {
@@ -91,6 +93,8 @@ export async function searchListingsViaApi(
     perPage: result.perPage,
     pageCount: Math.max(Math.ceil(result.total / result.perPage), 1),
     suggestion: result.suggestion,
+    nextCursor: result.nextCursor,
+    prevCursor: result.prevCursor,
     facets: {
       category: toFacet(result.facets.category),
       city: toFacet(result.facets.city),

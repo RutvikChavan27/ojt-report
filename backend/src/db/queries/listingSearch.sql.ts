@@ -125,6 +125,133 @@ export function buildOrderBy(sort: SortKey, hasQuery: boolean): string {
  */
 export const RANK_EXPRESSION = `ts_rank(l.search_vector, websearch_to_tsquery('english', $1))`;
 
+/**
+ * The tiebreaker values of one row, in the order its sort's ORDER BY uses them.
+ * Enough to resume immediately after (or before) that row without OFFSET.
+ *
+ * `id` is always present — every sort ends on it, which is what keeps a keyset
+ * seek unambiguous even when every other column ties. `rank` and `price` are
+ * mutually exclusive with each other and with being absent, one per sort family.
+ */
+export type Cursor = {
+  rank?: number;
+  postedAt?: string;
+  price?: number;
+  id: string;
+};
+
+/** Opaque to the client on purpose — nothing but this module parses it. */
+export function encodeCursor(cursor: Cursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString("base64url");
+}
+
+/** `null` on anything malformed, so a tampered or stale cursor degrades to "start over" rather than a 500. */
+export function decodeCursor(raw: string): Cursor | null {
+  try {
+    const parsed: unknown = JSON.parse(Buffer.from(raw, "base64url").toString("utf-8"));
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      typeof (parsed as Cursor).id === "string"
+    ) {
+      return parsed as Cursor;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Reads the cursor tuple off a result row, in the shape its sort produced it.
+ * The mirror of `buildKeysetClause` below — same three sort families.
+ */
+export function cursorFromRow(
+  row: { id: string; posted_at: Date; price: string },
+  sort: SortKey,
+  hasQuery: boolean,
+  rank?: number,
+): Cursor {
+  if (sort === "price_asc" || sort === "price_desc") {
+    return { price: Number(row.price), id: row.id };
+  }
+  if (sort === "relevance" && hasQuery) {
+    return { rank, postedAt: row.posted_at.toISOString(), id: row.id };
+  }
+  return { postedAt: row.posted_at.toISOString(), id: row.id };
+}
+
+/**
+ * A keyset ("seek") WHERE fragment: the set of rows immediately after (or
+ * before) one already-seen row, expressed as a single row-constructor
+ * comparison so Postgres can satisfy it with the same composite index that
+ * already backs the ORDER BY — no OFFSET, so the cost does not grow with how
+ * deep into the result set that row was.
+ *
+ * `direction: "next"` walks the same way the sort already reads (the next
+ * page). `"prev"` walks backward: the comparison and the ORDER BY it must be
+ * paired with (see `keysetOrderBy`) are both reversed, so the *closest*
+ * preceding rows come back first under LIMIT — the repository then reverses
+ * the array once in memory to restore display order. Two round trips through
+ * the same index, never a scan proportional to position.
+ */
+export function buildKeysetClause(
+  sort: SortKey,
+  hasQuery: boolean,
+  cursor: Cursor,
+  direction: "next" | "prev",
+  startIndex: number,
+): SqlFragment | null {
+  const forward = direction === "next";
+
+  if (sort === "price_asc" || sort === "price_desc") {
+    if (cursor.price === undefined) return null;
+    const op = (sort === "price_asc") === forward ? ">" : "<";
+    return {
+      text: `(l.price, l.id) ${op} ($${startIndex + 1}::numeric, $${startIndex + 2}::bigint)`,
+      values: [cursor.price, cursor.id],
+    };
+  }
+
+  if (sort === "relevance" && hasQuery) {
+    if (cursor.rank === undefined || cursor.postedAt === undefined) return null;
+    const op = forward ? "<" : ">";
+    return {
+      text: `(${RANK_EXPRESSION}, l.posted_at, l.id) ${op} ($${startIndex + 1}::double precision, $${startIndex + 2}::timestamptz, $${startIndex + 3}::bigint)`,
+      values: [cursor.rank, cursor.postedAt, cursor.id],
+    };
+  }
+
+  // "newest", and "relevance" without a query (which sorts the same way).
+  if (cursor.postedAt === undefined) return null;
+  const op = forward ? "<" : ">";
+  return {
+    text: `(l.posted_at, l.id) ${op} ($${startIndex + 1}::timestamptz, $${startIndex + 2}::bigint)`,
+    values: [cursor.postedAt, cursor.id],
+  };
+}
+
+/**
+ * The ORDER BY a keyset seek must run under: `buildOrderBy`'s own order when
+ * walking forward, flipped end-to-end when walking backward. Pairs with
+ * `buildKeysetClause`'s comparison flip — together they turn "the closest
+ * rows before this one" into "the first rows LIMIT returns", which is what
+ * makes a backward seek just as index-friendly as a forward one.
+ */
+export function keysetOrderBy(
+  sort: SortKey,
+  hasQuery: boolean,
+  direction: "next" | "prev",
+): string {
+  const order = buildOrderBy(sort, hasQuery);
+  if (direction === "next") return order;
+
+  return order
+    .split(", ")
+    .map((column) => (column.endsWith(" DESC") ? column.replace(" DESC", " ASC") : column.replace(" ASC", " DESC")))
+    .join(", ");
+}
+
 /** Columns every result row needs, including the primary photo. */
 export const LISTING_COLUMNS = `
   l.id::text,

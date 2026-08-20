@@ -5,10 +5,13 @@
 import { query } from "../config/database";
 import {
   buildListingWhere,
+  buildKeysetClause,
   buildOrderBy,
+  keysetOrderBy,
   LISTING_COLUMNS,
   LISTING_JOINS,
   RANK_EXPRESSION,
+  type Cursor,
   type ListingFilters,
   type SortKey,
 } from "../db/queries/listingSearch.sql";
@@ -17,10 +20,22 @@ import type { ListingRow } from "./marketplace.repository";
 
 export type SearchRow = ListingRow & { rank: string };
 
+/** A resume point plus which way to walk from it — see `buildKeysetClause`. */
+export type CursorSeek = { cursor: Cursor; direction: "next" | "prev" };
+
 export type SearchOptions = ListingFilters & {
   sort: SortKey;
   limit: number;
   offset: number;
+  /**
+   * When present, rows are fetched by seeking from this cursor instead of
+   * OFFSET — the fix for "page 500 must return as quickly as page 2": a seek
+   * costs one index descent regardless of how deep the cursor is, where
+   * OFFSET costs work proportional to `offset`. Absent on the first page of a
+   * search (nothing to resume from) and on a hand-edited `?page=N` jump,
+   * both of which still use `offset` below.
+   */
+  seek?: CursorSeek | null;
 };
 
 /**
@@ -43,20 +58,47 @@ export async function searchListingsExact(
     ? `AND l.search_vector @@ websearch_to_tsquery('english', $1)`
     : "";
 
-  values.push(options.limit, options.offset);
-  const limitPlaceholder = `$${values.length - 1}`;
-  const offsetPlaceholder = `$${values.length}`;
+  const seekClause =
+    options.seek &&
+    buildKeysetClause(
+      options.sort,
+      hasQuery,
+      options.seek.cursor,
+      options.seek.direction,
+      values.length,
+    );
 
-  const { rows } = await query<SearchRow>(
-    `SELECT ${LISTING_COLUMNS},
+  let sql: string;
+  if (seekClause) {
+    values.push(...seekClause.values);
+    values.push(options.limit);
+    sql = `SELECT ${LISTING_COLUMNS},
+            ${hasQuery ? RANK_EXPRESSION : "0"} AS rank
+     ${LISTING_JOINS}
+     WHERE ${where.text}
+       ${textClause}
+       AND ${seekClause.text}
+     ORDER BY ${keysetOrderBy(options.sort, hasQuery, options.seek!.direction)}
+     LIMIT $${values.length}`;
+  } else {
+    values.push(options.limit, options.offset);
+    const limitPlaceholder = `$${values.length - 1}`;
+    const offsetPlaceholder = `$${values.length}`;
+    sql = `SELECT ${LISTING_COLUMNS},
             ${hasQuery ? RANK_EXPRESSION : "0"} AS rank
      ${LISTING_JOINS}
      WHERE ${where.text}
        ${textClause}
      ORDER BY ${buildOrderBy(options.sort, hasQuery)}
-     LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
-    values,
-  );
+     LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`;
+  }
+
+  const { rows } = await query<SearchRow>(sql, values);
+
+  // A backward seek runs under the reversed ORDER BY so LIMIT takes the rows
+  // *closest* to the cursor — restoring display order means reversing once
+  // more here, in memory, rather than a second index walk.
+  if (seekClause && options.seek!.direction === "prev") rows.reverse();
 
   return rows;
 }

@@ -224,6 +224,9 @@ export type ApiSearchResult = {
   /** Closest real title to a misspelled query, for "did you mean". */
   suggestion: string | null;
   facets: ApiFacets;
+  /** Resume points for Next/Previous — see `SearchParams.cursor`. */
+  nextCursor: string | null;
+  prevCursor: string | null;
 };
 
 export type ApiListingPage = {
@@ -347,6 +350,9 @@ export type SearchParams = {
   sort?: string;
   page?: number;
   perPage?: number;
+  /** A previous response's `nextCursor`/`prevCursor`, paired with its direction. */
+  cursor?: string;
+  cursorDir?: "next" | "prev";
 };
 
 /**

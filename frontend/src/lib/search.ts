@@ -63,6 +63,14 @@ export type SearchParams = {
   postedWithinDays: number | null;
   sort: SortKey;
   page: number;
+  /**
+   * A resume point from a previous response's `nextCursor`/`prevCursor`, so
+   * Next/Previous can seek by index instead of by OFFSET — see
+   * `Pagination.tsx`. `null` for a first load, a filter/sort change, or a
+   * jump to a page not adjacent to the one just shown.
+   */
+  cursor: string | null;
+  cursorDir: "next" | "prev" | null;
 };
 
 export const EMPTY_PARAMS: SearchParams = {
@@ -76,6 +84,8 @@ export const EMPTY_PARAMS: SearchParams = {
   postedWithinDays: null,
   sort: "newest",
   page: 1,
+  cursor: null,
+  cursorDir: null,
 };
 
 export type FacetValue = { value: string; label: string; count: number };
@@ -96,6 +106,9 @@ export type SearchResult = {
   facets: Facets;
   /** Closest real word to a query that matched nothing. */
   suggestion: string | null;
+  /** Resume points for Next/Previous — see `SearchParams.cursor`. */
+  nextCursor: string | null;
+  prevCursor: string | null;
 };
 
 export const PER_PAGE = 12;
@@ -357,6 +370,10 @@ export function searchListings(params: SearchParams): SearchResult {
     pageCount,
     facets,
     suggestion: total === 0 && params.q ? suggestCorrection(params.q) : null,
+    // Dead code path (see note above) — no cursor support needed for a
+    // fixture that is never paginated deeply.
+    nextCursor: null,
+    prevCursor: null,
   };
 }
 
@@ -413,6 +430,8 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
     postedWithinDays: number("postedWithin"),
     sort: validSort && sortRaw ? sortRaw : q ? "relevance" : "newest",
     page: number("page") ?? 1,
+    cursor: search.get("cursor"),
+    cursorDir: search.get("cursorDir") === "prev" ? "prev" : search.get("cursorDir") === "next" ? "next" : null,
   };
 }
 
@@ -439,6 +458,10 @@ export function searchToParams(params: SearchParams): URLSearchParams {
   const defaultSort = params.q ? "relevance" : "newest";
   if (params.sort !== defaultSort) search.set("sort", params.sort);
   if (params.page > 1) search.set("page", String(params.page));
+  if (params.cursor && params.cursorDir) {
+    search.set("cursor", params.cursor);
+    search.set("cursorDir", params.cursorDir);
+  }
 
   return search;
 }

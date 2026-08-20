@@ -125,6 +125,14 @@ export type ListingSearchDTO = {
   /** Closest real title to a misspelled query, for "did you mean". */
   suggestion: string | null;
   facets: ListingFacetsDTO;
+  /**
+   * Opaque keyset tokens for the row immediately after/before this page.
+   * Feed one back as `cursor` (with the matching `cursorDir`) to fetch the
+   * adjacent page by index seek instead of OFFSET — `null` when this is the
+   * last/first page and there is nothing to seek to.
+   */
+  nextCursor: string | null;
+  prevCursor: string | null;
 };
 
 /** A browsable category with how many active listings it holds. */

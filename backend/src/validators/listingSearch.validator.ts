@@ -69,6 +69,12 @@ function parseAudience(value: unknown): string | undefined {
   return AUDIENCES.has(normalised) ? normalised : undefined;
 }
 
+/** A cursor is meaningless without knowing which way to walk from it. */
+function parseCursorDir(value: unknown): "next" | "prev" | undefined {
+  const raw = first(value);
+  return raw === "next" || raw === "prev" ? raw : undefined;
+}
+
 export function parseSearchRequest(queryString: Request["query"]): SearchRequest {
   const q = first(queryString.q)?.trim().slice(0, MAX_QUERY_LENGTH) || undefined;
 
@@ -98,5 +104,7 @@ export function parseSearchRequest(queryString: Request["query"]): SearchRequest
     sort,
     page: parsePositiveInt(queryString.page, 1),
     perPage: parsePositiveInt(queryString.perPage, 24),
+    cursor: first(queryString.cursor),
+    cursorDir: parseCursorDir(queryString.cursorDir),
   };
 }

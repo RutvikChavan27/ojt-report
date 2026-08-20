@@ -90,6 +90,8 @@ function SearchResults() {
     perPage: 12,
     pageCount: 1,
     suggestion: null,
+    nextCursor: null,
+    prevCursor: null,
     facets: { category: [], city: [], condition: [], price: [] },
   };
 
@@ -120,7 +122,13 @@ function SearchResults() {
   const update = (patch: Partial<SearchParams>) => {
     const next: SearchParams = { ...params, ...patch };
     const changingPage = "page" in patch;
-    if (!changingPage) next.page = 1;
+    if (!changingPage) {
+      next.page = 1;
+      // A cursor is only valid against the search it came from; carrying one
+      // into a new filter or sort would seek through the wrong result set.
+      next.cursor = null;
+      next.cursorDir = null;
+    }
 
     /*
      * Filters and sort replace the current history entry; only paging pushes a
@@ -356,8 +364,14 @@ function SearchResults() {
               <Pagination
                 page={results.page}
                 pageCount={results.pageCount}
-                onChange={(page) => {
-                  update({ page });
+                nextCursor={results.nextCursor}
+                prevCursor={results.prevCursor}
+                onChange={(page, cursor) => {
+                  update({
+                    page,
+                    cursor: cursor?.value ?? null,
+                    cursorDir: cursor?.dir ?? null,
+                  });
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               />

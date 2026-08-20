@@ -9,9 +9,16 @@ import {
   searchListingsFuzzy,
   suggestCorrection,
   suggestListings,
+  type CursorSeek,
   type FacetCountRow,
+  type SearchRow,
 } from "../repositories/listingSearch.repository";
-import type { SortKey } from "../db/queries/listingSearch.sql";
+import {
+  cursorFromRow,
+  decodeCursor,
+  encodeCursor,
+  type SortKey,
+} from "../db/queries/listingSearch.sql";
 import type { FacetKey } from "../db/queries/listingFacets.sql";
 import { resolveImagePath } from "../utils/images";
 import type {
@@ -36,6 +43,9 @@ export type SearchRequest = {
   sort: SortKey;
   page: number;
   perPage: number;
+  /** Opaque token from a previous response's `nextCursor`/`prevCursor`. */
+  cursor?: string;
+  cursorDir?: "next" | "prev";
 };
 
 /**
@@ -147,7 +157,19 @@ export async function searchListings(
   const requestedPage = Math.max(request.page, 1);
   const offset = (requestedPage - 1) * perPage;
 
-  const options = { ...request, limit: perPage, offset };
+  /* A cursor is only trusted when it actually decodes and carries the fields
+     this sort needs (see `buildKeysetClause`) — anything else, including one
+     left over from a different sort after the shopper changed it, quietly
+     falls back to `offset` below rather than 400ing or serving nonsense. */
+  const seek: CursorSeek | null =
+    request.cursor && request.cursorDir
+      ? (() => {
+          const cursor = decodeCursor(request.cursor!);
+          return cursor ? { cursor, direction: request.cursorDir! } : null;
+        })()
+      : null;
+
+  const options = { ...request, limit: perPage, offset, seek };
 
   /* All three queries are dispatched together rather than the page first and the
      count/facets after it.
@@ -203,12 +225,26 @@ export async function searchListings(
   // number, or a filter narrowing the results out from under an already-open
   // one — comes back with no rows even though matches exist. Re-fetch the
   // last real page instead of handing back a blank grid over a nonzero total.
+  //
+  // Only meaningful for an `offset` request: a cursor seek coming back empty
+  // means "nothing more in that direction", which is what an already-disabled
+  // Next/Previous button prevents the client from ever asking for on purpose.
   let page = requestedPage;
   const pageCount = Math.max(1, Math.ceil(total / perPage));
-  if (rows.length === 0 && total > 0 && requestedPage > pageCount) {
+  if (!seek && rows.length === 0 && total > 0 && requestedPage > pageCount) {
     page = pageCount;
     rows = await searchListingsExact({ ...options, offset: (page - 1) * perPage });
   }
+
+  const hasQuery = Boolean(request.q);
+  const first = rows[0] as SearchRow | undefined;
+  const last = rows[rows.length - 1] as SearchRow | undefined;
+  const nextCursor = last
+    ? encodeCursor(cursorFromRow(last, request.sort, hasQuery, Number(last.rank)))
+    : null;
+  const prevCursor = first
+    ? encodeCursor(cursorFromRow(first, request.sort, hasQuery, Number(first.rank)))
+    : null;
 
   return {
     items: rows.map(toDTO),
@@ -216,6 +252,10 @@ export async function searchListings(
     page,
     perPage,
     hasMore: page * perPage < total,
+    // No further page exists once the last row is on screen; a cursor is
+    // only worth handing back when there is somewhere left for it to go.
+    nextCursor: page * perPage < total ? nextCursor : null,
+    prevCursor: page > 1 ? prevCursor : null,
     sort: request.sort,
     fuzzy,
     suggestion,
