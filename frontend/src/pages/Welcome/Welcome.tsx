@@ -206,7 +206,7 @@ function Welcome() {
           <div className="mt-10 flex animate-[pop-in_0.5s_ease-out_both] justify-center [animation-delay:680ms] motion-reduce:animate-none">
             <Link
               to="/home"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-10 py-4 text-base font-bold text-charcoal-900 shadow-lg shadow-cyan-500/30 transition-all duration-200 hover:scale-105 hover:shadow-cyan-500/40 hover:brightness-105 motion-reduce:hover:scale-100"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-mist px-10 py-4 text-base font-bold text-charcoal-900 shadow-lg shadow-cyan-500/30 transition-all duration-200 hover:scale-105 hover:shadow-cyan-500/40 hover:brightness-105 motion-reduce:hover:scale-100"
             >
               Browse marketplace
               <FiArrowRight

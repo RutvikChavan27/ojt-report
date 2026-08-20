@@ -88,7 +88,7 @@ function SavedSearchesMenu() {
         aria-haspopup="true"
         className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition ${
           open
-            ? "bg-cyan-500 font-bold text-charcoal-900"
+            ? "bg-mist font-bold text-charcoal-900"
             : "text-charcoal-600 hover:bg-cyan-50 hover:text-cyan-700"
         }`}
       >
@@ -96,7 +96,7 @@ function SavedSearchesMenu() {
         Searches
         {total > 0 && (
           <span
-            className={`text-xs font-bold ${open ? "text-white/70" : "text-charcoal-400"}`}
+            className={`text-xs font-bold ${open ? "text-charcoal-900/60" : "text-charcoal-400"}`}
           >
             {total}
           </span>
@@ -108,7 +108,7 @@ function SavedSearchesMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 max-h-[26rem] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 max-h-[26rem] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-taupe bg-mist shadow-xl">
           {total === 0 && (
             <p className="px-4 py-5 text-sm text-charcoal-500">
               Nothing yet. Search for something and it will appear here.
@@ -218,7 +218,7 @@ function SavedSearchesMenu() {
 
                       <div className="flex flex-shrink-0 items-center gap-1">
                         {fresh > 0 && (
-                          <span className="rounded-full bg-cyan-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
+                          <span className="rounded-full bg-mist px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
                             {fresh} new
                           </span>
                         )}

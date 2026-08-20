@@ -19,7 +19,7 @@ function LocationSelector({
 }: LocationSelectorProps) {
   return (
     <label
-      className={`flex items-center gap-2 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3.5 py-2 transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 ${className}`}
+      className={`flex items-center gap-2 rounded-full border border-taupe bg-mist px-3.5 py-2 transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 ${className}`}
     >
       <FiMapPin size={16} className="flex-shrink-0 text-charcoal-400" />
       <span className="sr-only">Location</span>

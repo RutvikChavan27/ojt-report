@@ -178,7 +178,7 @@ function CategoryTiles({ categories }: CategoryTilesProps) {
         </div>
         <Link
           to="/post-ad"
-          className="flex flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none"
+          className="flex flex-shrink-0 items-center gap-2 rounded-full bg-mist px-6 py-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none"
         >
           <FiPlus size={17} />
           Sell Something

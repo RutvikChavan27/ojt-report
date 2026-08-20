@@ -21,7 +21,7 @@ function SortDropdown({ value, onChange, hasQuery }: SortDropdownProps) {
         value={value}
         onChange={(event) => onChange(event.target.value as SortKey)}
         aria-label="Sort results"
-        className="rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-4 py-2 text-sm font-semibold text-charcoal-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+        className="rounded-full border border-taupe bg-mist px-4 py-2 text-sm font-semibold text-charcoal-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
       >
         {SORT_OPTIONS.map((option) => (
           <option

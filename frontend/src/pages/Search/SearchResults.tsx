@@ -238,7 +238,7 @@ function SearchResults() {
             <button
               type="button"
               onClick={() => update({ q: "" })}
-              className="flex items-center gap-1.5 rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-charcoal-900 transition hover:bg-cyan-600"
+              className="flex items-center gap-1.5 rounded-full bg-mist px-3 py-1.5 text-xs font-semibold text-charcoal-900 transition hover:bg-mist-dark"
             >
               “{params.q}”
               <FiX size={12} />

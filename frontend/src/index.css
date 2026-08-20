@@ -60,6 +60,12 @@
   --color-cream: #fbf9f4;
   --color-taupe: #d8cfc3;
   --color-taupe-dark: #c3b6a5;
+
+  /* The fill every button and dropdown panel carries — a near-white cyan,
+     deliberately paler than the `cyan` scale itself. Borders, shadows and
+     icons stay on `cyan`/`mint` for definition; only the fill moved here. */
+  --color-mist: #d9fffd;
+  --color-mist-dark: #a8ece3;
 }
 
 html {

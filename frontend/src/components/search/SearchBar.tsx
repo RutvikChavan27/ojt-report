@@ -157,7 +157,7 @@ function SearchBar({
 
         <button
           type="submit"
-          className={`flex-shrink-0 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
+          className={`flex-shrink-0 rounded-full bg-mist font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
             tall ? "px-7 py-2.5 text-sm" : "px-5 py-2 text-sm"
           }`}
         >

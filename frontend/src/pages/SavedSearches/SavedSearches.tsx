@@ -28,7 +28,7 @@ function SavedSearches() {
         >
           <Link
             to="/search"
-            className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+            className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
           >
             Start searching
           </Link>
@@ -75,7 +75,7 @@ function SavedSearches() {
                 </div>
 
                 {fresh > 0 && (
-                  <span className="rounded-full bg-cyan-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
+                  <span className="rounded-full bg-mist px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
                     {fresh} new
                   </span>
                 )}
@@ -110,7 +110,7 @@ function SavedSearches() {
                     markChecked(entry.id);
                     navigate(`/search?${entry.query}`);
                   }}
-                  className="rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-5 py-2 text-xs font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+                  className="rounded-full bg-mist px-5 py-2 text-xs font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
                 >
                   View results
                 </button>

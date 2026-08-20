@@ -35,7 +35,7 @@ function CategoryStrip({ bare = false }: CategoryStripProps) {
             to="/search"
             className={`block rounded-full px-3.5 py-1.5 text-sm transition ${
               active === null
-                ? "bg-cyan-500 font-bold text-charcoal-900"
+                ? "bg-mist font-bold text-charcoal-900"
                 : "text-charcoal-600 hover:bg-sand hover:text-charcoal-900"
             }`}
           >
@@ -49,7 +49,7 @@ function CategoryStrip({ bare = false }: CategoryStripProps) {
               to={`/search?category=${category.slug}`}
               className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition ${
                 active === category.slug
-                  ? "bg-cyan-500 font-bold text-charcoal-900"
+                  ? "bg-mist font-bold text-charcoal-900"
                   : "text-charcoal-600 hover:bg-sand hover:text-charcoal-900"
               }`}
             >

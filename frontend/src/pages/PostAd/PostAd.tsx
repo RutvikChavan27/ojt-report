@@ -170,7 +170,7 @@ function PostAd() {
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
               to={`/listing/${postedId}`}
-              className="rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+              className="rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
             >
               View listing
             </Link>
@@ -237,7 +237,7 @@ function PostAd() {
                   className="h-full w-full object-cover"
                 />
                 {index === 0 && (
-                  <span className="absolute bottom-1 left-1 rounded bg-cyan-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-charcoal-900">
+                  <span className="absolute bottom-1 left-1 rounded bg-mist px-1.5 py-0.5 text-[9px] font-bold uppercase text-charcoal-900">
                     Cover
                   </span>
                 )}
@@ -425,7 +425,7 @@ function PostAd() {
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
         >
           <FiPlus size={16} />
           Post listing

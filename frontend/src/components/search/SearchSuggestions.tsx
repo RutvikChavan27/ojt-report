@@ -52,7 +52,7 @@ function SearchSuggestions({
   if (suggestions.length === 0 && recent.length === 0 && !loading) return null;
 
   return (
-    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 shadow-xl animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none">
+    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-taupe bg-mist shadow-xl animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none">
       {showingRecent && (
         <div className="flex items-center justify-between px-5 pb-1.5 pt-3.5">
           <span className="text-[11px] font-bold uppercase tracking-wide text-charcoal-400">
