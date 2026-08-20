@@ -192,3 +192,28 @@ export async function renewListing(id: string): Promise<boolean> {
   );
   return rows.length > 0;
 }
+
+/**
+ * Flips every active listing whose `expires_at` has passed to `expired`.
+ *
+ * Search and browse only ever filter on `status = 'active'`, never on
+ * `expires_at` directly, so this sweep is what actually makes "listings
+ * expire and drop out of search" true rather than aspirational — without
+ * it, an active row past its `expires_at` would keep appearing in every
+ * result until someone renewed or deleted it. `listings_expires_at_idx`
+ * (partial, `WHERE status = 'active'`) is what this scans.
+ *
+ * A plain `UPDATE ... WHERE`, not a `SELECT` first: idempotent and safe to
+ * call from more than one process (or the same one twice in a row) without
+ * coordination, which is what lets it run on a simple timer rather than
+ * needing a job queue or a lock.
+ */
+export async function sweepExpiredListings(): Promise<number> {
+  const { rows } = await query<{ id: string }>(
+    `UPDATE listings
+        SET status = 'expired', updated_at = now()
+      WHERE status = 'active' AND expires_at <= now()
+      RETURNING id::text`,
+  );
+  return rows.length;
+}

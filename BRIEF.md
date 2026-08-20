@@ -50,14 +50,10 @@ Remaining gaps, in the order they're graded (§10):
    hand-typed, non-adjacent `?page=500` still uses `OFFSET` for that one
    request, which is a documented, bounded trade-off (§9 Q1 in the README),
    not an oversight.
-2. **No expiry sweep.** `expires_at` exists, is indexed, and a listing can be
-   renewed (`POST /api/listings/:id/renew`) — but nothing yet flips `status`
-   to `expired` once `expires_at` passes. An expired-but-unswept listing
-   would still show up in search today.
-3. **Google OAuth is implemented but not manually verified end to end** — no
+2. **Google OAuth is implemented but not manually verified end to end** — no
    one has completed a real sign-in through Google against this deployment
    yet; see the root README's Known limitations.
-4. **Test coverage is real but not exhaustive** — the six cases the brief
+3. **Test coverage is real but not exhaustive** — the six cases the brief
    names explicitly all exist and pass (see the README's Tests section), but
    coverage of the write endpoints (create/edit/delete/sold/renew,
    ownership enforcement) is still by code review, not automated tests.
@@ -99,9 +95,9 @@ Remaining gaps, in the order they're graded (§10):
   local state)
 - ✅ Sold listing stays viewable by direct link but excluded from search — search filters to
   `status = 'active'`; `POST /api/listings/:id/sold` marks it
-- 🟡 Listings expire and drop out of search — `expires_at` exists, is indexed, and a listing can
-  be renewed; **there is still no scheduled sweep** that flips `status` to `expired` once
-  `expires_at` passes
+- ✅ Listings expire and drop out of search — a periodic sweep (`sweepExpiredListings`,
+  `backend/src/server.ts`, every 5 minutes) flips `status` to `expired` once `expires_at` passes;
+  a listing can also be renewed for another term (`POST /api/listings/:id/renew`)
 
 ## 4. §4C — Search (the core of the project)
 

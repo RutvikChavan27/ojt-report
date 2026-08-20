@@ -293,6 +293,12 @@ Six cases, matching what the brief names explicitly:
    passed as the search query is treated as a literal string; the table is
    confirmed intact afterward.
 
+A seventh test, beyond the six named above, covers the expiry sweep
+(`backend/src/repositories/listingWrite.repository.test.ts`): an active
+listing past its `expires_at` is flipped to `expired`, one not yet due is
+left alone, and an already-sold listing is never reverted to `expired`
+regardless of its expiry date.
+
 Cases 2–4 and 6 run as integration tests against the real, shared database
 rather than a mock — facet counts and full-text ranking are genuinely
 Postgres behaviour a mock can't stand in for honestly. Every fixture row is

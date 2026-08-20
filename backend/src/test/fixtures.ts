@@ -64,6 +64,8 @@ export type FixtureListing = {
   city?: string;
   postedAt?: Date;
   status?: "active" | "sold" | "expired";
+  /** Defaults to 30 days out; pass a past date to fixture an expired-but-unswept row. */
+  expiresAt?: Date;
 };
 
 /** Inserts one listing per entry, title-prefixed, and returns their ids in order. */
@@ -77,7 +79,7 @@ export async function seedListings(
       `INSERT INTO listings
          (seller_id, title, description, category_slug, audience, condition,
           price, city, status, posted_at, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now() + interval '30 days')
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING id::text`,
       [
         sellerId,
@@ -90,6 +92,7 @@ export async function seedListings(
         listing.city ?? "TestCity1",
         listing.status ?? "active",
         listing.postedAt ?? new Date(),
+        listing.expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       ],
     );
     ids.push(rows[0].id);
