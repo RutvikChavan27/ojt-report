@@ -17,7 +17,8 @@
     "images:pexels": "tsx src/scripts/fetchPexelsImages.ts",
     "images:items": "tsx src/scripts/fetchItemImages.ts",
     "images:upload": "tsx src/scripts/uploadImagesToStorage.ts",
-    "images:repoint": "tsx src/scripts/rewritePhotoPaths.ts"
+    "images:repoint": "tsx src/scripts/rewritePhotoPaths.ts",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -42,6 +43,7 @@
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.19.0",
     "@types/node": "^24.13.3",
-    "@types/pg": "^8.11.10"
+    "@types/pg": "^8.11.10",
+    "vitest": "^4.1.11"
   }
 }

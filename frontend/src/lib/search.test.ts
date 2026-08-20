@@ -1,0 +1,65 @@
+/**
+ * The URL is the only place a search's state lives (§4C) — a result page must
+ * survive being turned into a query string and read back out of it exactly,
+ * or a reload or a shared link silently loses part of what was being looked
+ * for. These tests round-trip a `SearchParams` through `searchToParams` and
+ * `paramsFromSearch` and check nothing was dropped or corrupted.
+ */
+import { describe, expect, it } from "vitest";
+import { EMPTY_PARAMS, paramsFromSearch, searchToParams, type SearchParams } from "./search";
+
+describe("search params URL round trip", () => {
+  it("recovers every field of a fully-populated search", () => {
+    const original: SearchParams = {
+      q: "denim jacket",
+      category: "mens-fashion",
+      city: "Pune",
+      conditions: ["Good", "Fair"],
+      priceBand: null,
+      minPrice: 500,
+      maxPrice: 5000,
+      postedWithinDays: 7,
+      sort: "price_asc",
+      page: 3,
+      cursor: "eyJpZCI6IjEyMyJ9",
+      cursorDir: "next",
+    };
+
+    const roundTripped = paramsFromSearch(searchToParams(original));
+
+    expect(roundTripped).toEqual(original);
+  });
+
+  it("produces a clean URL for a plain search, with no default values written out", () => {
+    const search = searchToParams(EMPTY_PARAMS);
+    expect(search.toString()).toBe("");
+  });
+
+  it("round-trips a bare query with no filters, omitting the sort that matches its default", () => {
+    const original: SearchParams = { ...EMPTY_PARAMS, q: "iphone", sort: "relevance" };
+    const search = searchToParams(original);
+
+    // "relevance" is the implied default once a query is present, so it is
+    // not written out — a plain search stays a plain, shareable URL.
+    expect(search.has("sort")).toBe(false);
+    expect(paramsFromSearch(search)).toEqual(original);
+  });
+
+  it("keeps repeated condition values distinct through the round trip", () => {
+    const search = searchToParams({ ...EMPTY_PARAMS, conditions: ["Good", "Fair"] });
+    expect(search.getAll("condition")).toEqual(["Good", "Fair"]);
+
+    const roundTripped = paramsFromSearch(search);
+    expect(roundTripped.conditions).toEqual(["Good", "Fair"]);
+  });
+
+  it("leaves cursorDir null for a hand-edited URL that carries a cursor alone", () => {
+    // `searchToParams` never emits one without the other, but a hand-edited
+    // URL could — the API treats a cursor with no direction as absent
+    // (see listingSearch.service.ts), so parsing it as null here is what
+    // keeps that case inert rather than seeking blind.
+    const params = paramsFromSearch(new URLSearchParams("cursor=abc123"));
+    expect(params.cursor).toBe("abc123");
+    expect(params.cursorDir).toBeNull();
+  });
+});
