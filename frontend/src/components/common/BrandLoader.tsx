@@ -9,8 +9,10 @@
  *
  * Branded rather than generic on purpose: the mark is the same typographic "B"
  * badge and BAZAAR wordmark the header carries (there is no image asset — the
- * logo is type, so it needs nothing loaded and stays crisp at any size). Colours
- * are the site's brand colour on white, matching the header logo.
+ * logo is type, so it needs nothing loaded and stays crisp at any size). The
+ * backdrop is the same blue-to-light-blue gradient the page body carries, so
+ * the loader reads as the site itself arriving rather than a separate screen
+ * placed in front of it; the dark mark keeps full contrast against it.
  *
  * `fixed inset-0` plus `z-[100]` puts it above the sticky header; the grid is
  * centred on both axes at every breakpoint, and the mark scales up a step on
@@ -27,7 +29,7 @@ function BrandLoader({ label = "Loading" }: BrandLoaderProps) {
       // aria-busy rather than a live region: the status line below does the
       // announcing, and a whole-screen live region would be read on every route.
       aria-busy
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-cyan-50 to-mint-50 px-6"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-cyan-200 to-cyan-50 px-6"
     >
       {/* Badge + halo share a stacking context so the halo can sit behind the
           mark without a wrapper of its own in the layout. */}
