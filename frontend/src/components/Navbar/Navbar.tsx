@@ -75,7 +75,7 @@ function Navbar() {
 
   const badge = (count: number) =>
     count > 0 ? (
-      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-mint-500 px-1 text-[10px] font-bold text-charcoal-900">
+      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold text-charcoal-900">
         {count > 99 ? "99+" : count}
       </span>
     ) : null;
@@ -124,8 +124,8 @@ function Navbar() {
                 type="button"
                 onClick={() => setCategoriesOpen((open) => !open)}
                 aria-expanded={categoriesOpen}
-                className={`group flex items-center gap-2.5 rounded-full border border-mint-500 bg-mint-500 py-2 pl-2 pr-4 text-[15px] font-semibold text-charcoal-900 shadow-md shadow-mint-500/20 transition-all duration-200 ease-out hover:-translate-y-px hover:border-mint-600 hover:bg-mint-600 hover:shadow-lg motion-reduce:transform-none ${
-                  categoriesOpen ? "border-mint-600 bg-mint-600" : ""
+                className={`group flex items-center gap-2.5 rounded-full border border-cyan-500 bg-cyan-500 py-2 pl-2 pr-4 text-[15px] font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out hover:-translate-y-px hover:border-cyan-600 hover:bg-cyan-600 hover:shadow-lg motion-reduce:transform-none ${
+                  categoriesOpen ? "border-cyan-600 bg-cyan-600" : ""
                 }`}
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal-900/10 text-charcoal-900">
@@ -245,7 +245,7 @@ function Navbar() {
                 on a button that was hidden from them. */}
             <Link
               to="/post-ad"
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-4 py-2.5 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-mint-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6 sm:py-3"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-4 py-2.5 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6 sm:py-3"
             >
               <FiPlus size={17} />
               <span className="hidden sm:inline">Sell Something</span>

@@ -79,7 +79,7 @@ function ListingGallery({ images, alt }: ListingGalleryProps) {
               aria-pressed={active === index}
               className={`relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 bg-sand transition ${
                 active === index
-                  ? "border-mint-500"
+                  ? "border-cyan-500"
                   : "border-transparent hover:border-taupe"
               }`}
             >

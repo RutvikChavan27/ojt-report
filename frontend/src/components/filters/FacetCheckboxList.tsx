@@ -38,7 +38,7 @@ function FacetCheckboxList({
               type="checkbox"
               checked={selected.has(option.value)}
               onChange={() => onToggle(option.value)}
-              className="h-4 w-4 flex-shrink-0 rounded border-taupe text-mint-600 focus:ring-mint-500"
+              className="h-4 w-4 flex-shrink-0 rounded border-taupe text-cyan-600 focus:ring-cyan-500"
             />
             <span className="truncate">{option.label}</span>
           </span>

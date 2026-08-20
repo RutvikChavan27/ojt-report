@@ -149,7 +149,7 @@ function MyListings() {
 
         <Link
           to="/post-ad"
-          className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
+          className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
         >
           <FiPlus size={15} />
           Sell Something
@@ -171,8 +171,8 @@ function MyListings() {
             onClick={() => setTab(status)}
             className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-bold transition ${
               tab === status
-                ? "border-mint-500 text-mint-700"
-                : "border-transparent text-charcoal-500 hover:text-mint-600"
+                ? "border-cyan-500 text-cyan-700"
+                : "border-transparent text-charcoal-500 hover:text-cyan-600"
             }`}
           >
             {STATUS_LABEL[status]} ({countFor(status)})
@@ -201,7 +201,7 @@ function MyListings() {
             <button
               type="button"
               onClick={reload}
-              className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
+              className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
             >
               Try again
             </button>
@@ -220,7 +220,7 @@ function MyListings() {
             {tab === "active" && (
               <Link
                 to="/post-ad"
-                className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
+                className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
               >
                 Sell Something
               </Link>

@@ -105,7 +105,7 @@ function Home() {
               <button
                 type="button"
                 onClick={reload}
-                className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105"
+                className="inline-flex rounded-full bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
               >
                 Try again
               </button>

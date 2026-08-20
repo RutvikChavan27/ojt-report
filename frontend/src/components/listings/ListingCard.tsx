@@ -83,7 +83,7 @@ function ListingCard({ listing }: ListingCardProps) {
         aria-label={saved ? "Remove from saved" : "Save this listing"}
         aria-pressed={saved}
         className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-cyan-50/95 to-mint-50/95 shadow-sm backdrop-blur-sm transition hover:scale-105 ${
-          saved ? "text-mint-600" : "text-charcoal-700"
+          saved ? "text-cyan-600" : "text-charcoal-700"
         }`}
       >
         <FiHeart size={14} fill={saved ? "currentColor" : "none"} />

@@ -56,7 +56,7 @@ function Pagination({ page, pageCount, onChange }: PaginationProps) {
           aria-current={entry === page ? "page" : undefined}
           className={
             entry === page
-              ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-mint-500 px-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-mint-500/30"
+              ? "flex h-9 min-w-9 items-center justify-center rounded-full bg-cyan-500 px-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30"
               : button
           }
         >

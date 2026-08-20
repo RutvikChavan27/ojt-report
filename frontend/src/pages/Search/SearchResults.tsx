@@ -238,7 +238,7 @@ function SearchResults() {
             <button
               type="button"
               onClick={() => update({ q: "" })}
-              className="flex items-center gap-1.5 rounded-full bg-mint-500 px-3 py-1.5 text-xs font-semibold text-charcoal-900 transition hover:bg-mint-600"
+              className="flex items-center gap-1.5 rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-charcoal-900 transition hover:bg-cyan-600"
             >
               “{params.q}”
               <FiX size={12} />
@@ -250,7 +250,7 @@ function SearchResults() {
               key={chip.key}
               type="button"
               onClick={() => clearChip(chip.key)}
-              className="flex items-center gap-1.5 rounded-full bg-mint-50 px-3 py-1.5 text-xs font-semibold text-mint-800 transition hover:bg-mint-100"
+              className="flex items-center gap-1.5 rounded-full bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100"
             >
               {chip.label}
               <FiX size={12} />

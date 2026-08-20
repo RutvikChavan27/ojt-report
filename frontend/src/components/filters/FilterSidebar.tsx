@@ -145,7 +145,7 @@ function FilterSidebar({
                 name="posted-within"
                 checked={params.postedWithinDays === option.days}
                 onChange={() => onChange({ postedWithinDays: option.days })}
-                className="h-4 w-4 border-taupe text-mint-600 focus:ring-mint-500"
+                className="h-4 w-4 border-taupe text-cyan-600 focus:ring-cyan-500"
               />
               {option.label}
             </label>

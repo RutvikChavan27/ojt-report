@@ -88,8 +88,8 @@ function SavedSearchesMenu() {
         aria-haspopup="true"
         className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition ${
           open
-            ? "bg-mint-500 font-bold text-charcoal-900"
-            : "text-charcoal-600 hover:bg-mint-50 hover:text-mint-700"
+            ? "bg-cyan-500 font-bold text-charcoal-900"
+            : "text-charcoal-600 hover:bg-cyan-50 hover:text-cyan-700"
         }`}
       >
         <FiBookmark size={14} />
@@ -218,7 +218,7 @@ function SavedSearchesMenu() {
 
                       <div className="flex flex-shrink-0 items-center gap-1">
                         {fresh > 0 && (
-                          <span className="rounded-full bg-mint-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
+                          <span className="rounded-full bg-cyan-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-charcoal-900">
                             {fresh} new
                           </span>
                         )}

@@ -135,7 +135,7 @@ function ConfirmDialog({
   const confirmClasses =
     tone === "danger"
       ? "bg-red-600 text-white hover:bg-red-700"
-      : "bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] text-charcoal-900 hover:shadow-md hover:shadow-mint-500/30 hover:brightness-105";
+      : "bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] text-charcoal-900 hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105";
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
