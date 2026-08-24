@@ -48,8 +48,21 @@ export function buildSessionMiddleware(): RequestHandler {
     rolling: true,
     cookie: {
       httpOnly: true, // unreadable from JavaScript, so XSS cannot lift it
-      sameSite: "lax", // survives the Google redirect back to us
-      secure: config.isProduction, // HTTPS-only once deployed
+      /* "Lax" survives the Google *redirect* back to us (a top-level
+         navigation), but the frontend and API are on two different
+         registrable domains in production (vercel.app / onrender.com) —
+         every ordinary fetch() from the SPA to the API, including the /me
+         check right after that redirect, is a cross-site request, and
+         browsers never attach a Lax cookie to one. Without "None" there,
+         the session was created correctly on the server and then
+         invisible to the app that just created it.
+
+         Local dev keeps "lax": frontend and API differ only by port there
+         (localhost:5173 vs :5000), which the cookie spec treats as the
+         same site, so fetch already carries the cookie — and "None"
+         requires Secure, which a plain http://localhost origin can't set. */
+      sameSite: config.isProduction ? "none" : "lax",
+      secure: config.isProduction, // required by browsers whenever sameSite is "none"
       maxAge: SEVEN_DAYS_MS,
     },
   });
