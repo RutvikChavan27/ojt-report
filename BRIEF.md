@@ -20,7 +20,7 @@ Status key: ✅ done · 🟡 partial · ❌ not started · 🚫 built but out of
 | Backend | Node.js, **separate** HTTP API (Express or similar) | ✅ Express 5, separate origin, deployed separately (Vercel + Render) |
 | Database | **PostgreSQL** — not optional; uses its FTS and query planner | ✅ Postgres 17 (Supabase) |
 | Search | Database's own full-text capability. **Elasticsearch / Algolia / Meilisearch not permitted** | ✅ `tsvector` + `pg_trgm` only |
-| Auth | Email/password **plus OAuth 2.0** social login; secure sessions; hashed passwords | ✅ bcrypt cost 12 + Google OAuth (implemented; see §2 for verification status) |
+| Auth | Email/password **plus OAuth 2.0** social login; secure sessions; hashed passwords | ✅ bcrypt cost 12 + Google OAuth, both verified end to end on the deployed instance |
 | File storage | Listing photos **outside the database** — object storage or disk | ✅ Supabase Storage in production, disk in local dev |
 | Repository | Single Git repo | ✅ |
 
@@ -63,10 +63,7 @@ Remaining gaps, in the order they're graded (§10):
    hand-typed, non-adjacent `?page=500` still uses `OFFSET` for that one
    request, which is a documented, bounded trade-off (§9 Q1 in the README),
    not an oversight.
-2. **Google OAuth is implemented but not manually verified end to end** — no
-   one has completed a real sign-in through Google against this deployment
-   yet; see the root README's Known limitations.
-3. **Test coverage is real but not exhaustive** — the six cases the brief
+2. **Test coverage is real but not exhaustive** — the six cases the brief
    names explicitly all exist and pass (see the README's Tests section), but
    coverage of the write endpoints (create/edit/delete/sold/renew,
    ownership enforcement) is still by code review, not automated tests.
@@ -84,8 +81,9 @@ Remaining gaps, in the order they're graded (§10):
 - ✅ Register with email + password, log in, log out — `backend/src/services/auth.service.ts`
 - ✅ Passwords never stored or logged in plain text — bcrypt, `utils/password.ts`
 - ✅ OAuth 2.0 social login (Google) — `services/google.service.ts`, implemented end to end
-  (authorization-code flow, CSRF `state`, three-case email-matching logic) but **not yet
-  manually verified with a real Google sign-in against this deployment**
+  (authorization-code flow, CSRF `state`, three-case email-matching logic) and **manually
+  verified with a real Google sign-in against the deployed instance** — the session correctly
+  persists and the UI reflects the logged-in state after redirect
 - ✅ Social identity matching an existing email resolves to **one** user — three-case logic in
   `signInWithGoogle`, documented in the root README
 - ✅ Browsing and searching require no account

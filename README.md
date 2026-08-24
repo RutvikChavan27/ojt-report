@@ -441,11 +441,16 @@ as a boolean flag inside the same one-pass query described in Q2.
 
 ## Known limitations
 
-- **Google OAuth is implemented end-to-end but not yet manually verified
-  with a real Google sign-in** — the authorization-code flow, CSRF `state`
-  check, and the three-case "does this email already exist" logic are all
-  written and exercised by code review, but no one has clicked through the
-  actual Google consent screen against this deployment yet.
+- ~~Google OAuth not yet manually verified~~ — **resolved.** A real sign-in
+  was completed against the deployed instance. It surfaced one genuine bug
+  along the way, also now fixed: the session cookie was `sameSite: "lax"`,
+  which survives the OAuth redirect itself (a top-level navigation) but is
+  never attached to an ordinary cross-site `fetch()` — and the frontend
+  (Vercel) and API (Render) are different registrable domains in production.
+  The session was being created correctly and was simply invisible to the
+  app that just created it. Now `sameSite: "none"` in production (`"lax"`
+  still locally, where frontend and API differ only by port and count as the
+  same site). See `backend/src/middleware/session.middleware.ts`.
 - **Deep-linking directly to a distant, non-adjacent page number** (typing
   `?page=500` into the address bar with no cursor) still costs `OFFSET`'s
   work for that one request — a deliberate, bounded trade-off, not a bug.
