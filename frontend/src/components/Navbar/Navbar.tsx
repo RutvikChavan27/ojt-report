@@ -116,7 +116,14 @@ function Navbar() {
               menu and the primary action — rather than categories floating in
               the middle of the bar on its own. */}
           <div className="ml-auto flex items-center gap-1.5">
-            <div ref={categoriesRef} className="relative hidden lg:block">
+            {/* Held back to xl rather than lg: the location picker, this
+                button, and the search box all compete for the same row, and
+                turning this on at the same breakpoint the picker appears
+                (lg) left the search box as little as 11px wide at
+                1024–1279px — unusable, not merely tight. The mobile menu
+                (below) stays available through that same range so
+                categories are never actually unreachable. */}
+            <div ref={categoriesRef} className="relative hidden xl:block">
               {/* Mist fill at rest, cyan border for definition — the "active
                   navigation" control — rather than only turning solid once
                   opened, so it reads as deliberate from the first paint. */}
@@ -248,8 +255,12 @@ function Navbar() {
               className="flex h-11 items-center gap-2 rounded-full bg-mist px-4 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6"
             >
               <FiPlus size={17} />
-              <span className="hidden sm:inline">Sell Something</span>
-              <span className="sm:hidden">Sell</span>
+              {/* Full label held back to lg: from sm to lg the search box is
+                  already fighting the icon row and this button for space
+                  (see the Categories/menu-toggle comment above), and "Sell"
+                  says the same thing in a third of the width. */}
+              <span className="hidden lg:inline">Sell Something</span>
+              <span className="lg:hidden">Sell</span>
             </Link>
 
             <button
@@ -257,7 +268,7 @@ function Navbar() {
               onClick={() => setMobileOpen((open) => !open)}
               aria-label="Menu"
               aria-expanded={mobileOpen}
-              className={`${iconLink} lg:hidden`}
+              className={`${iconLink} xl:hidden`}
             >
               {mobileOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
@@ -277,7 +288,7 @@ function Navbar() {
       </Container>
 
       {mobileOpen && (
-        <div className="border-t border-taupe bg-mist lg:hidden">
+        <div className="border-t border-taupe bg-mist xl:hidden">
           <Container className="grid gap-1 py-3">
             {!user && (
               <Link

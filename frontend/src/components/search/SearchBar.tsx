@@ -129,7 +129,7 @@ function SearchBar({
           placeholder={placeholder}
           aria-label="Search listings"
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-charcoal-400"
+          className="min-w-0 flex-1 truncate bg-transparent text-sm outline-none placeholder:text-charcoal-400"
         />
 
         {/* Only present when there is something to clear, so the pill does not
@@ -156,7 +156,7 @@ function SearchBar({
         <button
           type="submit"
           className={`flex h-9 flex-shrink-0 items-center justify-center rounded-full bg-mist text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
-            tall ? "px-7" : "px-5"
+            tall ? "px-5 xl:px-7" : "px-5"
           }`}
         >
           Search
