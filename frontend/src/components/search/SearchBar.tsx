@@ -110,7 +110,7 @@ function SearchBar({
       role="search"
     >
       <div
-        className={`flex w-full items-center gap-2.5 rounded-full border border-taupe bg-cream px-4 shadow-sm transition-all duration-200 focus-within:border-cyan-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-cyan-500/20 ${
+        className={`flex w-full items-center gap-2.5 rounded-full border border-taupe bg-mist px-4 shadow-sm transition-all duration-200 focus-within:border-cyan-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-cyan-500/20 ${
           tall ? "h-11" : "h-9"
         }`}
       >
