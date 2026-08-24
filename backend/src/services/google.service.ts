@@ -66,7 +66,11 @@ export async function fetchGoogleProfile(code: string): Promise<GoogleProfile> {
   });
 
   if (!tokenResponse.ok) {
-    throw new Error(`Google token exchange failed (${tokenResponse.status})`);
+    // Google's own body names the real reason (invalid_client, invalid_grant,
+    // redirect_uri_mismatch, ...) — the status code alone was leaving this
+    // completely unguessable from the server log.
+    const body = await tokenResponse.text().catch(() => "");
+    throw new Error(`Google token exchange failed (${tokenResponse.status}): ${body}`);
   }
 
   const { access_token: accessToken } = (await tokenResponse.json()) as {
