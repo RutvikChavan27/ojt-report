@@ -65,6 +65,12 @@ export type ListingPageDTO = {
 export type DashboardDTO = {
   /** Active listings site-wide, for the "N listings live" line. */
   totalActive: number;
+  /**
+   * Every listing ever posted, regardless of status — the headline "N total
+   * listings" figure. Not what search/browse/pagination should use; those
+   * stay on `totalActive`-style, status-filtered counts.
+   */
+  totalListings: number;
   /** Newest active listings, for the "Fresh listings" grid. */
   recent: ListingDTO[];
   /** Every browsable category with its live count, for the tiles and links. */

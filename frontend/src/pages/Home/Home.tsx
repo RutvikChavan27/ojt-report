@@ -69,7 +69,7 @@ function Home() {
 
   return (
     <div className="pb-16">
-      <HeroSearch activeCount={data?.totalActive ?? 0} recent={recent} />
+      <HeroSearch totalListings={data?.totalListings ?? 0} recent={recent} />
       <CategoryTiles categories={categories} />
 
       {/* Recent listings */}

@@ -195,6 +195,8 @@ export type ApiCategory = {
 
 export type ApiDashboard = {
   totalActive: number;
+  /** Every listing ever posted, regardless of status — the homepage's "total" figure. */
+  totalListings: number;
   recent: ApiListing[];
   categories: ApiCategory[];
 };

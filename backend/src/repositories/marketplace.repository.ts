@@ -117,6 +117,21 @@ export async function countListings(options: {
 }
 
 /**
+ * Every listing ever created, regardless of status — active, sold, or
+ * expired. Deliberately separate from `countListings` above: that one
+ * answers "how many can I browse right now" and must stay status-filtered
+ * for every existing caller (search, category pages, pagination). This one
+ * answers "how big is the marketplace", for the homepage stat, and would be
+ * the wrong number to hand to anything that filters or paginates.
+ */
+export async function countAllListings(): Promise<number> {
+  const { rows } = await query<{ total: string }>(
+    `SELECT count(*)::text AS total FROM listings`,
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
+/**
  * One listing with every photo and its seller's name. Returns null when the id
  * does not exist; sold and expired listings are still reachable by direct link,
  * which is why status is not filtered here.

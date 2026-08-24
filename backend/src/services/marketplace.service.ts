@@ -5,6 +5,7 @@
  * converted once here so the frontend never has to think about it.
  */
 import {
+  countAllListings,
   countListings,
   findCategoriesWithCounts,
   findListingById,
@@ -143,13 +144,15 @@ export async function getListing(id: string): Promise<ListingDetailDTO | null> {
  * costs nothing extra here.
  */
 export async function getDashboard(): Promise<DashboardDTO> {
-  const [recent, categories] = await Promise.all([
+  const [recent, categories, totalListings] = await Promise.all([
     listListings({ page: 1, perPage: DASHBOARD_RECENT_LIMIT }),
     listListingCategories(),
+    countAllListings(),
   ]);
 
   return {
     totalActive: recent.total,
+    totalListings,
     recent: recent.items,
     categories,
   };
