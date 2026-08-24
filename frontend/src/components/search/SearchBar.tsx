@@ -35,7 +35,7 @@ function SearchBar({
   initialQuery = "",
   city = null,
   size = "default",
-  placeholder = "Search for cars, phones, furniture, clothes...",
+  placeholder = "Search for anything...",
 }: SearchBarProps) {
   const navigate = useNavigate();
   const { recent, record, remove, clear } = useRecentSearches();
@@ -110,12 +110,20 @@ function SearchBar({
       role="search"
     >
       <div
-        className={`flex w-full items-center gap-2 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 pl-4 shadow-sm transition-all duration-200 focus-within:border-cyan-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-cyan-500/20 ${
-          tall ? "h-11 pr-1.5" : "py-1 pr-1"
+        className={`flex w-full items-center gap-2.5 rounded-full border border-taupe bg-cream px-4 shadow-sm transition-all duration-200 focus-within:border-cyan-500 focus-within:shadow-md focus-within:ring-2 focus-within:ring-cyan-500/20 ${
+          tall ? "h-11" : "h-9"
         }`}
       >
         <FiSearch size={tall ? 17 : 15} className="flex-shrink-0 text-charcoal-400" />
 
+        {/* No submit button — searching on Enter keeps this to exactly what
+            the box needs to say, matching the plain "icon + input" look
+            asked for. Handled explicitly here rather than left to the
+            form's implicit-submission behaviour: a text field with no
+            visible submit control is exactly the case browsers are least
+            consistent about triggering that for, and with no button on
+            screen either, a silent no-op on Enter would leave no way to
+            search at all. */}
         <input
           ref={inputRef}
           type="text"
@@ -123,6 +131,12 @@ function SearchBar({
           onChange={(event) => {
             setValue(event.target.value);
             setOpen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              runSearch(value);
+            }
           }}
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
@@ -147,20 +161,11 @@ function SearchBar({
             }}
             aria-label="Clear search"
             title="Clear search"
-            className="flex-shrink-0 rounded-full p-1.5 text-charcoal-400 transition hover:bg-sand hover:text-charcoal-900"
+            className="flex-shrink-0 rounded-full p-1 text-charcoal-400 transition hover:bg-sand hover:text-charcoal-900"
           >
-            <FiX size={tall ? 17 : 15} />
+            <FiX size={tall ? 16 : 14} />
           </button>
         )}
-
-        <button
-          type="submit"
-          className={`flex h-9 flex-shrink-0 items-center justify-center rounded-full bg-mist text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none ${
-            tall ? "px-5 xl:px-7" : "px-5"
-          }`}
-        >
-          Search
-        </button>
       </div>
 
       {open && (
