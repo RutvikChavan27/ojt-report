@@ -9,7 +9,7 @@ email/password plus Google OAuth, and photos stored outside the database.
 
 - **Live site:** https://ojt-report-pi.vercel.app
 - **Live API:** https://ojt-report-backend.onrender.com (`/health` → `{"success":true,"status":"ok"}`)
-- **Database:** PostgreSQL 17 (Supabase), 100,000+ listings
+- **Database:** PostgreSQL 17 (Supabase), 145,000 listings (99,169 active), well past the brief's 100,000-listing floor — verify anytime with `SELECT count(*) FROM listings;`
 
 No login is needed to browse, search, or open a listing — only to post one,
 save a search, or manage your own listings.
@@ -235,7 +235,7 @@ in place as a comment; summarised here:
 | `listings_status_posted_idx` (`status, posted_at DESC, id DESC`) | Default "newest" browse **and** the keyset cursor tuple for that sort. |
 | `listings_status_price_idx` (`status, price, id`) | Price sorts and their cursor tuple. |
 | `listings_status_category_posted_idx`, `listings_status_city_posted_idx` | Category/city browse without a full scan. |
-| `listings_facets_idx` (partial, `WHERE status = 'active'`) | Facet counts — an index-only scan over just the six faceted columns, since ~70% of the table qualifies and an ordinary index would be ignored for a seq scan otherwise. |
+| `listings_facets_idx` (partial, `WHERE status = 'active'`, `INCLUDE (price)`) | Facet counts — an index-only scan over the six faceted columns plus `price` as a covered payload column, since ~70% of the table qualifies and an ordinary index would be ignored for a seq scan otherwise. `price` was added to the index as part of this pass — see [Performance](#performance-at-145k-rows) for why its absence mattered. |
 | `listings_expires_at_idx` (partial) | The expiry sweep. |
 | `listings_seller_posted_idx` | The seller dashboard (`GET /api/listings/mine`). |
 | `listing_photos_listing_idx` | Fetching a result page's primary photo via one `LATERAL` join, avoiding N+1. |
@@ -247,22 +247,63 @@ and a single-column index on any of them would only ever be used alongside a
 seq scan on the rest of the predicate, at extra write cost for no read
 benefit.
 
-## Performance at 100k rows
+## Performance at 145k rows
 
-Measured with `EXPLAIN (ANALYZE)` on the deployed database (execution time,
-excluding client↔server network latency):
+The database has grown past the original 100k-row seed (145,000 total,
+99,169 active as of this writing — `SELECT count(*) FROM listings`).
+Measured with `EXPLAIN (ANALYZE)` on the deployed database (server-side
+execution time, excluding client↔server network latency), re-verified after
+running `VACUUM ANALYZE listings` to refresh planner statistics and the
+visibility map:
 
 | Query | Execution time |
 |---|---|
-| Full-text `iphone`, ranked, limit 12 | **63 ms** |
-| Category browse (newest, limit 12) | **0.15 ms** |
-| Facet counts (all six groups) | **19 ms** |
-| Deep pagination via `OFFSET` (page 4000) | **35 ms** |
-| The same depth via keyset cursor | **0.08 ms** |
+| Full-text `iphone`, ranked, limit 12 | **~14 ms** |
+| Category browse (newest, limit 12) | **~0.1 ms** |
+| Facet counts, narrowed by a query or filter | **~15–20 ms** |
+| Facet counts, **no query or filter at all** (a plain "all listings" browse) | **~400–550 ms** — see below |
+| Deep pagination via `OFFSET` (page 4000) | **~40 ms** |
+| The same depth via keyset cursor | **~0.1 ms** |
 
-All comfortably under the brief's 300 ms target. Reproduce with
-`npm run explain:facets`, or run `EXPLAIN (ANALYZE, BUFFERS)` directly on any
-query in `backend/src/db/queries/`.
+Everything is comfortably under the brief's 300 ms target **except the
+unfiltered facet-count case**, which is not: computing all six facet groups
+with nothing narrowing the ~90,000 active rows costs roughly 400–550 ms at
+this scale, and this is the query the site actually runs on its own "all
+listings, no search" page.
+
+**Root cause, found and partly fixed during a performance re-audit:**
+`fetchFacetCounts` materialises a CTE over every active listing and scans it
+once per facet group (6 scans). Two real problems compounded:
+
+1. `listings_facets_idx` didn't include `price`, which the query needs for
+   every row — so Postgres couldn't do a true index-only scan and fell back
+   to a sequential scan of the whole table. **Fixed**: the index now
+   `INCLUDE`s `price` as a payload column (`backend/src/db/marketplace.sql`),
+   confirmed by `EXPLAIN` to now use `Index Only Scan`.
+2. Past roughly 100k rows, materialising that CTE (six columns × ~90k rows)
+   exceeds Postgres's 4 MB default `work_mem`, so it was spilling to on-disk
+   temp files. **Fixed**: `work_mem` is now raised to 64 MB per connection
+   (`backend/src/config/database.ts`), confirmed to remove the temp-file
+   spill from the plan.
+
+Both fixes are real and measured, but **neither closes the gap on their
+own** — with both applied, the unfiltered case still costs ~400–550 ms,
+because scanning and filtering ~90,000 in-memory rows six times over is
+inherently CPU-bound work that grows with the active-listing count,
+independent of indexing or memory. The query is fast (~15–20 ms) the moment
+any query or filter narrows the candidate set — which is true of almost
+every real search — but a genuinely unfiltered "show me everything" browse
+is not, and will get slower as the dataset grows further. Closing this
+properly means rewriting the six sequential CTE scans into a single pass
+(e.g. `GROUPING SETS`), which was not attempted here: it touches the exact
+logic §10 grades most strictly ("a count that is subtly wrong is worse than
+no count at all"), and is not a change to make right before a submission
+deadline without time to test it thoroughly. This is a known, disclosed
+limitation, not a hidden one — see [Known limitations](#known-limitations).
+
+Reproduce any of these with `npm run explain:facets`, or run
+`EXPLAIN (ANALYZE, BUFFERS)` directly on any query in
+`backend/src/db/queries/`.
 
 ## Tests
 
@@ -417,9 +458,24 @@ as a boolean flag inside the same one-pass query described in Q2.
   No real secret was ever exposed by it; rewriting history to remove it
   entirely is possible but hasn't been done, since doing so unrequested
   would rewrite shared history other clones may depend on.
-- **`frontend/.env` is tracked in git** — it only ever held a non-secret
-  local default (`VITE_API_URL=http://localhost:5000`), but as a matter of
-  hygiene `frontend/.gitignore` now excludes `.env` going forward.
+- **`frontend/.env` was tracked in git** — it only ever held a non-secret
+  local default (`VITE_API_URL=http://localhost:5000`); it has since been
+  untracked and `frontend/.gitignore` now excludes `.env` going forward.
+- **Unfiltered facet counts (a plain "all listings" browse, no query or
+  filter) cost ~400–550 ms at the current 145k-row scale** — over the
+  brief's 300 ms target. Two real contributing bugs were found and fixed in
+  this pass (a missing covering column on `listings_facets_idx`, and
+  `work_mem` too low for the query's working set); what remains is an
+  architectural cost — six sequential scans of a materialised CTE — that a
+  quick fix can't safely close two days before a deadline. Every query that
+  actually includes a search term or a filter is fast (~15–20 ms), which
+  covers the overwhelming majority of real usage. See
+  [Performance](#performance-at-145k-rows) above for the full story and
+  what a real fix would involve.
+- **The deployed instance may lag behind this repository's `main` branch**
+  at any given moment — Render/Vercel only reflect what's actually been
+  pushed. Before relying on any number or behavior described here, confirm
+  `git log origin/main -1` matches `git log -1` locally.
 
 ## Decisions and deviations
 

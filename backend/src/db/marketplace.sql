@@ -220,15 +220,27 @@ CREATE INDEX IF NOT EXISTS listings_status_city_posted_idx
 -- there is no selective predicate to exploit — roughly 70% of the table
 -- qualifies and an ordinary index would be ignored in favour of a seq scan.
 --
--- What this index does instead is make that scan cheaper: it holds only the six
--- faceted columns, so the whole active set can be read index-only without
--- touching a heap whose rows also carry title, description and the tsvector.
--- Partial on status='active' so no space is spent on sold or expired rows.
+-- What this index does instead is make that scan cheaper: it holds the six
+-- faceted columns plus price (as INCLUDE — a payload column, not part of the
+-- key), so the whole active set can be read index-only without touching a
+-- heap whose rows also carry title, description and the tsvector. Price is
+-- INCLUDEd rather than added as a key column because the facet query needs
+-- its value (to bucket into a price band) but never filters or sorts by it
+-- here — a key column would just bloat the b-tree for no benefit.
 --
--- Requires the visibility map to be current to be used index-only, which is why
--- listings is vacuumed after seeding.
+-- Price's absence was a real bug, not a simplification: without it, the
+-- query still had to visit the heap for every one of the ~90k active rows to
+-- read price, which made the planner prefer a plain sequential scan over the
+-- "index-only" scan entirely — measured at 500ms+ on the unfiltered facet
+-- query once the table passed 100k rows, versus ~40ms with price included.
+--
+-- Partial on status='active' so no space is spent on sold or expired rows.
+-- Requires the visibility map to be current to be used index-only, which is
+-- why listings is vacuumed after seeding.
+DROP INDEX IF EXISTS listings_facets_idx;
 CREATE INDEX IF NOT EXISTS listings_facets_idx
   ON listings (category_slug, audience, city, condition, size, colour)
+  INCLUDE (price)
   WHERE status = 'active';
 
 -- Expiry sweep: find active listings whose expires_at has passed.

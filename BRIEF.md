@@ -41,8 +41,21 @@ seller dashboard whose edit/mark-sold/delete/renew buttons hit real,
 ownership-checked endpoints, saved searches and saved listings persisted
 server-side, login/register, and Google OAuth.
 
+> ⚠️ **Check before relying on any of this.** `main` in this repository can
+> be ahead of what's actually deployed — Render and Vercel only reflect what
+> has been pushed and redeployed. Run `git log origin/main -1` and compare
+> to `git log -1` before a demo or submission; if they differ, push first.
+
 Remaining gaps, in the order they're graded (§10):
 
+0. **Unfiltered facet counts (no query, no filter — a plain "all listings"
+   browse) measure ~400–550 ms at the current 145k-row scale**, over the
+   300 ms target. Two real bugs behind part of this were found and fixed in
+   a later pass (a missing covering index column on `listings_facets_idx`,
+   and `work_mem` too low for the query's working set); what's left is an
+   architectural cost from six sequential CTE scans that a safe, quick fix
+   can't close. Every search that includes a term or a filter is fast
+   (~15–20 ms) — see the root README's Performance section.
 1. **Deep pagination beyond adjacent pages still costs `OFFSET`.** Fixed for
    the navigation that's actually used (Previous/Next, and any page number
    adjacent to the one on screen) via a keyset cursor — see the root
@@ -134,13 +147,19 @@ Remaining gaps, in the order they're graded (§10):
 
 ## 6. §5 — Non-functional requirements
 
-- ✅ **Deployed database with ≥100,000 listings** — live on Supabase, verified via
-  `GET /api/listing-categories` on the deployed API
-- ✅ **Every search under 300 ms at that volume, measured on the deployed instance, numbers in
-  the README** — see the root README's Performance section (63 ms full-text, 0.15 ms category
-  browse, 19 ms facets, 0.08 ms keyset seek at any depth)
+- ✅ **Deployed database with ≥100,000 listings** — 145,000 live on Supabase (99,169 active),
+  verified via a direct `count(*)` query and via `GET /api/listing-categories` on the deployed API
+- 🟡 **Every search under 300 ms at that volume, measured on the deployed instance, numbers in
+  the README** — true for every query that includes a search term or a filter (~14 ms full-text,
+  ~0.1 ms category browse, ~15–20 ms filtered facets, ~0.1 ms keyset seek at any depth). **Not
+  true for one specific case**: computing all six facet groups with no query or filter applied
+  (a plain "all listings" browse) measures ~400–550 ms at the current row count — see the root
+  README's Performance section for the root cause (found and partly fixed during this pass: a
+  missing covering index column, and `work_mem` too low for the query's working set) and why the
+  remaining gap needs a bigger rewrite than was safe to attempt this close to submission
 - ✅ **`EXPLAIN ANALYZE` before/after indexes in the README, with each index justified** — root
-  README's Indexes section plus the pagination before/after comparison
+  README's Indexes section plus the pagination before/after comparison; re-verified against the
+  current 145k-row dataset, not just the original 100k seed
 - ✅ **"All searching, filtering, sorting and counting happens in the database."** True of the
   live path end to end. (A pre-backend mock implementation still exists at
   `frontend/src/lib/search.ts` for historical reasons — nothing imports it; the live app uses
@@ -151,7 +170,11 @@ Remaining gaps, in the order they're graded (§10):
 - ✅ Every write endpoint validates input server-side — see `docs/API.md` for the exact 400
   conditions on every endpoint that accepts a body
 - ✅ Meaningful status codes and machine-readable errors — consistent `{ success, data | error }`
-  envelope across every endpoint, audited while writing `docs/API.md`
+  envelope across every endpoint, audited while writing `docs/API.md`. A gap found during a
+  security re-audit is now fixed: the central error handler (`backend/src/middleware/error.middleware.ts`)
+  used to send the raw `err.message` to the client in every environment, including production,
+  which could leak an internal driver/constraint detail on an unexpected error — it now only does
+  that outside production, and returns a generic message otherwise
 - ✅ Code commented to the standard described (file-level purpose, exported function contracts,
   reasoning on non-obvious logic)
 - 🟡 Usable at phone width — the topbar and major flows have been checked at mobile/tablet/desktop

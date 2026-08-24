@@ -46,6 +46,14 @@ export async function connectDatabase(connectionString: string): Promise<void> {
   // fuzzy search behaves the same however long the pool has been alive.
   pool.on("connect", (client) => {
     void client.query("SET pg_trgm.word_similarity_threshold = 0.3");
+    // The facet-count query materialises a CTE over every active listing —
+    // tens of thousands of rows, six columns each — and scans it once per
+    // facet group. Past ~100k listings that no longer fits Postgres's 4MB
+    // default work_mem, so it was spilling to on-disk temp files (visible as
+    // "temp read/written" in EXPLAIN) instead of staying in memory, which
+    // measured as most of the query's cost. 64MB is comfortably above what
+    // the current data volume needs; revisit if the dataset grows much further.
+    void client.query("SET work_mem = '64MB'");
   });
   /* One query first, on its own, to prove the database is actually reachable.
      This is the only part allowed to fail the boot. */
