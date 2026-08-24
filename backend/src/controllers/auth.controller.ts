@@ -5,6 +5,7 @@ import { AuthError, login, register, signInWithGoogle } from "../services/auth.s
 import {
   buildAuthoriseUrl,
   fetchGoogleProfile,
+  GoogleAuthError,
   isGoogleConfigured,
 } from "../services/google.service";
 import { findUserById } from "../repositories/user.repository";
@@ -155,8 +156,14 @@ export async function getGoogleCallback(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const fail = (reason: string) =>
-    res.redirect(`${config.clientUrl}/?auth=${encodeURIComponent(reason)}`);
+  // `detail` is Google's own short error code (invalid_client, invalid_grant,
+  // ...) — safe to hand to the client since it's a fixed OAuth error keyword,
+  // never a stack trace or anything else that could leak internals.
+  const fail = (reason: string, detail?: string) =>
+    res.redirect(
+      `${config.clientUrl}/?auth=${encodeURIComponent(reason)}` +
+        (detail ? `&reason=${encodeURIComponent(detail)}` : ""),
+    );
 
   if (!isGoogleConfigured()) return fail("google_unconfigured");
 
@@ -179,7 +186,7 @@ export async function getGoogleCallback(
     res.redirect(`${config.clientUrl}/?auth=google_ok`);
   } catch (err) {
     console.error("[auth] Google sign-in failed:", (err as Error).message);
-    fail("google_failed");
+    fail("google_failed", err instanceof GoogleAuthError ? err.code : undefined);
   }
 }
 

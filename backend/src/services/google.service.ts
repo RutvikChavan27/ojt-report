@@ -46,6 +46,22 @@ export type GoogleProfile = {
 };
 
 /**
+ * Carries Google's own short error code (`invalid_client`, `invalid_grant`,
+ * `redirect_uri_mismatch`, ...) separately from the human-readable message,
+ * so the callback controller can pass just the code on to the client without
+ * also forwarding whatever verbose description came with it.
+ */
+export class GoogleAuthError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "GoogleAuthError";
+  }
+}
+
+/**
  * Exchanges an authorisation code for the user's profile.
  *
  * Throws when Google rejects the exchange or the account has no verified email:
@@ -68,9 +84,21 @@ export async function fetchGoogleProfile(code: string): Promise<GoogleProfile> {
   if (!tokenResponse.ok) {
     // Google's own body names the real reason (invalid_client, invalid_grant,
     // redirect_uri_mismatch, ...) — the status code alone was leaving this
-    // completely unguessable from the server log.
+    // completely unguessable from the server log, and from the sign-in
+    // attempt itself: there was previously no way to see *why* without
+    // reading a server log by hand.
     const body = await tokenResponse.text().catch(() => "");
-    throw new Error(`Google token exchange failed (${tokenResponse.status}): ${body}`);
+    let code = "unknown_error";
+    try {
+      const parsed = JSON.parse(body) as { error?: string };
+      if (parsed.error) code = parsed.error;
+    } catch {
+      // Not JSON — keep the generic code, the full body is still in the message.
+    }
+    throw new GoogleAuthError(
+      code,
+      `Google token exchange failed (${tokenResponse.status}): ${body}`,
+    );
   }
 
   const { access_token: accessToken } = (await tokenResponse.json()) as {
