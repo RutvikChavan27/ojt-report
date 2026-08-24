@@ -183,7 +183,10 @@ export async function getGoogleCallback(
     const profile = await fetchGoogleProfile(code);
     const user = await signInWithGoogle(profile);
     await startSession(req, user.id);
-    res.redirect(`${config.clientUrl}/?auth=google_ok`);
+    // Straight to the main browsing page rather than the logged-out Welcome
+    // screen — that page's whole point is "log in or create an account",
+    // which is exactly what someone who just did either doesn't need to see.
+    res.redirect(`${config.clientUrl}/home?auth=google_ok`);
   } catch (err) {
     console.error("[auth] Google sign-in failed:", (err as Error).message);
     fail("google_failed", err instanceof GoogleAuthError ? err.code : undefined);
