@@ -353,21 +353,42 @@ above — three queries run in parallel per search (`Promise.all`), so this
 does not multiply per query, but the round trip itself is the dominant cost.
 
 `GET /health/latency` (`backend/src/app.ts`) isolates exactly this: it times
-a trivial `SELECT 1` from inside the running server process and reports both
-that round trip and Render's own `RENDER_REGION` environment variable,
-so this can be confirmed directly against the API rather than inferred —
+a trivial `SELECT 1` from inside the running server process, isolated from
+client latency, query cost, and cold starts:
 
 ```bash
 curl https://ojt-report-backend.onrender.com/health/latency
+# {"success":true,"data":{"region":null,"dbRoundTripMs":142}}
 ```
 
-— `dbRoundTripMs` here *is* the Render↔Supabase hop, isolated from client
-latency, query cost, and cold starts. If it's tens of milliseconds, the
-regions already match and something else explains the gap; if it's in the
-hundreds, that confirms the mismatch. Compare `region` against the Supabase
-project's own region (Project Settings → General) to know which one to move.
-This is a Render/Supabase account-level action either way, not a code
-change — see [Known limitations](#known-limitations).
+Measured against the deployed instance: **`dbRoundTripMs` is a stable
+~142–143 ms**, warm, run after run — far above what a same-region round trip
+to Postgres should cost (typically single-digit milliseconds), which
+confirms Render and Supabase are not co-located. (`region` came back `null`
+— Render does not appear to expose `RENDER_REGION` on this plan/tier, so the
+exact region name has to be read from the dashboard directly: Render →
+service → Settings, and Supabase → Project Settings → General, currently
+`ap-southeast-2` / Sydney.)
+
+That ~142 ms is real, but it is **not the whole gap**: the same requests'
+full round trip (`curl -w`) showed 460 ms–930 ms time-to-first-byte —
+300–800 ms beyond the reported DB time, on top of the network/TLS connect
+time to Render itself (a separate ~25–65 ms, also measured). Session
+middleware was checked and ruled out as the cause (`saveUninitialized:
+false` means an anonymous request with no cookie, like this one, never
+touches the session store). The remaining gap is most consistent with
+Render's **free-tier CPU allocation** — the dashboard's own banner warns
+free instances "spin down with inactivity, which can delay requests by 50
+seconds or more," and a throttled/shared CPU tier is known to add
+highly variable latency to ordinary request handling, independent of
+network distance.
+
+**Net conclusion: there are two stacked, separate causes, not one** —
+a genuine cross-region network hop (~140 ms, fixable by moving Render or
+Supabase to the same region) and free-tier compute overhead (very
+plausibly 300+ ms, fixable by upgrading off Render's free tier). Both are
+account/billing decisions, not code changes, and neither was changed in
+this pass — see [Known limitations](#known-limitations).
 
 ## Tests
 
@@ -554,15 +575,20 @@ as a boolean flag inside the same one-pass query described in Q2.
 - **End-to-end API latency on the deployed instance measures 500 ms–2.9 s**,
   above the brief's 300 ms target, despite every query costing single-digit
   to tens of milliseconds at the database layer once warm (see
-  [Performance](#performance-at-145k-rows)) — and, unlike the DB-side numbers,
-  this gap did not shrink on repeated identical requests, ruling out cold
-  cache as the cause. The gap looks like a Render↔Supabase cross-region
-  network hop rather than a query cost. `GET /health/latency` was added to
-  confirm this directly (isolates the Render↔Supabase round trip from
-  everything else) — see [Performance](#performance-at-145k-rows) for how
-  to read it. Fixing it (matching regions) is a Render/Supabase account
-  action, not something fixable by changing code, and was not done in this
-  pass.
+  [Performance](#performance-at-145k-rows)). `GET /health/latency` isolates
+  the Render↔Supabase network hop specifically: a stable ~142 ms warm — real,
+  and consistent with the two not being co-located, but confirmed to only
+  account for **part** of the gap. The rest (300-800 ms more, measured via
+  `curl -w`) is not explained by the database, by TLS/connect time, or by
+  session middleware (ruled out, since an anonymous request
+  never touches the session store) and is most consistent with Render's free
+  tier's CPU allocation (the dashboard's own banner: free instances "spin
+  down with inactivity, which can delay requests by 50 seconds or more").
+  **Two separate, stacked causes, not one** — see
+  [Performance](#performance-at-145k-rows) for the full breakdown. Fixing
+  either (matching regions; upgrading off the free tier) is a Render/Supabase
+  account and billing decision, not something fixable by changing code, and
+  neither was done in this pass.
 - **The fuzzy/typo-tolerant search path costs 115–280 ms on its own, warm**
   (`"bycicle"` — see [Performance](#performance-at-145k-rows)) — the
   slowest individual query measured in this codebase, and the one with the
