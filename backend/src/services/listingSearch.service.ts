@@ -191,32 +191,47 @@ export async function searchListings(
   let rows = await pageRows;
   let fuzzy = false;
   let suggestion: string | null = null;
+  let total: number;
+  let facetRows: FacetCountRow[];
 
   // Only reach for the fuzzy path on a genuine miss: a later page legitimately
   // comes back empty, and retrying there would silently mix the two rankings.
   if (rows.length === 0 && request.q && requestedPage === 1) {
-    rows = await searchListingsFuzzy(options);
-    if (rows.length > 0) {
-      fuzzy = true;
-      suggestion = await suggestCorrection(request.q);
+    /* Same bet as the exact-search fan-out above, one level deeper: the fuzzy
+       page, its count, its facets and its "did you mean" all start together
+       rather than the page first and the rest after it. Awaiting the page
+       alone before starting the other three turned every fuzzy search into
+       two sequential round trips instead of one — the fuzzy page itself
+       costs as much as any of the other three, so that was doubling the
+       floor, not adding a rounding error.
+
+       The bet here is that the fuzzy page finds something, which is what
+       "fuzzy" already meant before this change — a search this far in has
+       already missed on tsquery, so a second miss (fuzzy also finding
+       nothing) is rarer still, and its cost is the same three superseded
+       queries the exact path already accepts losing. */
+    const fuzzyRows = searchListingsFuzzy(options);
+    const fuzzyTotal = countSearchMatches({ ...request, fuzzy: true });
+    const fuzzyFacets = fetchFacetCounts({ ...request, fuzzy: true });
+    const fuzzySuggestion = suggestCorrection(request.q);
+
+    rows = await fuzzyRows;
+    fuzzy = rows.length > 0;
+
+    if (fuzzy) {
+      void optimisticTotal.catch(() => undefined);
+      void optimisticFacets.catch(() => undefined);
+      [total, facetRows, suggestion] = await Promise.all([
+        fuzzyTotal,
+        fuzzyFacets,
+        fuzzySuggestion,
+      ]);
+    } else {
+      void fuzzyTotal.catch(() => undefined);
+      void fuzzyFacets.catch(() => undefined);
+      void fuzzySuggestion.catch(() => undefined);
+      [total, facetRows] = await Promise.all([optimisticTotal, optimisticFacets]);
     }
-  }
-
-  let total: number;
-  let facetRows: FacetCountRow[];
-
-  if (fuzzy) {
-    // The optimistic pair counted the exact match set, which is empty here, so
-    // they are re-run against the fuzzy one. Their rejections still need
-    // claiming: an ignored rejected promise is an unhandled rejection, which
-    // takes the process down under Node's default policy.
-    void optimisticTotal.catch(() => undefined);
-    void optimisticFacets.catch(() => undefined);
-
-    [total, facetRows] = await Promise.all([
-      countSearchMatches({ ...request, fuzzy: true }),
-      fetchFacetCounts({ ...request, fuzzy: true }),
-    ]);
   } else {
     [total, facetRows] = await Promise.all([optimisticTotal, optimisticFacets]);
   }

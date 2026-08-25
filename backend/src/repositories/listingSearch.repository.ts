@@ -111,6 +111,18 @@ export async function searchListingsExact(
  * Only run after an exact miss — it is the more expensive path, and running it
  * on every search would spend that cost on the majority of queries that do not
  * need it.
+ *
+ * Ranks, then joins — not the other way round. Joining category/photo inline
+ * (as `LISTING_JOINS` does, and as this query used to) forces Postgres to run
+ * both joins — including the per-row `LATERAL` photo lookup — against every
+ * row the trigram index returns before the `ORDER BY ... LIMIT` can discard
+ * the ones that don't make the page: measured at ~1,085 ms for "bycicle"
+ * against this dataset (thousands of trigram candidates, each joined, only
+ * 24 kept). Resolving rank and applying `LIMIT` first, in a CTE over `listings`
+ * alone, then joining only the resulting page — the exact same rows, same
+ * order, verified — measured ~112 ms. Not applied to the exact-match path:
+ * that one was already within budget, and touching a working query for a
+ * theoretical gain is a bad trade this close to a deadline.
  */
 export async function searchListingsFuzzy(
   options: SearchOptions,
@@ -131,13 +143,41 @@ export async function searchListingsFuzzy(
   // only short titles ever matched. Both operators use the same GIN trigram
   // index on title.
   const { rows } = await query<SearchRow>(
-    `SELECT ${LISTING_COLUMNS},
-            word_similarity($1, l.title) AS rank
-     ${LISTING_JOINS}
-     WHERE ${where.text}
-       AND $1 <% l.title
-     ORDER BY rank DESC, l.posted_at DESC, l.id DESC
-     LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
+    `WITH ranked AS (
+       SELECT l.id, l.title, l.category_slug, l.audience, l.brand, l.size,
+              l.colour, l.condition, l.price, l.city, l.location, l.posted_at,
+              word_similarity($1, l.title) AS rank
+       FROM listings l
+       WHERE ${where.text}
+         AND $1 <% l.title
+       ORDER BY rank DESC, l.posted_at DESC, l.id DESC
+       LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}
+     )
+     SELECT ranked.id::text,
+            ranked.title,
+            ranked.category_slug,
+            c.label AS category_label,
+            ranked.audience,
+            ranked.brand,
+            ranked.size,
+            ranked.colour,
+            ranked.condition::text,
+            ranked.price,
+            ranked.city,
+            ranked.location,
+            ranked.posted_at,
+            photo.path AS image,
+            ranked.rank
+     FROM ranked
+     JOIN listing_categories c ON c.slug = ranked.category_slug
+     LEFT JOIN LATERAL (
+       SELECT path
+       FROM listing_photos
+       WHERE listing_id = ranked.id
+       ORDER BY is_primary DESC, position ASC
+       LIMIT 1
+     ) AS photo ON true
+     ORDER BY ranked.rank DESC, ranked.posted_at DESC, ranked.id DESC`,
     values,
   );
 
@@ -277,21 +317,77 @@ export async function suggestListings(
     .slice(0, Math.min(Math.max(limit, 1), 10));
 }
 
+/** Levenshtein distance, capped early since only small edits are worth ranking. */
+function editDistance(a: string, b: string): number {
+  if (Math.abs(a.length - b.length) > 3) return 99;
+
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      current[j] = Math.min(
+        previous[j] + 1,
+        current[j - 1] + 1,
+        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    previous = current;
+  }
+  return previous[b.length];
+}
+
 /**
- * The closest existing title to a misspelled query, for a "did you mean"
- * prompt. Limited to active rows and ordered by similarity.
+ * The closest existing word to a misspelled query, for a "did you mean"
+ * prompt.
+ *
+ * Titles here are full phrases ("Kids Bicycle 20-inch — Barely Used"), and
+ * `word_similarity` against the *whole title* — the previous approach —
+ * regularly tied several unrelated titles at the same score (many phrases
+ * score exactly 0.25 against a short typo, since the threshold search
+ * space is wide), with no tiebreaker: `bycicle` could surface "Engineering
+ * Mathematics by B.S. Grewal" as often as "Kids Bicycle...", depending on
+ * scan order, not relevance.
+ *
+ * Fixed by keeping the trigram index for what it's good at — narrowing 90k+
+ * rows to a small, plausible candidate set fast — and then resolving the
+ * actual "closest word" question in Node, where a real edit distance can be
+ * computed per *word* rather than per full title. The candidate pool (30
+ * titles) is small enough that this costs nothing meaningful on top of the
+ * indexed query itself.
  */
 export async function suggestCorrection(q: string): Promise<string | null> {
-  if (!q) return null;
+  const trimmed = q.trim();
+  if (!trimmed) return null;
 
   const { rows } = await query<{ title: string }>(
     `SELECT l.title
      FROM listings l
      WHERE l.status = 'active' AND $1 <% l.title
      ORDER BY word_similarity($1, l.title) DESC
-     LIMIT 1`,
-    [q],
+     LIMIT 30`,
+    [trimmed],
   );
+  if (rows.length === 0) return null;
 
-  return rows[0]?.title ?? null;
+  const words = new Set<string>();
+  for (const { title } of rows) {
+    for (const word of title.toLowerCase().split(/[^a-z0-9]+/)) {
+      if (word.length > 2) words.add(word);
+    }
+  }
+
+  const needle = trimmed.toLowerCase();
+  let best: { word: string; distance: number } | null = null;
+  for (const word of words) {
+    const distance = editDistance(needle, word);
+    if (
+      !best ||
+      distance < best.distance ||
+      (distance === best.distance && word < best.word) // deterministic tiebreak
+    ) {
+      best = { word, distance };
+    }
+  }
+
+  return best?.word ?? null;
 }
