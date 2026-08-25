@@ -267,18 +267,21 @@ export const LISTING_COLUMNS = `
   l.city,
   l.location,
   l.posted_at,
-  photo.path AS image
+  -- The thumbnail generated at upload time; falls back to the full-size
+  -- photo for every row with none (every seeded row, and anything uploaded
+  -- before thumbnails existed) — see upload.middleware.ts.
+  COALESCE(photo.thumb_path, photo.path) AS image
 `;
 
 /**
- * Joins used by both the exact and fuzzy searches. The photo comes from a
- * LATERAL subquery so a page of results costs one query rather than one per row.
+ * Joins used by the exact search. The photo comes from a LATERAL subquery so
+ * a page of results costs one query rather than one per row.
  */
 export const LISTING_JOINS = `
   FROM listings l
   JOIN listing_categories c ON c.slug = l.category_slug
   LEFT JOIN LATERAL (
-    SELECT path
+    SELECT path, thumb_path
     FROM listing_photos
     WHERE listing_id = l.id
     ORDER BY is_primary DESC, position ASC

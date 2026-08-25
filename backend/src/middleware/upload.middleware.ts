@@ -10,6 +10,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import multer from "multer";
+import sharp from "sharp";
 import { config } from "../config/env";
 
 /** The brief allows eight photos per listing; the API is the thing enforcing it. */
@@ -34,6 +35,45 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 /** True when uploads belong in Supabase Storage rather than on local disk. */
 const useSupabaseStorage = config.imageStorage === "supabase";
+
+/**
+ * Decoded formats sharp will accept as a genuine image of an allowed type —
+ * the values `ALLOWED_TYPES` names, minus the `image/` prefix.
+ */
+const ALLOWED_FORMATS = new Set(["jpeg", "png", "webp", "avif"]);
+
+/**
+ * Confirms a file's *content*, not its name or its declared type.
+ *
+ * `fileFilter` above only ever sees what the client claims (`file.mimetype`
+ * is the multipart part's declared Content-Type) — a renamed or relabelled
+ * file sails through it unchanged. This decodes the actual bytes: `sharp`
+ * only reports a format for data it can genuinely parse as that format, so
+ * a non-image (or an image sharp cannot decode at all) throws here rather
+ * than being resized, stored, and served as if it were a real photo.
+ *
+ * Runs as a side effect of the same `sharp` call already needed for the
+ * thumbnail, not a separate pass over the bytes.
+ *
+ * @throws Error with a message fit to show the person who uploaded it.
+ */
+async function verifiedFormat(source: string | Buffer, originalName: string) {
+  let metadata: Awaited<ReturnType<ReturnType<typeof sharp>["metadata"]>>;
+  try {
+    metadata = await sharp(source).metadata();
+  } catch {
+    throw new Error(
+      `"${originalName}" isn't a readable image — only JPEG, PNG, WebP and AVIF are accepted.`,
+    );
+  }
+
+  if (!metadata.format || !ALLOWED_FORMATS.has(metadata.format)) {
+    throw new Error(
+      `"${originalName}" is a ${metadata.format ?? "file"}, not one of the accepted image types (JPEG, PNG, WebP, AVIF).`,
+    );
+  }
+  return metadata;
+}
 
 /**
  * Random, never the client's filename: two people uploading "photo.jpg" must
@@ -71,6 +111,28 @@ export const uploadListingPhotos = multer({
 /** The public path a stored file is served from. */
 export const publicPathFor = (filename: string): string =>
   `${config.imagesRoute}/${path.basename(filename)}`;
+
+/** Result-page cards render far smaller than a full photo; no point shipping the original. */
+const THUMBNAIL_WIDTH = 480;
+
+/**
+ * The thumbnail counterpart of any stored name or public path — same value,
+ * `-thumb` inserted before the extension.
+ *
+ * Deterministic on purpose: nothing needs to look up or store a thumbnail's
+ * path anywhere, including at listing-creation time — `thumbPathFor` on the
+ * full-size path already stored in `listing_photos.path` is the thumbnail's
+ * path too, computed the same way here and at read time
+ * (`marketplace.repository.ts`, `listingSearch.sql.ts`,
+ * `listingWrite.repository.ts` all `COALESCE(thumb_path, path)`).
+ */
+function withThumbSuffix(value: string): string {
+  const ext = path.extname(value);
+  return ext ? `${value.slice(0, -ext.length)}-thumb${ext}` : `${value}-thumb`;
+}
+
+/** The public path of a listing photo's thumbnail, given its full-size public path. */
+export const thumbPathFor = (fullPath: string): string => withThumbSuffix(fullPath);
 
 /**
  * Network-level failures worth retrying.
@@ -167,18 +229,58 @@ async function putObject(file: Express.Multer.File, name: string): Promise<void>
  * each buffer is PUT into the bucket first. Either way the caller gets the same
  * shape of path, so nothing downstream knows which backend is in use.
  *
- * @throws Error if an upload cannot be completed, so the request fails loudly
- *         rather than recording a row pointing at a file that does not exist.
+ * A thumbnail is generated and stored alongside every original, at
+ * `thumbPathFor(path)` — a listing card never needs the full-size photo, and
+ * generating it once here is the only place that decision has to be made;
+ * every read path (`marketplace.repository.ts`, `listingSearch.sql.ts`,
+ * `listingWrite.repository.ts`) just prefers it when present and falls back
+ * to the original otherwise, which is also what makes this safe to ship
+ * without touching the ~145k already-seeded rows that have no thumbnail at
+ * all (`thumb_path IS NULL` for every one of them, by design — see the
+ * `COALESCE` at each read site).
+ *
+ * @throws Error if an upload or a thumbnail cannot be completed, so the
+ *         request fails loudly rather than recording a row pointing at a
+ *         file that does not exist, or one whose card silently falls back to
+ *         the full-size image forever.
  */
 export async function persistUploads(
   files: Express.Multer.File[]
 ): Promise<string[]> {
-  if (!useSupabaseStorage) return files.map((f) => publicPathFor(f.filename));
+  if (!useSupabaseStorage) {
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          await verifiedFormat(file.path, file.originalname);
+          await sharp(file.path)
+            .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
+            .toFile(path.join(config.imagesDir, withThumbSuffix(file.filename)));
+        } catch (err) {
+          // multer already wrote this one before the content check ran —
+          // a rejected upload must not leave it sitting in the served
+          // folder, reachable by anyone who guesses or finds its filename.
+          // Awaited, not fire-and-forget: the caller must be able to trust
+          // that the cleanup has actually happened by the time this rejects.
+          await fs.promises.rm(file.path, { force: true });
+          throw err;
+        }
+      })
+    );
+    return files.map((f) => publicPathFor(f.filename));
+  }
 
   return Promise.all(
     files.map(async (file) => {
+      await verifiedFormat(file.buffer, file.originalname);
       const name = storedNameFor(file.mimetype);
-      await putObject(file, name);
+      const thumbnail = await sharp(file.buffer)
+        .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
+        .toBuffer();
+
+      await Promise.all([
+        putObject(file, name),
+        putObject({ ...file, buffer: thumbnail }, withThumbSuffix(name)),
+      ]);
       return publicPathFor(name);
     })
   );

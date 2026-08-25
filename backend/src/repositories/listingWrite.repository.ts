@@ -9,6 +9,7 @@
  * to be left off the route deliberately.
  */
 import { query } from "../config/database";
+import { thumbPathFor } from "../middleware/upload.middleware";
 import type { ListingRow } from "./marketplace.repository";
 
 /** How long a listing stays live, and what renewing extends it by. */
@@ -38,11 +39,11 @@ export async function findListingsBySeller(
        c.label AS category_label, l.audience, l.brand, l.size, l.colour,
        l.condition::text, l.price, l.city, l.location, l.posted_at,
        l.status::text, l.view_count, l.expires_at,
-       photo.path AS image
+       COALESCE(photo.thumb_path, photo.path) AS image
      FROM listings l
      JOIN listing_categories c ON c.slug = l.category_slug
      LEFT JOIN LATERAL (
-       SELECT path FROM listing_photos
+       SELECT path, thumb_path FROM listing_photos
        WHERE listing_id = l.id
        ORDER BY is_primary DESC, position ASC
        LIMIT 1
@@ -91,11 +92,18 @@ export async function createListing(input: NewListing): Promise<string> {
   const id = rows[0].id;
 
   if (input.images.length > 0) {
+    // The thumbnail for each photo was already generated and stored at
+    // upload time (`persistUploads`), at the deterministic path
+    // `thumbPathFor` computes here — nothing to look up, just the same
+    // string transform applied to what `postListingImages` already
+    // returned.
+    const thumbPaths = input.images.map(thumbPathFor);
+
     await query(
-      `INSERT INTO listing_photos (listing_id, path, is_primary, position)
-       SELECT $1::bigint, path, ordinality = 1, ordinality - 1
-         FROM unnest($2::text[]) WITH ORDINALITY AS t(path, ordinality)`,
-      [id, input.images],
+      `INSERT INTO listing_photos (listing_id, path, thumb_path, is_primary, position)
+       SELECT $1::bigint, path, thumb_path, ordinality = 1, ordinality - 1
+         FROM unnest($2::text[], $3::text[]) WITH ORDINALITY AS t(path, thumb_path, ordinality)`,
+      [id, input.images, thumbPaths],
     );
   }
 

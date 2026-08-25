@@ -166,12 +166,12 @@ export async function searchListingsFuzzy(
             ranked.city,
             ranked.location,
             ranked.posted_at,
-            photo.path AS image,
+            COALESCE(photo.thumb_path, photo.path) AS image,
             ranked.rank
      FROM ranked
      JOIN listing_categories c ON c.slug = ranked.category_slug
      LEFT JOIN LATERAL (
-       SELECT path
+       SELECT path, thumb_path
        FROM listing_photos
        WHERE listing_id = ranked.id
        ORDER BY is_primary DESC, position ASC

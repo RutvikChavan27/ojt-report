@@ -60,11 +60,14 @@ const LIST_SELECT = `
     l.city,
     l.location,
     l.posted_at,
-    photo.path AS image
+    -- A card renders the thumbnail generated at upload time; falls back to
+    -- the full-size photo for every row seeded before thumbnails existed
+    -- (thumb_path is NULL for all of those, by design — see upload.middleware.ts).
+    COALESCE(photo.thumb_path, photo.path) AS image
   FROM listings l
   JOIN listing_categories c ON c.slug = l.category_slug
   LEFT JOIN LATERAL (
-    SELECT path
+    SELECT path, thumb_path
     FROM listing_photos
     WHERE listing_id = l.id
     ORDER BY is_primary DESC, position ASC
