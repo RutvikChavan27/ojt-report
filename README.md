@@ -266,16 +266,35 @@ execution time, excluding client↔server network latency), re-verified after
 running `VACUUM ANALYZE listings` to refresh planner statistics and the
 visibility map:
 
-| Query | Execution time |
+| Query | Execution time (warm) |
 |---|---|
-| Full-text `iphone`, ranked, limit 12 | **~14 ms** |
+| Full-text `iphone`, ranked, limit 12 | **~15–19 ms** |
 | Category browse (newest, limit 12) | **~0.1 ms** |
-| Facet counts, narrowed by a query or filter | **~15–20 ms** |
+| Facet counts, narrowed by a query or filter | **~7–24 ms** |
 | Facet counts, **no query or filter at all** (a plain "all listings" browse) | **~400–550 ms** — see below |
-| Deep pagination via `OFFSET` (page 4000) | **~40 ms** |
-| The same depth via keyset cursor | **~0.1 ms** |
+| Deep pagination via `OFFSET` (page 4000, offset ~48,000) | **~27–83 ms** |
+| The same depth via keyset cursor | **~1 ms** |
+| Typo-tolerant fuzzy search (`"bycicle"`) | **~115–280 ms** — see below |
 
-Everything is comfortably under the brief's 300 ms target **except the
+**These are warm-cache numbers** — the same query run immediately after a
+cold/idle period on this connection measured far higher (the `iphone` search
+above hit 1,882 ms on a first touch, then settled to 15–19 ms on every
+run after; the fuzzy search hit 2,840 ms cold, then 115–280 ms warm). This
+isn't a measurement error — re-ran each query 5× in sequence and watched it
+happen directly. It's Postgres's own buffer cache: a page nobody has touched
+recently has to come from disk once, then stays cached. A live site under
+continuous real traffic stays warm; a query that hasn't run in a while (or
+one run right after a burst of unrelated ad-hoc queries, as happened while
+producing this table) pays that cost again. Worth knowing, not disclosed
+before this pass.
+
+The **fuzzy/typo path is a genuine, separate concern even warm**: 115–280 ms
+on its own, which leaves little to no margin once any network latency is
+added on top (see the API-latency section below) — closer to the 300 ms
+ceiling than any other query here, and the one most likely to tip over it
+in practice.
+
+Everything else is comfortably under the brief's 300 ms target **except the
 unfiltered facet-count case**, which is not: computing all six facet groups
 with nothing narrowing the ~90,000 active rows costs roughly 400–550 ms at
 this scale, and this is the query the site actually runs on its own "all
@@ -321,8 +340,10 @@ The table above is deliberately DB-only, to isolate query/index performance
 from network latency — the brief also asks the deployed **API** to answer in
 under 300 ms, which is a different measurement and, measured directly against
 `https://ojt-report-backend.onrender.com/api/search/listings`, is **not**
-currently met: repeated warm requests measured 500 ms–1.2 s end to end, well
-above what the DB-only numbers above would predict.
+currently met: repeated requests measured 500 ms–2.9 s end to end, far above
+what even the *cold-cache* DB numbers above would predict, and the gap did
+not shrink on repeated identical requests the way the DB-only numbers did —
+ruling out cache warmth as the explanation for this one.
 
 The gap is consistent with a network round trip, not a query cost: the
 Render backend and the Supabase database (`aws-0-ap-southeast-2`, Sydney) may
@@ -330,9 +351,23 @@ not be provisioned in the same region, in which case every query pays a
 cross-region hop on top of the millisecond-scale execution time measured
 above — three queries run in parallel per search (`Promise.all`), so this
 does not multiply per query, but the round trip itself is the dominant cost.
-Confirming and fixing this requires checking both dashboards' region
-settings, which is a Render/Supabase account action, not a code change — see
-[Known limitations](#known-limitations).
+
+`GET /health/latency` (`backend/src/app.ts`) isolates exactly this: it times
+a trivial `SELECT 1` from inside the running server process and reports both
+that round trip and Render's own `RENDER_REGION` environment variable,
+so this can be confirmed directly against the API rather than inferred —
+
+```bash
+curl https://ojt-report-backend.onrender.com/health/latency
+```
+
+— `dbRoundTripMs` here *is* the Render↔Supabase hop, isolated from client
+latency, query cost, and cold starts. If it's tens of milliseconds, the
+regions already match and something else explains the gap; if it's in the
+hundreds, that confirms the mismatch. Compare `region` against the Supabase
+project's own region (Project Settings → General) to know which one to move.
+This is a Render/Supabase account-level action either way, not a code
+change — see [Known limitations](#known-limitations).
 
 ## Tests
 
@@ -516,13 +551,24 @@ as a boolean flag inside the same one-pass query described in Q2.
   against a full title phrase scored below the 0.3 threshold. **Fixed** to
   0.2, verified against the live database. Requires a backend redeploy to
   take full effect — see [Search](#search) above.
-- **End-to-end API latency on the deployed instance measures 500 ms–1.2 s**,
-  above the brief's 300 ms target, despite every query being millisecond-scale
-  at the database layer (see [Performance](#performance-at-145k-rows)). The
-  gap looks like a Render↔Supabase cross-region network hop rather than a
-  query cost, and needs a region check on both dashboards to confirm — not
-  something fixable by changing code. Not fixed in this pass; see the
-  Performance section above for what to check.
+- **End-to-end API latency on the deployed instance measures 500 ms–2.9 s**,
+  above the brief's 300 ms target, despite every query costing single-digit
+  to tens of milliseconds at the database layer once warm (see
+  [Performance](#performance-at-145k-rows)) — and, unlike the DB-side numbers,
+  this gap did not shrink on repeated identical requests, ruling out cold
+  cache as the cause. The gap looks like a Render↔Supabase cross-region
+  network hop rather than a query cost. `GET /health/latency` was added to
+  confirm this directly (isolates the Render↔Supabase round trip from
+  everything else) — see [Performance](#performance-at-145k-rows) for how
+  to read it. Fixing it (matching regions) is a Render/Supabase account
+  action, not something fixable by changing code, and was not done in this
+  pass.
+- **The fuzzy/typo-tolerant search path costs 115–280 ms on its own, warm**
+  (`"bycicle"` — see [Performance](#performance-at-145k-rows)) — the
+  slowest individual query measured in this codebase, and the one with the
+  least margin left once any network latency is added on top. Not fixed in
+  this pass; the trigram candidate set it scans (~7,000 rows before
+  filtering to real matches) would need to shrink to close this.
 
 ## Decisions and deviations
 

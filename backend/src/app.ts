@@ -5,6 +5,7 @@ import apiRouter from "./routes/index";
 import authRouter from "./routes/auth.routes";
 import { buildSessionMiddleware } from "./middleware/session.middleware";
 import { errorHandler, notFound } from "./middleware/error.middleware";
+import { query } from "./config/database";
 
 /** Loopback and RFC1918 ranges — a machine on the developer's own network. */
 const LOCAL_HOSTNAME =
@@ -80,6 +81,36 @@ export function createApp() {
 
   app.get("/health", (_req, res) => {
     res.json({ success: true, status: "ok" });
+  });
+
+  /**
+   * Diagnostic only — not part of the API contract, temporary while chasing
+   * down why the deployed API measures 500ms-2s per search despite every
+   * query costing single-digit-to-tens-of-ms at the database (see README
+   * "Known limitations"). `dbRoundTripMs` times a trivial `SELECT 1` from
+   * inside this process, so it isolates the Render<->Supabase network hop
+   * from everything else (query cost, client<->Render latency, cold starts).
+   * `region` is Render's own env var, for comparing against Supabase's
+   * project region directly instead of guessing from symptoms.
+   */
+  app.get("/health/latency", (_req, res) => {
+    const startedAt = Date.now();
+    query("SELECT 1")
+      .then(() => {
+        res.json({
+          success: true,
+          data: {
+            region: process.env.RENDER_REGION ?? null,
+            dbRoundTripMs: Date.now() - startedAt,
+          },
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          success: false,
+          error: err instanceof Error ? err.message : "unknown",
+        });
+      });
   });
 
   app.use("/api/auth", authRouter);
