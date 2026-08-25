@@ -98,6 +98,17 @@ function ListingDetails() {
 
   const saved = isSaved(listing.id);
 
+  /* Sold and expired listings stay reachable by direct link (§4B) — but a
+     visitor arriving at one has no other way to know it isn't actually
+     available, so the same status badge the seller dashboard already uses
+     shows up here too, on the one page a buyer would actually see it. */
+  const statusBadge =
+    listing.status === "sold"
+      ? { label: "Sold", style: "bg-sand text-charcoal-600" }
+      : listing.status === "expired"
+        ? { label: "No longer available", style: "bg-amber-50 text-amber-700" }
+        : null;
+
   const facts: { icon: React.ReactNode; label: string; value: string }[] = [
     { icon: <FiTag size={14} />, label: "Condition", value: listing.condition },
     {
@@ -144,9 +155,18 @@ function ListingDetails() {
           <ListingGallery images={listing.images} alt={listing.title} />
 
           <div className="mt-8">
-            <h1 className="text-xl font-black leading-snug tracking-tight text-charcoal-900 sm:text-2xl">
-              {listing.title}
-            </h1>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <h1 className="text-xl font-black leading-snug tracking-tight text-charcoal-900 sm:text-2xl">
+                {listing.title}
+              </h1>
+              {statusBadge && (
+                <span
+                  className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${statusBadge.style}`}
+                >
+                  {statusBadge.label}
+                </span>
+              )}
+            </div>
             <p className="mt-2 text-2xl font-black tracking-tight text-charcoal-900">
               {formatPrice(listing.price)}
             </p>
