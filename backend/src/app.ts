@@ -60,10 +60,22 @@ export function createApp() {
   // `credentials` and an explicit (reflected) origin are both required for the
   // session cookie to survive a cross-origin request: browsers refuse to send
   // cookies to a wildcard origin.
+  //
+  // `maxAge` matters specifically on a slow backend: every state-changing
+  // request (and some GETs, depending on headers) is "not simple" to a
+  // browser and pays a full OPTIONS preflight round trip before the real one
+  // — a second hit of whatever this instance's latency is, on top of the
+  // first. With no `maxAge` set, that preflight is cached for a few seconds
+  // at most (browsers differ; some cache nothing at all without this header
+  // present), so a person clicking around the site pays it repeatedly.
+  // 24 hours is the maximum Chromium honours; the response fields it caches
+  // are static (the same origin is allowed or not, regardless of path), so
+  // there's nothing here that stale-caching could get wrong.
   app.use(
     cors({
       origin: (origin, done) => done(null, isAllowedOrigin(origin)),
       credentials: true,
+      maxAge: 86400,
     })
   );
   app.use(express.json());
