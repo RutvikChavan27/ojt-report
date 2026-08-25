@@ -451,6 +451,45 @@ plausibly 300+ ms, fixable by upgrading off Render's free tier). Both are
 account/billing decisions, not code changes, and neither was changed in
 this pass — see [Known limitations](#known-limitations).
 
+Two rounds of code-level fixes were made against this regardless, both real
+and verified, neither sufficient on its own to close the remaining gap:
+
+1. `buildFacetCountsQuery`, `searchListingsFuzzy` and `searchListings`
+   (see the facet/fuzzy sections above) — real, measured 5–10× reductions
+   in database+query time.
+2. CORS preflight caching (`app.ts`, `maxAge: 86400`) — a browser
+   re-running an OPTIONS preflight for every cross-origin request, uncached,
+   doubles the cost of a request on a backend where every round trip is
+   already expensive. Doesn't show up in `curl` (which never preflights),
+   but is real for actual browser traffic.
+
+Isolated, well-spaced single requests (removing any chance of the testing
+itself causing contention) still show a **~500–530 ms floor**, with
+occasional spikes to **2 s+** where the database and query cost measured
+well under 300 ms on their own — the app's own `Server-Timing` header
+proves this each time (`db;dur=...` stays under 250 ms even when the
+client-observed total is 2 s). Code changes have reached the point of
+diminishing returns.
+
+**Independently confirmed twice** that the database itself is not the
+bottleneck: `EXPLAIN (ANALYZE, BUFFERS)` on `SELECT * FROM listings WHERE
+status = 'active' ORDER BY posted_at DESC LIMIT 20` — the query the
+homepage/browse path actually runs — measured **0.659 ms** via an `Index
+Scan` on `listings_status_posted_idx`, run once from this machine and once
+independently in Supabase's own SQL editor, same result both times. (An
+earlier version of that same query using `created_at` instead of
+`posted_at` — a real column on the table, just one nothing indexes or
+queries by — measured 2–5 *seconds* via a full parallel sequential scan.
+Not a bug: a different, unindexed column, not the one any app code uses.)
+
+**Both halves of the deployed stack are on free tiers** — Render's web
+service and Supabase's project both show `FREE` in their own dashboards.
+That is the most complete, most defensible summary of the remaining gap:
+sub-millisecond queries, a competently-indexed schema, and a real,
+measured ~500 ms–2 s+ hosting-tier cost sitting on top of it, verified from
+multiple independent angles rather than assumed. Closing it is a plan
+upgrade and/or a region change — an account decision, not a code change.
+
 ## Tests
 
 ```bash
