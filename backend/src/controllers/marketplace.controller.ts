@@ -137,13 +137,32 @@ export async function getListingById(
  * maxPrice, postedWithin (days), sort (relevance|newest|price_asc|price_desc),
  * page, perPage.
  */
+/**
+ * `Server-Timing` breaks the response down into the two phases that live in
+ * this process: everything before the database calls started (CORS, session,
+ * JSON body parsing, query-string validation) and the database calls
+ * themselves (three, run in parallel — see `searchListings`). Added while
+ * chasing the gap between millisecond-scale query costs and a much slower
+ * deployed API; visible in any browser's Network tab or via
+ * `curl -sD - -o /dev/null <url> | grep -i server-timing`.
+ */
 export async function getListingSearch(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
+    const dbStart = process.hrtime.bigint();
     const results = await searchListings(parseSearchRequest(req.query));
+    const dbEnd = process.hrtime.bigint();
+
+    const appStart = res.locals.startAt as bigint | undefined;
+    const timings = [`db;dur=${Number(dbEnd - dbStart) / 1e6}`];
+    if (appStart !== undefined) {
+      timings.push(`appOverhead;dur=${Number(dbStart - appStart) / 1e6}`);
+    }
+    res.setHeader("Server-Timing", timings.join(", "));
+
     sendSuccess(res, results);
   } catch (err) {
     next(err);

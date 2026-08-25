@@ -44,6 +44,19 @@ function isAllowedOrigin(origin: string | undefined): boolean {
 export function createApp() {
   const app = express();
 
+  // Stamped before anything else runs, so a handler can report how much of
+  // its own total time was spent before it started (CORS, session, JSON
+  // parsing) versus its own work — see `Server-Timing` on
+  // GET /api/search/listings. Does not capture time spent before Node even
+  // accepted the connection (OS-level accept-queue delay under a starved
+  // event loop), which is what makes it possible to tell the two apart: any
+  // gap between this and a client's own measured time-to-first-byte is time
+  // this process was not yet free to run at all.
+  app.use((_req, res, next) => {
+    res.locals.startAt = process.hrtime.bigint();
+    next();
+  });
+
   // `credentials` and an explicit (reflected) origin are both required for the
   // session cookie to survive a cross-origin request: browsers refuse to send
   // cookies to a wildcard origin.
