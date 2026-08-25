@@ -128,10 +128,43 @@ with every column and index commented in place. The core tables:
   `STORED` `tsvector` column, weighted so a title match (`'A'`) outranks the
   same word in the description (`'B'`), brand (`'C'`), or colour (`'D'`).
 - **`listing_photos`** — paths only; the bytes live outside the database
-  (see Architecture above).
+  (see Architecture above). `thumb_path` holds a generated, resized copy
+  (480px wide) used by every list/grid context (search results, category
+  browse, the seller dashboard); the listing detail page's own gallery still
+  uses the full-size original. Generated once at upload time
+  (`backend/src/middleware/upload.middleware.ts`), not on read — a card
+  never resizes on the fly. `NULL` for every row seeded before this existed;
+  every read site `COALESCE`s to the full-size path, so nothing breaks for
+  the ~145k listings with no thumbnail. Upload also verifies the file's
+  actual decoded content matches an accepted image format (via `sharp`),
+  not just the client-declared MIME type — a renamed non-image is rejected
+  and never reaches storage.
 - **`saved_searches`**, **`saved_listings`** — per-user, both scoped by a
   foreign key to `users` and enforced server-side per request (see
   `docs/API.md`), not just hidden in the UI.
+
+### How a Google identity resolves to one account
+
+The brief asks this to be decided and documented, not just implemented — the
+decision is in `signInWithGoogle` (`backend/src/services/auth.service.ts`),
+three cases in order:
+
+1. **This Google identity has signed in before** (`oauth_identities` already
+   has a row for it) — use that account. Nothing to resolve.
+2. **It hasn't, but the email Google returns matches an existing account**
+   (registered with a password, or through a different provider) — link the
+   identity to that account (`linkProviderIdentity`) rather than creating a
+   second one. From then on, that person can sign in either way and lands on
+   the same account, same saved listings, same saved searches.
+3. **Neither** — create a new account, with `password_hash` left `null` (an
+   OAuth-only account can still add a local password later; nothing about
+   the schema assumes one exists).
+
+The identity check runs before the email check, not the other way round:
+once linked, a Google account keeps resolving correctly even if the person
+later changes the email on their Google account, since `oauth_identities`
+keys on Google's own stable `providerUserId`, not on the email address that
+happened to match the first time.
 
 ## Search
 
