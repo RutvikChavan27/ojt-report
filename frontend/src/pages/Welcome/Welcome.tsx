@@ -176,8 +176,8 @@ function Welcome() {
             />
           </span>
 
-          <h1 className="mt-7 animate-[pop-in_0.55s_ease-out_both] text-5xl font-black uppercase leading-none tracking-[0.2em] text-charcoal-900 [animation-delay:120ms] motion-reduce:animate-none sm:text-7xl">
-            Bazaar
+          <h1 className="mt-7 animate-[pop-in_0.55s_ease-out_both] text-4xl font-black uppercase leading-none tracking-[0.15em] text-charcoal-900 [animation-delay:120ms] motion-reduce:animate-none sm:text-6xl">
+            Bazaar Marketplace
           </h1>
 
           {/* The tagline, assembled word by word so it arrives rather than
@@ -234,7 +234,7 @@ function Welcome() {
 
           {totalListings > 0 && (
             <p className="mt-4 animate-[fade-in_0.5s_ease-out_both] text-xs text-charcoal-400 [animation-delay:860ms] motion-reduce:animate-none">
-              {totalListings.toLocaleString("en-IN")} total listings on Bazaar
+              {totalListings.toLocaleString("en-IN")} total listings on Bazaar Marketplace
             </p>
           )}
 

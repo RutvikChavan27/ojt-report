@@ -25,7 +25,7 @@ function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           <div className="sm:col-span-2 lg:col-span-2">
             <p className="text-lg font-black tracking-tight text-charcoal-900">
-              BAZAAR
+              BAZAAR MARKETPLACE
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-charcoal-500">
               Buy and sell second-hand things near you. Sell something in
@@ -117,10 +117,10 @@ function Footer() {
 
         <div className="mt-10 flex flex-col gap-3 border-t border-taupe pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-charcoal-400">
-            Bazaar — a student project. Listings and sellers shown are fictional.
+            Buy and sell locally, safely and for free.
           </p>
           <p className="text-xs text-charcoal-400">
-            © {new Date().getFullYear()} Bazaar. All rights reserved.
+            © {new Date().getFullYear()} Bazaar Marketplace. All rights reserved.
           </p>
         </div>
       </Container>

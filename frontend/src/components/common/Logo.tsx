@@ -13,7 +13,7 @@ function Logo({ className = "" }: LogoProps) {
     <Link
       to="/home"
       className={`group flex flex-shrink-0 items-center gap-2 ${className}`}
-      aria-label="Bazaar home"
+      aria-label="Bazaar Marketplace home"
     >
       {/* Badge rocks and catches a light sweep continuously; hover enlarges it. */}
       <span className="relative flex h-8 w-8 animate-[logo-sway_3s_ease-in-out_infinite] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-r from-[#00c9ff] to-[#92fe9d] text-sm font-black text-charcoal-900 transition-[scale] duration-300 group-hover:scale-110 motion-reduce:animate-none">

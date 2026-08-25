@@ -69,7 +69,7 @@ function Login() {
     <Container className="py-12" narrow="sm">
       <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-7">
         <h1 className="text-xl font-black tracking-tight text-charcoal-900">
-          Log in to Bazaar
+          Log in to Bazaar Marketplace
         </h1>
         <p className="mt-1 text-sm text-charcoal-500">
           To post listings, save searches and manage what you have posted.
@@ -158,7 +158,7 @@ function Login() {
         )}
 
         <p className="mt-6 text-center text-sm text-charcoal-500">
-          New to Bazaar?{" "}
+          New to Bazaar Marketplace?{" "}
           <Link to="/register" className="font-bold text-charcoal-900 hover:underline">
             Create an account
           </Link>

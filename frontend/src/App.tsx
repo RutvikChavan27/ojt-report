@@ -165,7 +165,7 @@ function App() {
                 <EmptyState
                   as="h1"
                   title="Page not found"
-                  description="That link does not point anywhere on Bazaar."
+                  description="That link does not point anywhere on Bazaar Marketplace."
                 />
               </Container>
             }

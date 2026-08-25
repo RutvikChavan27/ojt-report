@@ -180,8 +180,8 @@ function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
           <span className="font-black tabular-nums text-cyan-600">
             {shownCount.toLocaleString("en-IN")}
           </span>{" "}
-          total listings on Bazaar. Find a good deal, or sell what you no
-          longer need — free to browse, no account needed.
+          total listings on Bazaar Marketplace. Find a good deal, or sell what
+          you no longer need — free to browse, no account needed.
         </p>
 
         {/* Popular searches — commonly bought second-hand items. */}
