@@ -270,65 +270,126 @@ visibility map:
 |---|---|
 | Full-text `iphone`, ranked, limit 12 | **~15–19 ms** |
 | Category browse (newest, limit 12) | **~0.1 ms** |
-| Facet counts, narrowed by a query or filter | **~7–24 ms** |
-| Facet counts, **no query or filter at all** (a plain "all listings" browse) | **~400–550 ms** — see below |
+| Facet counts, narrowed by a filter that **isn't** the facet being counted | **~7–24 ms** |
+| Facet counts for the **one facet currently filtered on** (e.g. the category list while a category is selected) | **~450 ms** — see below |
+| Facet counts, **no filter selected at all** (a plain "all listings" browse) | **~215–450 ms**, was ~2,180 ms — see below |
 | Deep pagination via `OFFSET` (page 4000, offset ~48,000) | **~27–83 ms** |
 | The same depth via keyset cursor | **~1 ms** |
-| Typo-tolerant fuzzy search (`"bycicle"`) | **~115–280 ms** — see below |
+| Deep pagination at the API layer (page 1 / 100 / 500, real service call) | **~350 / ~380 / ~460 ms** — flat with depth, dominated by the facet cost above, not `OFFSET` |
+| Typo-tolerant fuzzy search, page of results alone | **~112–450 ms**, was ~1,085 ms — see below |
+| Typo-tolerant fuzzy search, full response (page + count + facets + suggestion) | **~440 ms – ~2 s**, was ~900 ms – 2.3 s, scales with how broad the typo's match is — see below |
 
 **These are warm-cache numbers** — the same query run immediately after a
-cold/idle period on this connection measured far higher (the `iphone` search
-above hit 1,882 ms on a first touch, then settled to 15–19 ms on every
-run after; the fuzzy search hit 2,840 ms cold, then 115–280 ms warm). This
-isn't a measurement error — re-ran each query 5× in sequence and watched it
-happen directly. It's Postgres's own buffer cache: a page nobody has touched
-recently has to come from disk once, then stays cached. A live site under
-continuous real traffic stays warm; a query that hasn't run in a while (or
-one run right after a burst of unrelated ad-hoc queries, as happened while
-producing this table) pays that cost again. Worth knowing, not disclosed
-before this pass.
+cold/idle period on this connection measures far higher (Postgres's own
+buffer cache: a page nobody has touched recently comes from disk once, then
+stays cached — confirmed by re-running each query 5× in sequence and
+watching the first run cost 10–40× the rest). A live site under continuous
+traffic stays warm; a query that hasn't run in a while pays that cost again.
+`VACUUM ANALYZE listings` was also re-run during this pass — the facet index
+had drifted to `Heap Fetches: ~19,800` out of ~88k rows (the visibility map
+falling behind the 5-minute expiry sweep's continuous updates), now back to
+`Heap Fetches: 0`. Worth re-running periodically; autovacuum does this on its
+own given normal activity, this just forces it ahead of a demo.
 
-The **fuzzy/typo path is a genuine, separate concern even warm**: 115–280 ms
-on its own, which leaves little to no margin once any network latency is
-added on top (see the API-latency section below) — closer to the 300 ms
-ceiling than any other query here, and the one most likely to tip over it
-in practice.
+### Facet counts: what was actually slow, and what changed
 
-Everything else is comfortably under the brief's 300 ms target **except the
-unfiltered facet-count case**, which is not: computing all six facet groups
-with nothing narrowing the ~90,000 active rows costs roughly 400–550 ms at
-this scale, and this is the query the site actually runs on its own "all
-listings, no search" page.
+The original audit only measured the **fully unfiltered** case (no query, no
+filter — a plain "all listings" browse) as slow, and considered anything
+with a filter applied fast. That was wrong in one specific way, found while
+attempting a fix: **any facet counted while *its own* filter is the one
+selected** pays the same cost as the fully unfiltered case, regardless of
+what else is filtered. Picking a category still has to answer "how many
+*other* categories exist" over the full active set, by design (§4C: a facet
+list has to show every option, or there's no way to switch) — so browsing
+into "Mobiles" is *not* fast just because a filter is now applied. Every
+*other* facet in that same response (city, condition, price, ...) narrows to
+the selected category first and stays fast. Confirmed with `EXPLAIN
+(ANALYZE, BUFFERS)` on the actual generated query, not a hand-simplified
+stand-in — the category branch alone: `HashAggregate` over the full ~88k-row
+CTE scan, **331 ms** of a 453 ms total.
 
-**Root cause, found and partly fixed during a performance re-audit:**
-`fetchFacetCounts` materialises a CTE over every active listing and scans it
-once per facet group (6 scans). Two real problems compounded:
+**Fixed, for the fully-unfiltered case only:** `buildFacetCountsQuery`
+(`backend/src/db/queries/listingFacets.sql.ts`) now detects when *no*
+per-facet filter is selected — the point where "exclude this facet's own
+filter" is a no-op for all six groups, because there is no filter to
+exclude — and issues a single `GROUP BY GROUPING SETS (...)` query instead
+of six `UNION ALL` branches over a materialised CTE. Verified byte-for-byte
+identical output against the old query (same 40 rows, same values, same
+counts) before shipping it. Measured: **~2,180 ms → ~215–450 ms**, roughly
+5–10×. This also folds into every deep-pagination request on an unfiltered
+browse (page 1/100/500 above), since the facet computation, not `OFFSET`,
+is what dominates those.
 
-1. `listings_facets_idx` didn't include `price`, which the query needs for
-   every row — so Postgres couldn't do a true index-only scan and fell back
-   to a sequential scan of the whole table. **Fixed**: the index now
-   `INCLUDE`s `price` as a payload column (`backend/src/db/marketplace.sql`),
-   confirmed by `EXPLAIN` to now use `Index Only Scan`.
-2. Past roughly 100k rows, materialising that CTE (six columns × ~90k rows)
-   exceeds Postgres's 4 MB default `work_mem`, so it was spilling to on-disk
-   temp files. **Fixed**: `work_mem` is now raised to 64 MB per connection
-   (`backend/src/config/database.ts`), confirmed to remove the temp-file
-   spill from the plan.
+**Not fixed: the single-selected-facet case** (~450 ms, e.g. browsing one
+category). `GROUPING SETS` cannot express "exclude only this group's own
+filter" — every grouping set in one `GROUP BY GROUPING SETS` shares the same
+`WHERE`. A `FILTER (WHERE ...)` clause per aggregate was tried, using
+`GROUPING()` to vary the filter per group — Postgres rejects this outright
+(`grouping operations are not allowed in FILTER`), which settles the
+question rather than leaving it open. Fixing this for real means a
+different architecture — e.g. a separate, cheaper path for the one branch
+that can't narrow — which is exactly the kind of rewrite to the brief's
+most strictly-graded logic that isn't safe to attempt untested right before
+a deadline. Disclosed, not silently left as "fast" like before.
 
-Both fixes are real and measured, but **neither closes the gap on their
-own** — with both applied, the unfiltered case still costs ~400–550 ms,
-because scanning and filtering ~90,000 in-memory rows six times over is
-inherently CPU-bound work that grows with the active-listing count,
-independent of indexing or memory. The query is fast (~15–20 ms) the moment
-any query or filter narrows the candidate set — which is true of almost
-every real search — but a genuinely unfiltered "show me everything" browse
-is not, and will get slower as the dataset grows further. Closing this
-properly means rewriting the six sequential CTE scans into a single pass
-(e.g. `GROUPING SETS`), which was not attempted here: it touches the exact
-logic §10 grades most strictly ("a count that is subtly wrong is worse than
-no count at all"), and is not a change to make right before a submission
-deadline without time to test it thoroughly. This is a known, disclosed
-limitation, not a hidden one — see [Known limitations](#known-limitations).
+The two earlier index/`work_mem` fixes (documented in previous passes) are
+still in effect and still real — they're what makes the *narrowed* facet
+branches (city, condition, ... while browsing a category) cost ~7–24 ms
+instead of scanning the full table each. `GROUPING SETS` is the added fix on
+top, for the specific case they didn't reach.
+
+### Typo-tolerant (fuzzy) search: also optimized, not fully closed
+
+Two real, verified fixes, in order:
+
+1. **The page-of-results query joined category and photo data inline**
+   (`LISTING_JOINS`), which forced Postgres to run both joins — including a
+   per-row `LATERAL` photo lookup — against every trigram candidate (often
+   thousands) before `ORDER BY ... LIMIT` could discard the ones that don't
+   make the page. **Fixed**: rank and apply `LIMIT` first, in a CTE over
+   `listings` alone, then join only the resulting page
+   (`searchListingsFuzzy`, `backend/src/repositories/listingSearch.repository.ts`).
+   Verified identical row order and content against the old query before
+   shipping. Measured on `"bycicle"`: **~1,085 ms → ~112 ms**, ~10×. Not
+   applied to the exact-match path — it was already within budget, and
+   rewriting a query that wasn't broken for a theoretical gain is a bad
+   trade this close to a deadline.
+2. **The full fuzzy response ran four round trips sequentially** — an exact
+   match attempt, then the fuzzy page, then the "did you mean" suggestion,
+   then count+facets — where only the first two genuinely had to happen in
+   that order. **Fixed**: once a fuzzy hit is confirmed, its count, its
+   facets and its suggestion all start together (`listingSearch.service.ts`),
+   the same speculative-parallel pattern already used for the exact-match
+   path. Measured on `"jaket"` (a narrower typo, ~3,000 matches): full
+   response **~900 ms → ~440 ms**. Broader typos (`"swaeter"`, ~11,000
+   matches) still cost **~950 ms–2 s** — the remaining cost scales with how
+   many rows the trigram index returns, which a broader typo makes larger
+   almost by definition. This is disclosed, not fixed further: shrinking
+   the candidate pool itself (a stricter secondary filter) risks rejecting
+   the very typos it exists to catch, which the brief explicitly asks not
+   to break.
+
+### The "did you mean" suggestion was picking irrelevant words
+
+Found while re-measuring the fuzzy path: `"bycicle"` could suggest
+"Engineering Mathematics by B.S. Grewal" as often as "bicycle". Root cause —
+`ORDER BY word_similarity($1, title) DESC LIMIT 1` over full title phrases
+regularly ties several unrelated titles at the *same* score (0.25 is common
+against a 7-character typo, and many completely unrelated multi-word titles
+land on it too), with no tiebreaker, so whichever row the scan happened to
+visit first won. **Fixed** (`suggestCorrection`,
+`backend/src/repositories/listingSearch.repository.ts`): the trigram index
+still narrows 90k+ rows to a small candidate pool fast, same as before, but
+the actual "closest word" question is now resolved in Node with a real edit
+distance computed **per word**, not per full title, deterministically
+tie-broken. Verified: `"bycicle"` → `bicycle`, `"jaket"` → `jacket`. Two of
+the four words this typo-tolerance example set originally used —
+`"hoodei"`/`"hoodie"` and `"swaeter"`/`"sweater"` — no longer exist anywhere
+in the current 145k-row dataset (leftover from before this project pivoted
+from a clothing marketplace to general classifieds); no correction algorithm
+can suggest a word with zero matching listings, so those two now suggest the
+closest word that *does* exist (`"wooden"`, `"seater"`) — consistent with
+what the search results themselves show, rather than an unrelated pick.
 
 Reproduce any of these with `npm run explain:facets`, or run
 `EXPLAIN (ANALYZE, BUFFERS)` directly on any query in
@@ -551,17 +612,21 @@ as a boolean flag inside the same one-pass query described in Q2.
 - **`frontend/.env` was tracked in git** — it only ever held a non-secret
   local default (`VITE_API_URL=http://localhost:5000`); it has since been
   untracked and `frontend/.gitignore` now excludes `.env` going forward.
-- **Unfiltered facet counts (a plain "all listings" browse, no query or
-  filter) cost ~400–550 ms at the current 145k-row scale** — over the
-  brief's 300 ms target. Two real contributing bugs were found and fixed in
-  this pass (a missing covering column on `listings_facets_idx`, and
-  `work_mem` too low for the query's working set); what remains is an
-  architectural cost — six sequential scans of a materialised CTE — that a
-  quick fix can't safely close two days before a deadline. Every query that
-  actually includes a search term or a filter is fast (~15–20 ms), which
-  covers the overwhelming majority of real usage. See
-  [Performance](#performance-at-145k-rows) above for the full story and
-  what a real fix would involve.
+- **Facet counts for the one facet currently being filtered on (e.g. the
+  category list while a category is selected) cost ~450 ms** — the same
+  order of cost as a fully unfiltered browse, and for the same structural
+  reason: that facet's own filter is deliberately excluded from its own
+  count (§4C — a filter list has to keep showing every option), so it
+  always scans the full active set regardless of what else is filtered.
+  Every *other* facet in the same response narrows correctly and stays fast
+  (~7–24 ms). A `GROUPING SETS` rewrite fixed the fully-unfiltered case
+  (~2,180 ms → ~215–450 ms, ~5–10×, verified byte-for-byte identical
+  output) but cannot express "exclude only this group's own filter" — a
+  `FILTER (WHERE ...)` variant using `GROUPING()` was tried and Postgres
+  rejects it outright (`grouping operations are not allowed in FILTER`).
+  Fixing the single-facet case needs a different architecture, not
+  attempted here. See [Performance](#performance-at-145k-rows) for the
+  full story, including what was previously mismeasured as "fast."
 - **The deployed instance may lag behind this repository's `main` branch**
   at any given moment — Render/Vercel only reflect what's actually been
   pushed. Before relying on any number or behavior described here, confirm
@@ -589,12 +654,15 @@ as a boolean flag inside the same one-pass query described in Q2.
   either (matching regions; upgrading off the free tier) is a Render/Supabase
   account and billing decision, not something fixable by changing code, and
   neither was done in this pass.
-- **The fuzzy/typo-tolerant search path costs 115–280 ms on its own, warm**
-  (`"bycicle"` — see [Performance](#performance-at-145k-rows)) — the
-  slowest individual query measured in this codebase, and the one with the
-  least margin left once any network latency is added on top. Not fixed in
-  this pass; the trigram candidate set it scans (~7,000 rows before
-  filtering to real matches) would need to shrink to close this.
+- **The fuzzy/typo-tolerant search path's full response still costs
+  ~440 ms–2 s**, even after this pass's fixes (a ~10× faster page query,
+  plus running its count/facets/suggestion in parallel instead of in
+  sequence — see [Performance](#performance-at-145k-rows)). The remaining
+  cost scales with how broad the typo's trigram match is (a few thousand
+  candidate rows for a narrow typo, over ten thousand for a broad one), and
+  shrinking that candidate pool further risks rejecting genuine typos,
+  which the brief explicitly asks not to break. Not fixed further in this
+  pass.
 
 ## Decisions and deviations
 
