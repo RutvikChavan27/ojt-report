@@ -9,8 +9,12 @@ CREATE EXTENSION IF NOT EXISTS citext; -- case-insensitive email comparison
 
 -- pg_trgm ships with word_similarity_threshold at 0.6, which is too strict for
 -- ordinary misspellings: measured against this data, "hoodei" -> "Hoodie"
--- scores 0.571, "jaket" -> "Jacket" 0.444 and "swaeter" -> "Sweater" 0.333, so
--- every one of them was rejected. 0.3 accepts all of those.
+-- scores 0.571, "jaket" -> "Jacket" 0.444 and "swaeter" -> "Sweater" 0.333.
+-- 0.3 accepted all of those, but missed the classifieds category itself:
+-- "bycicle" -> a "Bicycle" listing title scores only 0.25 (the titles here are
+-- full phrases like "Kids Bicycle 20-inch — Barely Used", which dilutes the
+-- single-word match), so it was silently rejected. 0.2 accepts that too, with
+-- headroom for the same effect on other multi-word titles.
 --
 -- The cost is recall traded for precision: a looser threshold matches more
 -- unrelated words, which is why the fuzzy path only runs after the exact search
@@ -21,7 +25,7 @@ BEGIN
   -- otherwise ALTER DATABASE rejects the parameter as unrecognised.
   PERFORM word_similarity('a', 'b');
   EXECUTE format(
-    'ALTER DATABASE %I SET pg_trgm.word_similarity_threshold = 0.3',
+    'ALTER DATABASE %I SET pg_trgm.word_similarity_threshold = 0.2',
     current_database()
   );
 END $$;

@@ -45,7 +45,7 @@ export async function connectDatabase(connectionString: string): Promise<void> {
   // opened afterwards. Setting it as each pooled connection is created means the
   // fuzzy search behaves the same however long the pool has been alive.
   pool.on("connect", (client) => {
-    void client.query("SET pg_trgm.word_similarity_threshold = 0.3");
+    void client.query("SET pg_trgm.word_similarity_threshold = 0.2");
     // The facet-count query materialises a CTE over every active listing —
     // tens of thousands of rows, six columns each — and scans it once per
     // facet group. Past ~100k listings that no longer fits Postgres's 4MB

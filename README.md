@@ -143,6 +143,16 @@ an exact miss, since it is the more expensive path and the majority of
 searches don't need it — see `searchListingsFuzzy` in
 `backend/src/repositories/listingSearch.repository.ts`).
 
+`pg_trgm.word_similarity_threshold` is set to **0.2** (`backend/src/db/marketplace.sql`,
+`backend/src/config/database.ts`), not the library's 0.6 default. Titles here
+are full phrases ("Kids Bicycle 20-inch — Barely Used"), which dilutes a
+single-word match: `word_similarity('bycicle', …)` against that title scores
+only 0.25, so the threshold has to sit below that or the canonical typo
+example in this brief matches nothing. Verified directly against the
+deployed database: `'bycicle' <% title` returns 0 rows at 0.3, ~3,500 at 0.2,
+without materially loosening precision for other misspellings (`"hoodei"`
+0.571, `"jaket"` 0.444, `"swaeter"` 0.333 all still clear it).
+
 Filters (category, city, condition, size, colour, price, posted-within) all
 combine, each independent of the others, and every filter list shows a count
 computed **with every other filter applied but not its own** — otherwise
@@ -304,6 +314,25 @@ limitation, not a hidden one — see [Known limitations](#known-limitations).
 Reproduce any of these with `npm run explain:facets`, or run
 `EXPLAIN (ANALYZE, BUFFERS)` directly on any query in
 `backend/src/db/queries/`.
+
+### A second, separate gap: end-to-end API latency
+
+The table above is deliberately DB-only, to isolate query/index performance
+from network latency — the brief also asks the deployed **API** to answer in
+under 300 ms, which is a different measurement and, measured directly against
+`https://ojt-report-backend.onrender.com/api/search/listings`, is **not**
+currently met: repeated warm requests measured 500 ms–1.2 s end to end, well
+above what the DB-only numbers above would predict.
+
+The gap is consistent with a network round trip, not a query cost: the
+Render backend and the Supabase database (`aws-0-ap-southeast-2`, Sydney) may
+not be provisioned in the same region, in which case every query pays a
+cross-region hop on top of the millisecond-scale execution time measured
+above — three queries run in parallel per search (`Promise.all`), so this
+does not multiply per query, but the round trip itself is the dominant cost.
+Confirming and fixing this requires checking both dashboards' region
+settings, which is a Render/Supabase account action, not a code change — see
+[Known limitations](#known-limitations).
 
 ## Tests
 
@@ -481,6 +510,19 @@ as a boolean flag inside the same one-pass query described in Q2.
   at any given moment — Render/Vercel only reflect what's actually been
   pushed. Before relying on any number or behavior described here, confirm
   `git log origin/main -1` matches `git log -1` locally.
+- **`pg_trgm.word_similarity_threshold` was too strict for this dataset's
+  titles** — found during a re-audit: `"bycicle"`, the brief's own typo
+  example, matched zero rows in production because `word_similarity`
+  against a full title phrase scored below the 0.3 threshold. **Fixed** to
+  0.2, verified against the live database. Requires a backend redeploy to
+  take full effect — see [Search](#search) above.
+- **End-to-end API latency on the deployed instance measures 500 ms–1.2 s**,
+  above the brief's 300 ms target, despite every query being millisecond-scale
+  at the database layer (see [Performance](#performance-at-145k-rows)). The
+  gap looks like a Render↔Supabase cross-region network hop rather than a
+  query cost, and needs a region check on both dashboards to confirm — not
+  something fixable by changing code. Not fixed in this pass; see the
+  Performance section above for what to check.
 
 ## Decisions and deviations
 
