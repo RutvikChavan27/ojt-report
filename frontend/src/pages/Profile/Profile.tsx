@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import { FiBookmark, FiHeart, FiList, FiLogOut, FiUser } from "react-icons/fi";
-import { MY_LISTINGS } from "../../data/marketplace";
+import { fetchMyListings } from "../../lib/api";
+import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../store/AuthContext";
 import { useSavedListings } from "../../store/SavedListingsContext";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
@@ -16,6 +17,7 @@ function Profile() {
   const { user, signOut } = useAuth();
   const { count: savedCount } = useSavedListings();
   const { searches } = useSavedSearches();
+  const { data: myListings } = useApi(fetchMyListings, []);
 
   // RequireAuth already guarantees a session; this only satisfies the type.
   if (!user) return null;
@@ -25,7 +27,7 @@ function Profile() {
       to: "/my-listings",
       icon: <FiList size={18} />,
       label: "My listings",
-      value: MY_LISTINGS.filter((listing) => listing.status === "active").length,
+      value: (myListings ?? []).filter((listing) => listing.status === "active").length,
       caption: "active",
     },
     {
