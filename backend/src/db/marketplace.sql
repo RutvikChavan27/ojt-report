@@ -282,3 +282,30 @@ ALTER TABLE listings
 
 CREATE INDEX IF NOT EXISTS listings_subcategory_idx
   ON listings (subcategory_slug) WHERE status = 'active';
+
+-- === Row Level Security ====================================================
+--
+-- Every Supabase project exposes its database over a public REST API
+-- (PostgREST) by default, regardless of whether the app uses it. This app
+-- doesn't — it talks to Postgres directly from the Express backend, over
+-- `DATABASE_URL`, as the `postgres` role — but the public API endpoint still
+-- exists and is reachable by anyone with the project's anon key unless RLS is
+-- turned on. Flagged by Supabase's own security advisor: every table here had
+-- RLS disabled, which meant `users`, `oauth_identities`, `user_sessions`,
+-- `saved_listings` and `saved_searches` were all readable/writable through
+-- that API, bypassing every ownership check this app enforces in Express.
+--
+-- Enabled with no policies attached, on purpose: `postgres` has BYPASSRLS
+-- (confirmed via `pg_roles`), so the backend's own access is completely
+-- unaffected — this only closes the separate, unused public API path. If a
+-- real use for PostgREST/Supabase client-side access ever arises, add
+-- specific policies then; until then, no policy at all is the correct
+-- default-deny for a database this app never intended to expose directly.
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+  END LOOP;
+END $$;

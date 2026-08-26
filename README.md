@@ -659,6 +659,18 @@ as a boolean flag inside the same one-pass query described in Q2.
 
 ## Known limitations
 
+- ~~Row Level Security was disabled on every table~~ — **resolved.** Supabase
+  flagged this via its own security advisor: every table in `public`,
+  including `users`, `oauth_identities`, `user_sessions`, `saved_listings`
+  and `saved_searches`, had RLS off, meaning Supabase's automatic public
+  REST API (present on every project regardless of whether the app uses it)
+  could read or write any row directly, bypassing every ownership check this
+  app enforces in Express. This app never uses that API — it connects
+  directly as the `postgres` role, which has `BYPASSRLS` (confirmed via
+  `pg_roles`) — so RLS is now enabled on every table with no policies
+  attached: the backend's own access is completely unaffected, and the
+  separate, unused public API path is now closed by default. See
+  `backend/src/db/marketplace.sql`.
 - ~~Google OAuth not yet manually verified~~ — **resolved.** A real sign-in
   was completed against the deployed instance. It surfaced one genuine bug
   along the way, also now fixed: the session cookie was `sameSite: "lax"`,
