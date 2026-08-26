@@ -4,8 +4,15 @@
 -- Every index at the bottom of this file carries a comment naming the query it
 -- exists for; anything that cannot be justified that way should not be here.
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm; -- trigram similarity, for typo tolerance
-CREATE EXTENSION IF NOT EXISTS citext; -- case-insensitive email comparison
+-- Installed into `extensions`, not `public` (Supabase's own security advisor
+-- flags extensions left in `public` as a naming-collision risk). `extensions`
+-- is already on every Supabase database's default `search_path`, so this is
+-- purely where the objects live — every unqualified reference elsewhere in
+-- this file and the app (the `<%` operator, `citext` as a column type, ...)
+-- keeps resolving exactly as before.
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA extensions; -- trigram similarity, for typo tolerance
+CREATE EXTENSION IF NOT EXISTS citext SCHEMA extensions; -- case-insensitive email comparison
 
 -- pg_trgm ships with word_similarity_threshold at 0.6, which is too strict for
 -- ordinary misspellings: measured against this data, "hoodei" -> "Hoodie"

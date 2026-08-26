@@ -671,6 +671,18 @@ as a boolean flag inside the same one-pass query described in Q2.
   attached: the backend's own access is completely unaffected, and the
   separate, unused public API path is now closed by default. See
   `backend/src/db/marketplace.sql`.
+- ~~Extensions installed in `public`~~ — **resolved.** Supabase's advisor
+  flagged `pg_trgm`, `citext` and (an unused) `fuzzystrmatch` all living in
+  the `public` schema — a naming-collision risk, not a functional bug.
+  `fuzzystrmatch` was dropped outright (nothing in the app used it — a
+  leftover from an approach that didn't make it into the shipped code; the
+  actual typo-suggestion logic is a hand-written edit-distance function, not
+  Postgres's `levenshtein()`). `pg_trgm` and `citext` are genuinely used
+  (typo-tolerant search; case-insensitive email) and were moved to a
+  dedicated `extensions` schema instead — already on every Supabase
+  database's default `search_path`, so nothing that references them
+  unqualified had to change. Verified identical results on both
+  extension-dependent queries before and after the move, live.
 - ~~Google OAuth not yet manually verified~~ — **resolved.** A real sign-in
   was completed against the deployed instance. It surfaced one genuine bug
   along the way, also now fixed: the session cookie was `sameSite: "lax"`,
