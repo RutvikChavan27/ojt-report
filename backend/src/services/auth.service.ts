@@ -1,4 +1,21 @@
 /**
+ * This is the "service" layer for authentication — the actual rules for
+ * registering, logging in, and signing in with Google live here, separate
+ * from the HTTP-specific code in controllers/auth.controller.ts.
+ *
+ * Passwords are never stored as plain text. `hashPassword` (see
+ * utils/password.ts) runs the password through bcrypt, a one-way scrambling
+ * function: it's easy to check "does this password match this hash," but
+ * effectively impossible to reverse a hash back into the original password.
+ * That's why, even if the database were ever exposed, actual passwords would
+ * not be.
+ *
+ * "DTO" (seen in `AuthUserDTO` below) stands for Data Transfer Object — it
+ * just means a plain object shaped for sending to the frontend, containing
+ * only what the frontend actually needs (id, email, name) and specifically
+ * never the password hash. `toDTO()` below is what strips everything else
+ * off before a user object leaves this file.
+ *
  * Authentication: registration, password login, and Google sign-in.
  *
  * Every function here returns a plain user object with no hash in it, so a
@@ -79,9 +96,12 @@ export async function login(input: {
 }): Promise<AuthUserDTO> {
   const user = await findUserByEmail(input.email);
 
-  // Hash a throwaway value when the email is unknown so both paths take a
-  // similar amount of time; returning instantly on a missing row leaks which
-  // addresses exist through response timing.
+  // If the email isn't registered, this could just return an error
+  // immediately — but that would make "unknown email" respond noticeably
+  // faster than "wrong password" (which has to run the slow bcrypt check).
+  // Someone could use that timing difference to guess which emails have
+  // accounts. Running the same slow check against a fake hash here means
+  // both cases take about the same amount of time either way.
   if (!user) {
     await verifyPassword(input.password, "$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidin");
     throw new AuthError(BAD_CREDENTIALS, 401);

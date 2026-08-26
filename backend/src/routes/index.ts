@@ -1,3 +1,20 @@
+/**
+ * This file is the "map" of the marketplace API. It does not contain any
+ * logic itself — it just says, for each URL and HTTP method, which function
+ * (called a "controller") should handle it.
+ *
+ * How a request flows through this file:
+ *   Browser sends a request, e.g. GET /api/search/listings?q=iphone
+ *     -> Express looks for a matching line below
+ *     -> if the route has middleware first (like `requireAuth`), that runs
+ *        first and can stop the request early (e.g. "please log in")
+ *     -> otherwise the controller function runs and sends back a response
+ *
+ * `router.get(...)`, `router.post(...)`, `router.patch(...)` and
+ * `router.delete(...)` correspond to the four HTTP methods this API uses:
+ * GET to read data, POST to create something, PATCH to update part of
+ * something, DELETE to remove it.
+ */
 import { Router } from "express";
 import {
   getDashboardData,
@@ -40,7 +57,18 @@ import { requireAuth, requireListingOwner } from "../middleware/auth.middleware"
  * also behind `requireListingOwner`, which is the server-side form of "only the
  * seller who created a listing may change it".
  */
+// Router() creates a mini-app just for defining routes. It gets attached to
+// the real Express app (in app.ts) under the "/api" prefix, so a route
+// written here as "/dashboard" is actually reached at "/api/dashboard".
 const router = Router();
+
+// A route can list several functions in a row, e.g.
+//   router.patch("/listings/:id", requireAuth, requireListingOwner, patchListing)
+// Express runs them left to right. `requireAuth` and `requireListingOwner`
+// are "middleware" — functions that run before the real handler and can stop
+// the request (by sending an error response) instead of letting it continue.
+// Only if every middleware function calls `next()` does Express move on to
+// the actual controller function at the end (here, `patchListing`).
 
 // Everything the homepage renders, in one round trip.
 router.get("/dashboard", getDashboardData);

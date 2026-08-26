@@ -1,3 +1,15 @@
+/**
+ * All server configuration — database URL, secrets, Google OAuth credentials,
+ * feature toggles — is read from environment variables (`process.env`), not
+ * hard-coded, and not committed to git. `dotenv/config` below loads a local
+ * `backend/.env` file into `process.env` in development; in production
+ * (Render) those same variable names are set directly in the hosting
+ * platform's dashboard instead of a file. Either way, `config` below is the
+ * only place `process.env` gets read — everything else in the backend
+ * imports `config` instead, so there is one place to see everything the app
+ * depends on being set, and no risk of a secret being logged by accident
+ * from a stray `console.log(process.env)` elsewhere.
+ */
 import "dotenv/config";
 import path from "node:path";
 

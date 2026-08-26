@@ -144,11 +144,27 @@ export async function suggestSearches(
 }
 
 /**
- * One page of search results.
+ * This is the main search function — the controller calls this one function,
+ * and it's responsible for producing everything a search results page needs
+ * in one go: the page of listings, the total count (for "1,234 results" and
+ * page numbers), the facet counts (the numbers next to each filter checkbox),
+ * and — only when needed — a typo correction.
  *
- * Tries tsquery first. If a query was supplied and matched nothing, retries with
- * trigram similarity and flags the response as fuzzy, so the UI can say results
- * are approximate and offer a correction.
+ * In plain terms, what happens inside:
+ *   1. Try an exact search (real words matching the listing's title/description).
+ *   2. If that finds nothing at all AND the shopper typed something, try again
+ *      with typo-tolerant matching instead (so "bycicle" still finds bicycles).
+ *   3. Also work out the total count and the filter counts, in parallel with
+ *      the above rather than after it, since none of them depend on each other.
+ *   4. If someone asked for a page number that doesn't exist (e.g. page 50 of
+ *      a 3-page result), quietly give them the last real page instead of an
+ *      empty one.
+ *   5. Package everything into the shape the frontend expects and return it.
+ *
+ * "One page of search results." Tries tsquery first (Postgres's real
+ * full-text search). If a query was supplied and matched nothing, retries with
+ * trigram similarity (typo-tolerant matching) and flags the response as fuzzy,
+ * so the UI can say results are approximate and offer a correction.
  */
 export async function searchListings(
   request: SearchRequest,

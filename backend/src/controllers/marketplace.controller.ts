@@ -1,3 +1,23 @@
+/**
+ * These functions are "controllers" — the layer that sits directly behind a
+ * route (see routes/index.ts). A controller's job is always the same shape:
+ * read what the request needs from `req`, ask a "service" file to actually
+ * do the work (talk to the database, apply business rules), then send the
+ * result back with `res`. The controller itself should stay thin — no SQL,
+ * no business logic — that's what `services/` and `repositories/` are for.
+ *
+ * Every controller function here has the same three parameters:
+ *   req  — the incoming HTTP request: `req.query` holds URL parameters like
+ *          `?q=iphone&page=2`, `req.params` holds route parameters like the
+ *          `:id` in `/listings/:id`, and `req.body` holds JSON the client sent.
+ *   res  — used to send the response back, e.g. `res.json(...)`.
+ *   next — call this to hand off to the next thing in the chain. Calling
+ *          `next(err)` specifically skips straight to the error-handling
+ *          middleware in app.ts, which is why every function below wraps its
+ *          work in try/catch and calls `next(err)` in the catch block —
+ *          otherwise a database error would crash the server instead of
+ *          producing a clean error response.
+ */
 import type { Request, Response, NextFunction } from "express";
 import {
   getDashboard,
@@ -131,13 +151,31 @@ export async function getListingById(
 }
 
 /**
- * GET /api/search/listings
+ * GET /api/search/listings — this is the endpoint the whole search feature
+ * runs through. This is the "Node.js route" step of the search flow:
  *
- * Query params: q, category, audience, city, condition (repeatable), minPrice,
- * maxPrice, postedWithin (days), sort (relevance|newest|price_asc|price_desc),
- * page, perPage.
- */
-/**
+ *   Search box (React)
+ *     -> fetch("/api/search/listings?q=iphone&category=mobiles&sort=newest")
+ *     -> this function runs
+ *     -> parseSearchRequest() turns the URL's query string into a plain object
+ *     -> searchListings() (in services/listingSearch.service.ts) builds and
+ *        runs the actual SQL against Postgres
+ *     -> the results come back here and get sent as JSON
+ *     -> React receives that JSON and renders listing cards
+ *
+ * `req.query` is everything after the "?" in the URL, parsed into an object
+ * by Express — e.g. `?q=iphone&page=2` becomes `{ q: "iphone", page: "2" }`.
+ * This function doesn't read `req.query` directly; it hands the whole thing
+ * to `parseSearchRequest`, which is responsible for validating and defaulting
+ * every value (see validators/listingSearch.validator.ts) — a controller
+ * should never trust raw user input to already be in the right shape.
+ *
+ * `await searchListings(...)` pauses this function until the database query
+ * finishes and the results are ready — `async`/`await` is what lets this
+ * code read top-to-bottom like a normal sequence of steps, even though
+ * talking to a database actually takes some (small) amount of time and
+ * happens in the background.
+ *
  * `Server-Timing` breaks the response down into the two phases that live in
  * this process: everything before the database calls started (CORS, session,
  * JSON body parsing, query-string validation) and the database calls
@@ -163,8 +201,14 @@ export async function getListingSearch(
     }
     res.setHeader("Server-Timing", timings.join(", "));
 
+    // sendSuccess wraps the data in a consistent shape — { success: true,
+    // data: ... } — so every endpoint in this API answers the same way and
+    // the frontend can handle responses generically. See utils/response.ts.
     sendSuccess(res, results);
   } catch (err) {
+    // Anything that went wrong above (a bad database connection, an
+    // unexpected error) ends up here. next(err) skips ahead to the error
+    // handler in app.ts instead of the request hanging forever.
     next(err);
   }
 }

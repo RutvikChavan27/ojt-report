@@ -1,9 +1,20 @@
 /**
- * Parses and bounds the search query string.
+ * This file turns the messy, all-strings URL query (`req.query`) into a
+ * clean, typed object the rest of the backend can trust — the "backend
+ * validation" step of the search flow.
  *
- * Everything here is defensive: values reach SQL as bind parameters regardless,
- * but rejecting nonsense early means a bad request is a 400 or a sane default
- * rather than a database error.
+ * Why this needs to exist at all: everything in a URL arrives as text, or
+ * arrays of text. `?page=2` arrives as the string `"2"`, not the number `2`.
+ * `?condition=Good&condition=Fair` (the same key twice) arrives as an array.
+ * A user could also type anything into the address bar, including nonsense
+ * or something malicious. This file is the one place that turns "whatever
+ * arrived" into "exactly what the search code expects," so nothing further
+ * down has to re-check any of this.
+ *
+ * Everything here is defensive: values reach SQL as bind parameters regardless
+ * (see db/queries/listingSearch.sql.ts for what that means and why it matters
+ * for security), but rejecting nonsense early means a bad request is a 400 or
+ * a sane default rather than a database error.
  */
 import type { Request } from "express";
 import type { SortKey } from "../db/queries/listingSearch.sql";
@@ -75,10 +86,21 @@ function parseCursorDir(value: unknown): "next" | "prev" | undefined {
   return raw === "next" || raw === "prev" ? raw : undefined;
 }
 
+// This is the main function of the file — everything above it is a small
+// helper this function uses. It receives the raw `req.query` object and
+// returns a clean `SearchRequest` object (the type is defined in
+// services/listingSearch.service.ts) that the rest of the search code relies
+// on being correct.
 export function parseSearchRequest(queryString: Request["query"]): SearchRequest {
+  // `?.` (optional chaining) means "only call .trim() if the value before it
+  // isn't undefined" — `first(...)` can return undefined when the query
+  // param wasn't sent at all, and calling .trim() on undefined would crash.
+  // The trailing `|| undefined` turns an empty string into undefined too, so
+  // an empty search box means "no search," not "search for nothing."
   const q = first(queryString.q)?.trim().slice(0, MAX_QUERY_LENGTH) || undefined;
 
   const sortRaw = first(queryString.sort) as SortKey | undefined;
+  // This is a ternary expression: `condition ? valueIfTrue : valueIfFalse`.
   // Ranking needs a query to rank against, so default to newest without one.
   const sort: SortKey =
     sortRaw && SORTS.has(sortRaw) ? sortRaw : q ? "relevance" : "newest";
@@ -86,10 +108,14 @@ export function parseSearchRequest(queryString: Request["query"]): SearchRequest
   let minPrice = parseNumber(queryString.minPrice);
   let maxPrice = parseNumber(queryString.maxPrice);
   // A reversed range would match nothing at all; treat it as a typo and swap.
+  // `[minPrice, maxPrice] = [maxPrice, minPrice]` is array destructuring used
+  // to swap two variables in one line, without needing a temporary variable.
   if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
     [minPrice, maxPrice] = [maxPrice, minPrice];
   }
 
+  // The object returned here becomes the single source of truth for this
+  // search request as it travels into searchListings() next.
   return {
     q,
     categorySlug: first(queryString.category) || undefined,

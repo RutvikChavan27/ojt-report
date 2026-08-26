@@ -4,6 +4,12 @@
  * Every handler here runs behind `requireAuth`, so `req.session.userId` is
  * always present. That id — never anything from the request — is what scopes the
  * queries, which is what stops one user reaching another's saved data.
+ *
+ * "Saved listings" is a simple bookmark list (which listing ids this user
+ * tapped the heart/save icon on). "Saved searches" is different: it stores a
+ * search itself (e.g. "bikes under 5000 in Pune") so the user can re-run it
+ * later or get a "new since you last checked" count — that's what
+ * `seenCount` / `lastCheckedAt` below are for.
  */
 import type { Request, Response, NextFunction } from "express";
 import {

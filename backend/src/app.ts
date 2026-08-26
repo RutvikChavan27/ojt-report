@@ -1,3 +1,21 @@
+/**
+ * This file builds the Express application itself: every request that
+ * reaches the backend passes through the pieces set up here, in the order
+ * they're added, before it ever reaches a route handler.
+ *
+ * Express calls each of these pieces "middleware" — a function that runs on
+ * every request (or every request to a matching path) and then either
+ * finishes the response itself or calls `next()` to let the next piece run.
+ * `app.use(...)` is how a piece of middleware gets added to that pipeline.
+ * The order below matters: CORS has to run before anything else can respond,
+ * sessions have to be set up before a route can check who's logged in, and
+ * the error handler has to be added last so it can catch problems from
+ * everything above it.
+ *
+ * This is also where the two route "sub-apps" get attached — one for
+ * authentication (`/api/auth/...`) and one for everything else
+ * (`/api/...`, defined in `routes/index.ts`).
+ */
 import express from "express";
 import cors from "cors";
 import { config } from "./config/env";
@@ -57,6 +75,13 @@ export function createApp() {
     next();
   });
 
+  // CORS (Cross-Origin Resource Sharing) is a browser security rule: a web
+  // page loaded from one address (the React app on Vercel) is normally
+  // blocked from calling an API on a different address (this backend on
+  // Render), unless the API explicitly says "this origin is allowed." That's
+  // what this middleware does — `isAllowedOrigin` above decides yes or no
+  // for each incoming request's origin.
+  //
   // `credentials` and an explicit (reflected) origin are both required for the
   // session cookie to survive a cross-origin request: browsers refuse to send
   // cookies to a wildcard origin.
@@ -138,9 +163,18 @@ export function createApp() {
       });
   });
 
+  // Attach the two route files. Everything inside authRouter answers at
+  // "/api/auth/..." (login, register, Google sign-in); everything inside
+  // apiRouter (routes/index.ts) answers at "/api/..." (listings, search,
+  // saved items). If a request doesn't match any route in either file...
   app.use("/api/auth", authRouter);
   app.use("/api", apiRouter);
 
+  // ...it falls through to here: `notFound` sends a clean 404 instead of
+  // Express's default HTML error page. `errorHandler` is different — it only
+  // runs when a route handler throws or calls `next(err)`, and it must be
+  // registered last, because Express recognises "this middleware handles
+  // errors" by it taking four arguments instead of the usual three.
   app.use(notFound);
   app.use(errorHandler);
 

@@ -1,6 +1,13 @@
 /**
  * Server-side validation for the auth endpoints. The client validates too, but
  * this is the copy that counts — a request can arrive from anywhere.
+ *
+ * React already stops a user submitting an empty form, so this might look
+ * redundant. It isn't: the frontend's checks only stop the *provided* form
+ * UI — nothing stops a request going straight to the API with curl, a
+ * modified frontend, or a script, skipping the browser entirely. Any rule
+ * that must actually hold (password length, a real email shape) has to be
+ * enforced again here, on the server, or it does not really exist.
  */
 import { MIN_PASSWORD_LENGTH } from "../utils/password";
 

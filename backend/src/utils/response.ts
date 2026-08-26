@@ -1,3 +1,9 @@
+/**
+ * Every API response goes through one of these two functions, so the
+ * frontend can always check `response.success` first and know where to find
+ * either the data or the error message — see `frontend/src/lib/api.ts`,
+ * which unwraps exactly this shape for every request it makes.
+ */
 import type { Response } from "express";
 
 /** Uniform success envelope: { success: true, data }. */

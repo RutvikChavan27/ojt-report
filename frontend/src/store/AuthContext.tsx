@@ -1,3 +1,22 @@
+/**
+ * This file is a React Context — the pattern this app uses to share state
+ * (here, "who is signed in") across many components without passing it down
+ * through props at every level. Three pieces work together:
+ *   - `createContext` makes a container that can hold a value.
+ *   - `AuthProvider` (below) computes that value and renders `<AuthContext.
+ *     Provider value={...}>` around the app, once, in App.tsx.
+ *   - `useAuth()` (at the bottom) is what any component calls to read the
+ *     current value — `const { user, signIn } = useAuth()` — without needing
+ *     to know or care where the provider is mounted.
+ *
+ * `useState` holds a value that persists across re-renders and re-renders the
+ * component when it changes (`setUser(...)` below). `useEffect` runs code in
+ * reaction to the component appearing on screen (or a dependency changing) —
+ * used here to ask the server "who is logged in?" once when the app loads.
+ * `useCallback`/`useMemo` cache a function/value between renders so
+ * components relying on them (like the dependency array of the effect above)
+ * don't see a "new" one on every render and re-run needlessly.
+ */
 import {
   createContext,
   useCallback,

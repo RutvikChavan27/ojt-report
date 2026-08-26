@@ -1,3 +1,41 @@
+/**
+ * This file handles everything about proving who someone is: email/password
+ * login and registration, logging out, checking who's currently logged in,
+ * and signing in with Google.
+ *
+ * How login/registration works, step by step:
+ *   1. React sends { email, password } to POST /api/auth/login (or /register).
+ *   2. This file validates the shape of that data, then asks
+ *      services/auth.service.ts to check the password (login) or create the
+ *      account (register) — the actual password hashing and comparison
+ *      happens there, never in this file.
+ *   3. On success, `startSession()` below creates a session — a way for the
+ *      server to remember "this browser is now logged in as user #42" across
+ *      future requests, using a cookie (see middleware/session.middleware.ts
+ *      for how that cookie is configured).
+ *   4. The response tells React who's logged in; React stores that in
+ *      AuthContext so the rest of the app knows.
+ *
+ * How Google sign-in works, step by step (the getGoogleStart /
+ * getGoogleCallback pair below):
+ *   1. User clicks "Continue with Google" -> browser is sent to
+ *      GET /api/auth/google (getGoogleStart), which redirects the whole
+ *      browser tab to Google's own sign-in page.
+ *   2. The person signs in on Google's site, not this app's — this app never
+ *      sees their Google password.
+ *   3. Google redirects the browser back to
+ *      GET /api/auth/google/callback (getGoogleCallback) with a temporary
+ *      code proving the sign-in happened.
+ *   4. This server exchanges that code with Google directly (server-to-server,
+ *      see services/google.service.ts) for the person's email and name.
+ *   5. A user account is found or created for that email, a session is
+ *      started exactly like a normal login, and the browser is redirected
+ *      back into the React app — now logged in.
+ *
+ * The `state` value used in steps 1 and 3 is a security check (explained
+ * further down at getGoogleStart) that stops a stranger from tricking someone
+ * into completing someone else's login.
+ */
 import crypto from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
 import { config } from "../config/env";
@@ -13,7 +51,20 @@ import { parseCredentials, parseRegistration } from "../validators/auth.validato
 import { sendError, sendSuccess } from "../utils/response";
 
 /**
- * Starts a fresh session for a user id.
+ * Starts a fresh session for a user id — this is what actually "logs someone
+ * in" at the server level.
+ *
+ * A session is a small piece of data stored on the server (in the
+ * `user_sessions` database table here) and identified by a random ID that
+ * gets sent to the browser as a cookie. On every later request, the browser
+ * automatically sends that cookie back, and the server looks up the session
+ * to know who's asking — that's how the app "remembers" a logged-in user
+ * without them re-entering a password on every page.
+ *
+ * This function wraps two callback-based operations
+ * (`req.session.regenerate`, `req.session.save`) in a `Promise`, so the
+ * calling code can simply `await startSession(...)` instead of nesting
+ * callbacks inside callbacks.
  *
  * The session is regenerated on every successful sign-in so the pre-login
  * session identifier cannot be reused afterwards (session fixation).
@@ -127,7 +178,19 @@ export async function getMe(
   }
 }
 
-/** GET /api/auth/google — redirects the browser to Google's consent screen. */
+/**
+ * GET /api/auth/google — the first step of Google sign-in: send the browser
+ * to Google's own consent screen.
+ *
+ * `state` is a random, one-time value used to prevent a specific attack:
+ * without it, an attacker could start their own Google sign-in, capture the
+ * callback link Google generates, and trick a victim into opening it — which
+ * would log the victim into the attacker's account. By generating a random
+ * value here, saving it in this browser's session, and checking (in
+ * getGoogleCallback below) that the value Google sends back matches, the
+ * server can be sure the person completing the callback is the same person
+ * who started it in this exact browser.
+ */
 export function getGoogleStart(req: Request, res: Response): void {
   if (!isGoogleConfigured()) {
     sendError(

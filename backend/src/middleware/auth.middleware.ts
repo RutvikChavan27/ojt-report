@@ -1,4 +1,12 @@
 /**
+ * "Middleware" here means a function that runs before a route's real handler
+ * and can stop the request early. These two are used in routes/index.ts by
+ * listing them before the actual controller, e.g.:
+ *   router.patch("/listings/:id", requireAuth, requireListingOwner, patchListing)
+ * Express runs them in order — only if `requireAuth` calls `next()` does
+ * `requireListingOwner` run, and only if that also calls `next()` does
+ * `patchListing` (the real work) run at all.
+ *
  * Guards for the endpoints that need a signed-in user, and for the ones that
  * need the signed-in user to *own* the thing being changed.
  *

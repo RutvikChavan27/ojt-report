@@ -34,6 +34,28 @@ import { useSavedSearches } from "../../store/SavedSearchesContext";
  * to it and the page reads back out of it, which is what makes a result page
  * bookmarkable, shareable, reload-safe and correct under the back button. Held
  * in component state instead, all four of those would quietly break.
+ *
+ * The full round trip, end to end, on every filter click, sort change, or
+ * page turn:
+ *   1. User clicks a filter checkbox / sort option / page number.
+ *   2. `update(...)` below merges that change into `params` and writes the
+ *      new query string into the URL (`setSearch`).
+ *   3. React Router re-renders this component with the new URL; `search`
+ *      (the URLSearchParams) changes, so `params` (`paramsFromSearch`) and
+ *      `key` (the query string) are recomputed.
+ *   4. `useApi` sees `key` changed and calls `searchListingsViaApi(params)`.
+ *   5. `searchListingsViaApi` (lib/searchApi.ts) reshapes `params` into the
+ *      querystring the backend expects and calls `searchListings` (lib/api.ts).
+ *   6. `searchListings` does `fetch('/api/search/listings?...')` — an actual
+ *      HTTP request leaves the browser here.
+ *   7. The Express route -> controller -> service -> repository chain on the
+ *      backend runs the real SQL against Postgres (full-text search, filters,
+ *      facet counts, sorting, pagination all happen there — see
+ *      backend/src/services/listingSearch.service.ts) and sends back JSON.
+ *   8. `searchListings` unwraps the JSON envelope; `searchListingsViaApi`
+ *      reshapes the result into this page's `SearchResult` type.
+ *   9. `useApi` stores it as `data`; this component re-renders with the new
+ *      `results`, and React updates the DOM to show the new listings.
  */
 function SearchResults() {
   const [search, setSearch] = useSearchParams();

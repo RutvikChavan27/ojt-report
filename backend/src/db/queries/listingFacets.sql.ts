@@ -1,5 +1,17 @@
 /**
- * SQL construction for facet counts — the "(n)" beside every filter checkbox.
+ * "Facet counts" are the small numbers next to each filter option — e.g.
+ * "Mobiles (7,141)" or "Under ₹5,000 (312)". This file builds the one SQL
+ * query that computes all of them at once, for whatever search/filters are
+ * currently active.
+ *
+ * The tricky part this file solves: each facet's count must ignore *its own*
+ * filter but respect every *other* filter. If you've already selected
+ * "Mobiles," the category list still needs to show how many Cars and
+ * Furniture listings exist too — otherwise there'd be no way to switch
+ * categories. But the price filter, city filter, etc. should still narrow
+ * those numbers down. Getting this right in one query (rather than six
+ * separate ones, or fetching everything and counting in JavaScript) is what
+ * keeps this fast even with 100,000+ listings.
  *
  * One statement produces every count. The alternative, a query per facet group,
  * costs six round trips and six scans of the same matching set to answer one

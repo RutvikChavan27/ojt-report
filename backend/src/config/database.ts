@@ -1,3 +1,19 @@
+/**
+ * This file is the one place the backend actually connects to PostgreSQL
+ * (hosted by Supabase). Every other file that needs to run a query imports
+ * the `query()` function at the bottom of this file rather than connecting
+ * to the database itself.
+ *
+ * A "connection pool" (the `Pool` from the `pg` library below) is a small
+ * group of already-open connections to the database, reused across requests
+ * instead of opening a brand new connection every time. Opening a connection
+ * to a database that lives on another server takes real time (a network
+ * round trip plus a security handshake); reusing one that's already open is
+ * effectively free by comparison. With many users hitting the API at once,
+ * a pool also means requests share a small, controlled number of
+ * connections instead of each opening (and the database allowing) an
+ * unlimited number.
+ */
 import { Pool, type QueryResultRow } from "pg";
 
 let pool: Pool | undefined;

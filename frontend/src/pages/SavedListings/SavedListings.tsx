@@ -9,12 +9,13 @@ import { useSavedListings } from "../../store/SavedListingsContext";
 import BackLink from "../../components/common/BackLink";
 
 /**
- * Listings the visitor has saved.
+ * Listings the signed-in user has saved.
  *
- * Which ids are saved lives on the device (localStorage) — there is no
- * server-side saved-listings table, so this is per-browser by design. The
- * listings behind those ids come from the API, so a saved listing always shows
- * today's price rather than the one it had when it was saved.
+ * `useSavedListings()` (store/SavedListingsContext.tsx) is backed by the
+ * `saved_listings` table and scoped to the account, not the device — the
+ * hook only holds the ids locally as a cache. Each listing behind those ids
+ * is fetched fresh here, so a saved listing always shows today's price
+ * rather than the one it had when it was saved.
  *
  * Fetched one id at a time because there is no bulk endpoint; `allSettled`
  * means a listing that has since been deleted drops out quietly instead of

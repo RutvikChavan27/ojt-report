@@ -32,6 +32,16 @@ export type AuthUser = {
  * Throws with the server's own message when a request fails, since that wording
  * is written to be read by a person; a network failure or non-JSON response
  * becomes a generic message rather than an unhandled parse error.
+ *
+ * `<T>` is a generic type parameter: this one function handles every kind of
+ * request the app makes (fetching a listing, logging in, saving a search),
+ * and `T` is filled in by each caller (e.g. `apiRequest<AuthUser>(...)`) to
+ * say what shape of data comes back, so the caller gets a typed result
+ * instead of `any`. Inside, `await fetch(...)` pauses this function until the
+ * network response arrives (without blocking the rest of the app — other
+ * code keeps running while this waits), and `await res.json()` similarly
+ * waits for the response body to be parsed from JSON text into a real
+ * JavaScript object.
  */
 async function apiRequest<T>(
   path: string,

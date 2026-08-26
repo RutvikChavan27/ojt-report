@@ -1,3 +1,11 @@
+/**
+ * This file wires up client-side routing with React Router: `<Routes>` picks
+ * one `<Route>` to render based on the current URL path, entirely in the
+ * browser — no page reload, no round trip to the server, just React swapping
+ * which component is on screen. `lazy(...)` + `<Suspense>` is what makes
+ * each route's code download only when that route is actually visited,
+ * instead of the browser downloading the whole site's JavaScript upfront.
+ */
 import { lazy, Suspense, useEffect } from "react";
 import Container from "./components/layout/Container";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";

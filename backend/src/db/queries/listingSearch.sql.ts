@@ -1,4 +1,18 @@
 /**
+ * This file builds SQL query text as strings — but never by pasting user
+ * input directly into that text. Every filter turns into a `$1`, `$2`, ...
+ * placeholder, and the actual value travels alongside in a separate `values`
+ * array; the database driver combines them safely later. This is what
+ * "parameterized SQL" means in practice, and it's the reason this app is safe
+ * from SQL injection even though the search box builds a query dynamically
+ * from whatever filters are selected.
+ *
+ * This is also where "filtering" happens for the whole search feature:
+ * `buildListingWhere` below turns the selected filters (category, price
+ * range, condition, city, ...) into one SQL `WHERE` clause, all applied
+ * together in the database — never by fetching everything and filtering it
+ * in JavaScript afterwards, which would not scale to 100,000+ listings.
+ *
  * SQL construction for listing search.
  *
  * Every filter value is passed as a bind parameter — nothing is interpolated
@@ -126,6 +140,18 @@ export function buildOrderBy(sort: SortKey, hasQuery: boolean): string {
 export const RANK_EXPRESSION = `ts_rank(l.search_vector, websearch_to_tsquery('english', $1))`;
 
 /**
+ * PAGINATION, explained: a simple way to paginate is `LIMIT 24 OFFSET 480`
+ * ("skip the first 480 rows, then give me 24") for page 21. The problem: to
+ * skip 480 rows, Postgres still has to walk through all of them first — so
+ * page 500 gets slower and slower the deeper it goes, at 100,000+ rows.
+ *
+ * This app uses a "cursor" (also called "keyset pagination") for Next/Previous
+ * instead: rather than saying "skip 480 rows," it remembers the sort values
+ * of the *last row already shown* — e.g. "the last listing was posted at
+ * 2pm and has id 4821" — and asks Postgres for "the next rows after that
+ * point," which an index can jump straight to, regardless of how deep into
+ * the results that is. `Cursor` below is exactly that remembered position.
+ *
  * The tiebreaker values of one row, in the order its sort's ORDER BY uses them.
  * Enough to resume immediately after (or before) that row without OFFSET.
  *
@@ -140,6 +166,13 @@ export type Cursor = {
   id: string;
 };
 
+// The cursor is sent to the browser as part of the API response (as
+// "nextCursor"/"prevCursor") and comes back on the next request — so it has
+// to travel as plain text in a URL. JSON.stringify turns the Cursor object
+// into text, and base64url encoding turns that text into a URL-safe string
+// with no spaces or special characters. It isn't encryption — anyone could
+// decode it — but nothing about a cursor is secret; it just remembers a
+// position in an already-public list of listings.
 /** Opaque to the client on purpose — nothing but this module parses it. */
 export function encodeCursor(cursor: Cursor): string {
   return Buffer.from(JSON.stringify(cursor)).toString("base64url");

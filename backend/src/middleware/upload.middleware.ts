@@ -5,6 +5,14 @@
  * `config.imagesRoute`, so an uploaded photo is reachable at the same kind of
  * `/images/...` path as every seeded one and nothing downstream needs to know
  * where a given image came from.
+ *
+ * `multer` (imported below) is the library that reads a multipart/form-data
+ * upload — the format a browser uses to send files, as opposed to plain JSON
+ * — and turns each file into a buffer or a saved temp file that ordinary
+ * Express code can work with. `uploadListingPhotos` further down is the
+ * multer-configured middleware the listing-creation route runs before its
+ * controller, so by the time that controller runs, `req.files` already holds
+ * the uploaded photos.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";

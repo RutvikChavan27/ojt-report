@@ -38,6 +38,16 @@ type Photo = { id: string; name: string; url: string; file: File };
  *
  * `seller_id` is never sent. The server takes ownership from the session, which
  * is what stops a caller posting an advert in someone else's name.
+ *
+ * Full submit flow (see `handleSubmit` below):
+ *   1. uploadListingImages(files) -> POST /api/listings/images (multipart)
+ *      -> upload.middleware.ts validates each file's real content, generates
+ *         a thumbnail, stores both -> returns the `/images/...` paths.
+ *   2. createListing({ ...form fields, images: paths }) -> POST /api/listings
+ *      (plain JSON) -> validated server-side -> INSERT into `listings` +
+ *      `listing_photos` -> returns the new listing.
+ *   3. This component shows the "your listing is live" success screen with a
+ *      link to the new listing's detail page.
  */
 function PostAd() {
   const { data: categories } = useApi(() => fetchCategories(), []);

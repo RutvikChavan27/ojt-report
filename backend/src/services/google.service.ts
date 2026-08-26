@@ -62,7 +62,19 @@ export class GoogleAuthError extends Error {
 }
 
 /**
- * Exchanges an authorisation code for the user's profile.
+ * Exchanges an authorisation code for the user's profile. This is the
+ * "server-to-server" half of Google sign-in that never touches the browser —
+ * it happens entirely between this backend and Google's servers, using the
+ * temporary `code` Google gave the browser in the callback redirect.
+ *
+ * Two HTTP requests happen here, one after the other with `await` so each
+ * finishes before the next starts:
+ *   1. POST to Google's token endpoint: trade the one-time `code` (plus this
+ *      app's secret `client_id`/`client_secret`, proving it's really this
+ *      app asking) for an `access_token` — a temporary key that can be used
+ *      to ask Google questions on this person's behalf.
+ *   2. GET Google's "userinfo" endpoint using that access token, which
+ *      returns the person's email, name, and Google account ID.
  *
  * Throws when Google rejects the exchange or the account has no verified email:
  * an unverified address could be someone else's, and linking on it would hand
@@ -101,6 +113,10 @@ export async function fetchGoogleProfile(code: string): Promise<GoogleProfile> {
     );
   }
 
+  // Object destructuring, with renaming: this pulls the `access_token` field
+  // out of Google's JSON response and stores it in a variable called
+  // `accessToken` (matching this project's naming style) in one step,
+  // instead of writing `const accessToken = response.access_token`.
   const { access_token: accessToken } = (await tokenResponse.json()) as {
     access_token?: string;
   };

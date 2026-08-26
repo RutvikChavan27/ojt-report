@@ -6,6 +6,12 @@
  * another user's rows, because the id in the WHERE clause comes from the session,
  * never from the request body or path. There is no separate ownership check to
  * forget — ownership is the query.
+ *
+ * Several inserts below end in `ON CONFLICT (...) DO NOTHING`. Without it, a
+ * repeat request (a double-click on "Save", or the same request retried after
+ * a dropped connection) would fail with a unique-constraint error instead of
+ * quietly succeeding a second time. "Idempotent" is the word for that: calling
+ * it once or five times in a row leaves the database in the same state.
  */
 import { query } from "../config/database";
 

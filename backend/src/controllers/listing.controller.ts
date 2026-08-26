@@ -5,6 +5,14 @@
  * an existing listing is also behind `requireListingOwner`. That middleware —
  * not anything in this file, and certainly nothing in React — is what enforces
  * "only the seller who created a listing may change it".
+ *
+ * Each function below is a controller: it reads the incoming `req` (params in
+ * the URL, `req.body` for the JSON the client sent, `req.session` for who is
+ * signed in), asks a validator or repository to do the actual work, and sends
+ * a `res` back. The repeated `try { ... } catch (err) { next(err) }` shape
+ * means any unexpected error (a bad SQL value, a dropped connection) is
+ * handed to Express's centralised error handler instead of crashing the
+ * process or leaving the request hanging with no response.
  */
 import type { Request, Response, NextFunction } from "express";
 import {

@@ -7,6 +7,12 @@
  * the handler runs. Keeping the check in one middleware rather than repeating
  * it in each query means a new endpoint cannot forget it by omission — it has
  * to be left off the route deliberately.
+ *
+ * A recurring pattern below is `UPDATE ... RETURNING id`: instead of updating
+ * and then running a separate SELECT to check whether anything changed, the
+ * single UPDATE hands back the id of whatever row it touched. No rows back
+ * means the WHERE clause matched nothing (wrong id, or someone else's row),
+ * which the caller reports as "not found" — one query instead of two.
  */
 import { query } from "../config/database";
 import { thumbPathFor } from "../middleware/upload.middleware";

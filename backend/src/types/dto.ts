@@ -1,4 +1,21 @@
-/** Shapes returned by the API (what the frontend consumes). */
+/**
+ * Shapes returned by the API (what the frontend consumes).
+ *
+ * "DTO" = Data Transfer Object: a plain type describing exactly what crosses
+ * the network, kept separate from the database row types in the repository
+ * files. A repository row can carry internal detail (a password hash, a raw
+ * Postgres column name); a DTO carries only what the frontend is meant to
+ * see, named the way the frontend expects (camelCase, not snake_case). The
+ * `to DTO`-style functions in the service layer are what convert one into
+ * the other.
+ *
+ * A few of the paging fields recur across these types — `total`, `page`,
+ * `perPage`, `hasMore`. They exist because a listings grid cannot render
+ * "Page 3 of 12" or a working Next button from just the current page's rows;
+ * the frontend needs the total count and where it stands within it, and
+ * fetching that also requires another query, which is why it comes back
+ * bundled with the page instead of being computed on the client.
+ */
 
 /** A marketplace listing as it appears in a results grid. */
 export type ListingDTO = {

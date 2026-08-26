@@ -1,4 +1,24 @@
 /**
+ * This is a "repository" file — the only layer in this backend that writes
+ * actual SQL and sends it to PostgreSQL. Controllers and services never talk
+ * to the database directly; they call functions here instead. Keeping all
+ * the SQL in one place (per feature) makes it much easier to see exactly
+ * what data comes from where, and to tune performance (indexes, query
+ * shape) without touching business logic elsewhere.
+ *
+ * Every query below uses "parameterized SQL" — instead of building a query
+ * by joining strings together (which is how SQL injection attacks happen),
+ * values are sent separately from the SQL text as $1, $2, $3, ... placeholders,
+ * and the `pg` database driver combines them safely. For example:
+ *
+ *   query("SELECT * FROM users WHERE email = $1", [userInput])
+ *
+ * Here, `userInput` can never be interpreted as SQL — even if someone types
+ * `'; DROP TABLE users; --` into a form, it is only ever treated as a plain
+ * string to compare against, never as part of the query's structure. This
+ * matters most for search, because a search box is the most obvious place to
+ * try a SQL injection attack.
+ *
  * Listing search against Postgres full-text search, with a trigram fallback for
  * misspelled queries.
  */
@@ -39,7 +59,19 @@ export type SearchOptions = ListingFilters & {
 };
 
 /**
- * Runs the tsquery search. Returns rows ordered by the requested sort.
+ * Runs the real full-text search and returns one page of matching listings.
+ *
+ * "Full-text search" means Postgres doesn't just check if the search text
+ * appears somewhere in the title — it understands words. `search_vector` is
+ * a special column (built automatically from the title and description,
+ * see marketplace.sql) that Postgres can search very fast using an index,
+ * the same way a book's index lets you jump straight to a topic instead of
+ * reading every page. `websearch_to_tsquery('english', $1)` turns the raw
+ * text someone typed into a search Postgres understands — plurals, common
+ * word endings, and multiple words are all handled by Postgres itself, using
+ * English-language rules.
+ *
+ * Returns rows ordered by the requested sort (relevance, newest, or price).
  *
  * The query text is only bound when there is one: an unreferenced parameter
  * makes Postgres reject the statement with "could not determine data type of

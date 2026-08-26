@@ -3,6 +3,19 @@
  *
  * Kept separate from listing.repository.ts, which serves the fixed storefront
  * catalogue — different table, different lifecycle.
+ *
+ * This is a "repository" file: the only place allowed to write raw SQL for
+ * listings. Controllers and services call the functions below instead of
+ * writing their own queries, which keeps every query in one place to review
+ * and keeps SQL out of the rest of the codebase.
+ *
+ * Every value that comes from outside the code (an id, a search term, a
+ * limit) is passed as `$1`, `$2`, ... rather than glued into the SQL string
+ * with template literals. Postgres receives the query text and the values
+ * separately and never treats a value as more SQL to run — so even a value
+ * like `'; DROP TABLE users; --` is just compared as a harmless piece of
+ * text. Building the string by hand (e.g. `WHERE id = ${id}`) is what SQL
+ * injection attacks exploit, so this codebase never does that.
  */
 import { query } from "../config/database";
 
@@ -44,6 +57,14 @@ export type FindListingsOptions = {
  * Columns shared by the list and detail queries. The primary photo comes from a
  * LATERAL subquery rather than a second round trip per row, so rendering a page
  * of results costs one query regardless of how many rows it holds.
+ *
+ * `LEFT JOIN LATERAL (...) ON true` below means: for each listing row, run
+ * this small subquery (find its primary photo) as if it were a mini function
+ * call, and attach the result as extra columns. "LATERAL" is what lets the
+ * subquery refer to `l.id` from the outer row; without it, a subquery in a
+ * JOIN cannot see the row it's being joined against. "LEFT" means a listing
+ * with no photos yet still comes back, just with a null image instead of
+ * being dropped entirely.
  */
 const LIST_SELECT = `
   SELECT

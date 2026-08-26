@@ -12,6 +12,25 @@ import { useAuth } from "../../store/AuthContext";
  * One door, because there is one kind of account. What a signed-in person may
  * do is decided per action rather than at the login form: posting and saved
  * searches need only an account, and changing a listing needs to own it.
+ *
+ * Email/password flow on submit:
+ *   Form submit -> signIn({email, password}) (AuthContext)
+ *   -> loginUser() POST /api/auth/login (lib/api.ts)
+ *   -> backend verifies the password hash, starts a session, sets a cookie
+ *   -> AuthContext stores the returned user -> this page navigates away.
+ *
+ * "Continue with Google" is not a fetch — it's a plain `<a href>` below,
+ * because the whole point is to leave this page and let the browser itself
+ * visit Google's own sign-in screen:
+ *   Click -> browser navigates to GET /api/auth/google (backend)
+ *   -> backend redirects to Google's consent screen
+ *   -> user approves -> Google redirects back to the backend's callback URL
+ *      with a one-time code
+ *   -> backend exchanges the code for the user's profile (google.service.ts)
+ *      and creates/links/signs in the account, then redirects to the
+ *      frontend with a `?auth=...` marker
+ *   -> AuthContext (see store/AuthContext.tsx) reads that marker on load,
+ *      re-checks the session, and shows a banner if it failed.
  */
 function Login() {
   const navigate = useNavigate();

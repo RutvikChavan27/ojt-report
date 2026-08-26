@@ -1,4 +1,8 @@
 /**
+ * This file configures how login sessions and their cookies work — it's
+ * plugged into the app once, in app.ts, and after that every request
+ * automatically has `req.session` available to read and write.
+ *
  * Session setup. Sessions live in Postgres rather than in memory, so they
  * survive a server restart and a logout can actually delete one — an in-memory
  * store would drop every login on each `tsx watch` reload.
