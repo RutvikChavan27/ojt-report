@@ -42,6 +42,7 @@ export type ListingDetailRow = ListingRow & {
   seller_name: string;
   seller_created_at: Date;
   seller_phone: string | null;
+  seller_contact_email: string | null;
   view_count: number;
   status: string;
 };
@@ -184,6 +185,7 @@ export async function findListingById(
        u.display_name AS seller_name,
        u.created_at AS seller_created_at,
        u.phone AS seller_phone,
+       u.contact_email AS seller_contact_email,
        COALESCE(
          (
            SELECT array_agg(path ORDER BY is_primary DESC, position ASC)

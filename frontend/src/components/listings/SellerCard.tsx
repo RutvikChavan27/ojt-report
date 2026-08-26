@@ -1,30 +1,32 @@
 import { useState } from "react";
-import { FiPhone, FiUser } from "react-icons/fi";
+import { FiMail, FiPhone, FiUser } from "react-icons/fi";
 import type { ApiSeller } from "../../lib/api";
 import { monthYear } from "../../lib/format";
 
 type SellerCardProps = {
   seller: ApiSeller;
+  /** False for a sold or expired listing — the item is not actually gettable. */
+  available: boolean;
 };
 
 /**
  * Who is selling, and how to reach them.
  *
- * The number stays masked until "Contact seller" is pressed. On a real
+ * Contact details stay hidden until "Contact Seller" is pressed. On a real
  * classifieds site that gate is what stops a scraper collecting every seller's
- * phone number in one pass, and it also makes the contact action deliberate.
+ * number and address in one pass over every listing page, and it also makes
+ * reaching out a deliberate action rather than something that just happens to
+ * be sitting in the page's initial HTML.
  *
- * The whole contact block disappears when the seller has no number on file,
- * which is every seeded account — nothing is collecting phone numbers yet. It
- * previously invented the hidden digits client-side, which put a number in
- * front of buyers that belonged to nobody.
- *
- * Even when a number does exist the API sends only the masked form, so
- * revealing the rest will need an endpoint of its own rather than a string
- * operation here.
+ * The whole block disappears when the seller has neither a phone nor a contact
+ * email on file — true for any account that hasn't been given one. `phone` and
+ * `contactEmail` arrive already resolved from the API (see ListingSellerDTO);
+ * nothing here invents or formats a number, so what's shown is always real
+ * data from the database, dummy or not.
  */
-function SellerCard({ seller }: SellerCardProps) {
+function SellerCard({ seller, available }: SellerCardProps) {
   const [revealed, setRevealed] = useState(false);
+  const hasContact = Boolean(seller.phone || seller.contactEmail);
 
   return (
     <div className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
@@ -46,36 +48,70 @@ function SellerCard({ seller }: SellerCardProps) {
         </div>
       </div>
 
-      {seller.phoneMasked ? (
-        <>
-          {revealed ? (
-            <a
-              href={`tel:${seller.phoneMasked}`}
-              onClick={(event) => event.preventDefault()}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-3 text-sm font-bold text-cyan-700"
-            >
-              <FiPhone size={15} />
-              {seller.phoneMasked}
-            </a>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setRevealed(true)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-            >
-              <FiPhone size={15} />
-              Contact seller
-            </button>
-          )}
-
-          <p className="mt-3 text-[11px] leading-relaxed text-charcoal-400">
-            Only the last digits are shown until the seller shares the rest.
-          </p>
-        </>
-      ) : (
+      {/* A sold or expired listing has nothing left to buy, so offering to
+          contact the seller about it would be misleading — the button simply
+          isn't shown, same as "Mark as sold" disappearing once it's sold. */}
+      {!available ? (
         <p className="mt-4 text-[11px] leading-relaxed text-charcoal-400">
-          This seller has not added a contact number.
+          This listing is no longer available.
         </p>
+      ) : !hasContact ? (
+        <p className="mt-4 text-[11px] leading-relaxed text-charcoal-400">
+          This seller has not added contact details.
+        </p>
+      ) : revealed ? (
+        <div className="mt-4 rounded-xl border border-taupe bg-white/60 p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-charcoal-500">
+            Seller Contact
+          </h3>
+
+          <dl className="mt-2 space-y-1.5 text-sm text-charcoal-900">
+            {seller.phone && (
+              <div className="flex items-center gap-2">
+                <FiPhone size={13} className="flex-shrink-0 text-charcoal-400" />
+                <dt className="sr-only">Phone</dt>
+                <dd>{seller.phone}</dd>
+              </div>
+            )}
+            {seller.contactEmail && (
+              <div className="flex items-center gap-2">
+                <FiMail size={13} className="flex-shrink-0 text-charcoal-400" />
+                <dt className="sr-only">Email</dt>
+                <dd className="truncate">{seller.contactEmail}</dd>
+              </div>
+            )}
+          </dl>
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            {seller.phone && (
+              <a
+                href={`tel:${seller.phone.replace(/\s+/g, "")}`}
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-mist py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+              >
+                <FiPhone size={14} />
+                Call Seller
+              </a>
+            )}
+            {seller.contactEmail && (
+              <a
+                href={`mailto:${seller.contactEmail}`}
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-cyan-500 py-2.5 text-sm font-bold text-cyan-700 transition hover:bg-cyan-50"
+              >
+                <FiMail size={14} />
+                Email Seller
+              </a>
+            )}
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setRevealed(true)}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+        >
+          <FiPhone size={15} />
+          Contact Seller
+        </button>
       )}
     </div>
   );

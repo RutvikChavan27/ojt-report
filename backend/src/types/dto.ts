@@ -47,11 +47,21 @@ export type ListingSellerDTO = {
   name: string;
   /** ISO timestamp of the account's creation, for "Member since". */
   memberSince: string;
-  /**
-   * Partly hidden contact number, or null when the seller has not given one.
-   * The full number is never part of a response.
-   */
+  /** Partly hidden contact number, for the teaser shown before "Contact Seller" is pressed. */
   phoneMasked: string | null;
+  /**
+   * Full contact number, or null when the seller has none on file. Only sent
+   * so the "Contact Seller" reveal has something real to show and dial — see
+   * SellerCard.tsx, which still gates it behind an explicit click rather than
+   * displaying it immediately.
+   */
+  phone: string | null;
+  /**
+   * Public contact email for "Contact Seller", or null when unset. Never the
+   * account's sign-in email — see the `contact_email` column comment in
+   * marketplace.sql for why those are kept separate.
+   */
+  contactEmail: string | null;
 };
 
 /** A listing on its own page: everything above plus body copy and all photos. */

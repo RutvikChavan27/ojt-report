@@ -66,6 +66,14 @@ ALTER TABLE users DROP COLUMN IF EXISTS account_type;
 -- response shape.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
 
+-- Public contact email for the "Contact Seller" action — deliberately not the
+-- same column as `email` above. `email` is the sign-in credential; reusing it
+-- as public contact info would hand a buyer a real user's login address the
+-- moment they open any listing that user posted. This is nullable and unset
+-- for every real account by default, exactly like `phone`, and is only
+-- populated for the generated seed sellers (see seedMarketplace100k.ts).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_email TEXT;
+
 -- A social login. Kept in its own table so one user can link several providers,
 -- which is how a Google sign-in matching an existing email resolves to one user
 -- rather than creating a duplicate account.

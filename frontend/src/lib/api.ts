@@ -179,11 +179,16 @@ export type ListingCardData = Pick<
   | "postedAt"
 >;
 
-/** Mirrors ListingSellerDTO. The full phone number is never sent. */
+/** Mirrors ListingSellerDTO. */
 export type ApiSeller = {
   name: string;
   memberSince: string;
+  /** Masked teaser shown before "Contact Seller" is pressed. */
   phoneMasked: string | null;
+  /** Full number, for the actual `tel:` link once revealed. */
+  phone: string | null;
+  /** Public contact address, distinct from the seller's sign-in email. */
+  contactEmail: string | null;
 };
 
 /** Mirrors ListingDetailDTO. */

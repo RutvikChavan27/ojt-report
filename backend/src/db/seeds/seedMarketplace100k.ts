@@ -71,6 +71,17 @@ const pick = <T>(items: readonly T[]): T => items[Math.floor(random() * items.le
 const pickInt = (min: number, max: number): number =>
   min + Math.floor(random() * (max - min + 1));
 
+/**
+ * A clearly fictional 10-digit Indian-mobile-shaped number for seller `i`
+ * (0-based) — "98765 xxxxx", where xxxxx is that seller's own index. Sequential
+ * and index-derived on purpose, not random: it means every seller's number is
+ * different, no two collide, and the pattern itself signals "demo data" rather
+ * than looking like a real, randomly-assigned number.
+ */
+function dummyPhone(i: number): string {
+  return `98765 ${String(i % 100_000).padStart(5, "0")}`;
+}
+
 /** A real listing this catalogue is built from. */
 type Template = {
   category_slug: string;
@@ -219,12 +230,24 @@ async function seed(): Promise<void> {
 
   // --- sellers ------------------------------------------------------------
   // password_hash null: these exist to own listings, never to log in.
+  //
+  // `phone`/`contact_email` are separate, obviously-fake fields for the
+  // "Contact Seller" action — never the sign-in `email` above, which must
+  // never be shown to a buyer. Each seller gets a distinct value (not one
+  // number/address copy-pasted across all 2,000), generated deterministically
+  // from their index so a re-seed at the same size reproduces the same data.
   const sellerRows = Array.from({ length: SELLER_COUNT }, (_, i) => [
     `seller${i + 1}@bazaar.test`,
     null,
     `Seller ${i + 1}`,
+    dummyPhone(i),
+    `seller${String(i + 1).padStart(4, "0")}@example.com`,
   ]);
-  await insertRows("users", ["email", "password_hash", "display_name"], sellerRows);
+  await insertRows(
+    "users",
+    ["email", "password_hash", "display_name", "phone", "contact_email"],
+    sellerRows,
+  );
 
   // Read ids back rather than assuming a range: users.id is a SERIAL that is not
   // reset between runs (real accounts must keep their ids), so the generated

@@ -127,6 +127,8 @@ export async function getListing(id: string): Promise<ListingDetailDTO | null> {
       name: row.seller_name,
       memberSince: row.seller_created_at.toISOString(),
       phoneMasked: maskPhone(row.seller_phone),
+      phone: row.seller_phone,
+      contactEmail: row.seller_contact_email,
     },
     viewCount: row.view_count,
     status: row.status,

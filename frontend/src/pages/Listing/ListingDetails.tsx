@@ -220,7 +220,7 @@ function ListingDetails() {
 
         {/* Right: the actions, kept in view while the detail is read */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <SellerCard seller={listing.seller} />
+          <SellerCard seller={listing.seller} available={listing.status === "active"} />
 
           <button
             type="button"
