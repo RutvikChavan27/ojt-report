@@ -97,6 +97,43 @@ describe("facet counts against a fixture with hand-known answers", () => {
   });
 });
 
+describe("combined filters, including a search term", () => {
+  const MARKER = "ZZZVITESTCOMBO";
+
+  beforeAll(async () => {
+    const [a, b] = categories;
+    await seedListings(sellerId, [
+      // Matches every filter below: the marker word, category A, ComboCityX,
+      // and a price inside the requested range.
+      { title: `${MARKER} match`, categorySlug: a, city: "ComboCityX", price: 2000 },
+      // Right marker and price, wrong category — must be excluded.
+      { title: `${MARKER} wrong category`, categorySlug: b, city: "ComboCityX", price: 2000 },
+      // Right marker and price, wrong city — must be excluded.
+      { title: `${MARKER} wrong city`, categorySlug: a, city: "ComboCityY", price: 2000 },
+      // Right marker, category and city, price outside the range — must be excluded.
+      { title: `${MARKER} wrong price`, categorySlug: a, city: "ComboCityX", price: 99000 },
+    ]);
+  });
+
+  it("returns only the row satisfying every filter at once (search term + category + city + price range)", async () => {
+    const rows = await searchListingsExact({
+      q: MARKER,
+      categorySlug: categories[0],
+      city: "ComboCityX",
+      minPrice: 500,
+      maxPrice: 5000,
+      sort: "relevance",
+      limit: 10,
+      offset: 0,
+    });
+
+    // Not "the top result happens to be the right one" — the other three rows
+    // must be absent entirely, each failing exactly one of the four filters.
+    expect(rows.length).toBe(1);
+    expect(rows[0].title).toContain("match");
+  });
+});
+
 describe("relevance ordering", () => {
   const MARKER = "ZZZVITESTRANK";
 
@@ -135,12 +172,13 @@ describe("pagination stability", () => {
   const MARKER = "ZZZVITESTPAGE";
   const PAGE_SIZE = 4;
   const TOTAL = 10;
+  let seededIds: string[];
 
   beforeAll(async () => {
     // One second apart and strictly decreasing, so "newest first" is a total,
     // known order: item 0 is newest, item 9 is oldest.
     const now = Date.now();
-    await seedListings(
+    seededIds = await seedListings(
       sellerId,
       Array.from({ length: TOTAL }, (_, index) => ({
         title: `${MARKER} item ${index}`,
@@ -204,16 +242,23 @@ describe("pagination stability", () => {
     });
     const page2Ids = page2.map((row) => row.id);
 
-    // Page 4 (what the walk continues into) contains none of what page 1
-    // already showed, and the new row — newer than the cursor it resumed
-    // from — correctly does not retroactively appear in it either.
+    // Page 2 contains none of what page 1 already showed, and the new row —
+    // newer than the cursor it resumed from — correctly does not
+    // retroactively appear in it either.
     expect(page2Ids.some((id) => page1Ids.includes(id))).toBe(false);
     expect(page2Ids).not.toContain(newId);
+
+    // The other half of "stable": not just no duplicates, but no gap either.
+    // Page 2 must be *exactly* items 4-7 from the original seed order — the
+    // four rows immediately after page 1's — in that order. If the new
+    // insert had shifted anything, one of these would be missing or a page 1
+    // row would reappear here instead.
+    expect(page2Ids).toEqual(seededIds.slice(4, 8));
   });
 });
 
 describe("SQL injection safety", () => {
-  it("treats a malicious query as a literal string, not executable SQL", async () => {
+  it("treats a destructive-looking query as a literal string, not executable SQL", async () => {
     const malicious = "'; DROP TABLE listings; --";
 
     await expect(
@@ -225,5 +270,21 @@ describe("SQL injection safety", () => {
     // as a bound parameter.
     const total = await countSearchMatches({});
     expect(total).toBeGreaterThan(1000);
+  });
+
+  it("does not let a tautology-shaped query ('... OR 1=1 ...') widen the search to match everything", async () => {
+    // The classic "always true" injection. If this text ever reached the
+    // database as SQL rather than as a bound value, the WHERE clause would
+    // become tautological and match every row instead of none.
+    const rows = await searchListingsExact({
+      q: "' OR 1=1 --",
+      sort: "relevance",
+      limit: 24,
+      offset: 0,
+    });
+    const totalUnfiltered = await countSearchMatches({});
+
+    expect(rows.length).toBeLessThan(100);
+    expect(rows.length).toBeLessThan(totalUnfiltered);
   });
 });

@@ -7,7 +7,7 @@ genuinely separate Node/Express API, PostgreSQL as the only datastore (its
 own full-text search and query planner, not Elasticsearch/Algolia/Meilisearch),
 email/password plus Google OAuth, and photos stored outside the database.
 
-- **Live site:** https://ojt-report-pi.vercel.app
+- **Live site:** https://devnco-bazaar.vercel.app
 - **Live API:** https://ojt-report-backend.onrender.com (`/health` → `{"success":true,"status":"ok"}`)
 - **Database:** PostgreSQL 17 (Supabase), 145,000 listings (99,169 active), well past the brief's 100,000-listing floor — verify anytime with `SELECT count(*) FROM listings;`
 
@@ -536,21 +536,32 @@ Six cases, matching what the brief names explicitly:
 1. **Filter combinations** — `buildListingWhere` combining several filters
    produces the right clause and bound values, and clearing one leaves the
    rest untouched (pure unit test, `backend/src/db/queries/listingSearch.sql.test.ts`).
+   A second, integration-level case in `listingSearch.repository.test.ts`
+   combines a search term with category, city and a price range at once and
+   asserts only the one row satisfying all four comes back — three
+   near-misses, each failing exactly one filter, are seeded specifically to
+   prove the filters are ANDed together, not any of them alone.
 2. **Facet counts against a fixture with hand-known answers**, including
    re-narrowing every other facet once one is applied
    (`backend/src/repositories/listingSearch.repository.test.ts`).
 3. **Pagination stability** — a full keyset walk visits every fixture row
    exactly once (no skip, no repeat), and a listing posted mid-walk does not
    retroactively appear in, or shift, a page already fetched — the scenario
-   §9 Q4 below asks about directly.
+   §9 Q4 below asks about directly. Checked in both directions: no row from
+   page 1 reappears on page 2, and page 2 is asserted to equal *exactly* the
+   next four original rows in order, so a skipped row would fail the test
+   just as loudly as a duplicated one.
 4. **Relevance ordering** — a title match outranks the same word appearing
    only in the description.
 5. **The search-params URL round trip** — every field of a fully-populated
    search survives being serialised to a query string and parsed back
    (`frontend/src/lib/search.test.ts`, pure unit test, no database).
-6. **SQL-injection safety** — a payload like `'; DROP TABLE listings; --`
-   passed as the search query is treated as a literal string; the table is
-   confirmed intact afterward.
+6. **SQL-injection safety** — two payloads: a destructive one
+   (`'; DROP TABLE listings; --`, confirming the table survives intact) and a
+   tautology (`' OR 1=1 --`, confirming it matches a handful of rows at most
+   rather than widening the query to match the whole table — the shape of
+   injection that doesn't destroy anything but silently returns data it
+   shouldn't).
 
 A seventh test, beyond the six named above, covers the expiry sweep
 (`backend/src/repositories/listingWrite.repository.test.ts`): an active

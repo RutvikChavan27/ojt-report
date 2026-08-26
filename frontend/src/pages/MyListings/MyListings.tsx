@@ -3,16 +3,15 @@ import Container from "../../components/layout/Container";
 import { Link } from "react-router-dom";
 import {
   FiCheckCircle,
-  FiEdit2,
   FiEye,
   FiPlus,
   FiRefreshCw,
   FiTrash2,
 } from "react-icons/fi";
 import EmptyState from "../../components/common/EmptyState";
-import ListingRowSkeleton from "../../components/common/ListingRowSkeleton";
+import ListingTableSkeleton from "../../components/common/ListingTableSkeleton";
 import ImageWithLoader from "../../components/common/ImageWithLoader";
-import { formatPrice, relativeTime } from "../../lib/format";
+import { formatPrice } from "../../lib/format";
 import {
   deleteListing,
   fetchMyListings,
@@ -130,8 +129,9 @@ function MyListings() {
     return run(id, () => deleteListing(id));
   };
 
-  const action =
-    "flex items-center gap-1.5 rounded-full border border-taupe px-3 py-1.5 text-xs font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900";
+  /** Icon-only row action (View / Mark sold / Renew / Delete) — kept small so a row of them fits one table cell. */
+  const iconAction =
+    "flex h-8 w-8 items-center justify-center rounded-full border border-taupe text-charcoal-600 transition hover:border-charcoal-400 hover:text-charcoal-900";
 
   return (
     <Container className="py-8" narrow="lg">
@@ -190,11 +190,7 @@ function MyListings() {
       )}
 
       {loading ? (
-        <div className="mt-6 space-y-4">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <ListingRowSkeleton key={index} />
-          ))}
-        </div>
+        <ListingTableSkeleton />
       ) : error ? (
         <div className="mt-8">
           <EmptyState title="Could not load your listings" description={error}>
@@ -228,110 +224,149 @@ function MyListings() {
           </EmptyState>
         </div>
       ) : (
-        <ul className="mt-6 space-y-4">
-          {visible.map((listing) => (
-            <li
-              key={listing.id}
-              className="overflow-hidden rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50"
-            >
-              <div className="flex flex-col gap-4 p-4 sm:flex-row">
-                <Link
-                  to={`/listing/${listing.id}`}
-                  className="relative h-28 w-full flex-shrink-0 overflow-hidden rounded-xl bg-sand sm:w-40"
+        /* A horizontal-scroll table rather than a fixed grid: "Listing / Status
+           / Views / Expiry" reads left to right at a glance, which a stack of
+           cards does not, and it is what a seller checking on their listings
+           actually wants — the numbers, not the photos, are the point of this
+           page. `overflow-x-auto` on the wrapper plus a `min-w` on the table
+           is what keeps every column readable on a phone instead of squashing
+           them — the table scrolls sideways there rather than wrapping. */
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-taupe">
+          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 text-xs font-bold uppercase tracking-wide text-charcoal-500">
+                <th scope="col" className="px-4 py-3 font-bold">
+                  Listing
+                </th>
+                <th scope="col" className="px-4 py-3 font-bold">
+                  Status
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-bold">
+                  Views
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-bold">
+                  Expiry
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-bold">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((listing) => (
+                <tr
+                  key={listing.id}
+                  className="border-b border-taupe last:border-b-0 hover:bg-sand/40"
                 >
-                  <ImageWithLoader
-                    src={listing.image}
-                    alt={listing.title}
-                    skeletonRounded="xl"
-                    className="h-full w-full object-cover"
-                  />
-                </Link>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
+                  <td className="px-4 py-3">
                     <Link
                       to={`/listing/${listing.id}`}
-                      className="text-sm font-bold text-charcoal-900 hover:underline"
+                      className="flex min-w-0 items-center gap-3"
                     >
-                      {listing.title}
+                      <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-sand">
+                        <ImageWithLoader
+                          src={listing.image}
+                          alt={listing.title}
+                          skeletonRounded="lg"
+                          className="h-full w-full object-cover"
+                        />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold text-charcoal-900 hover:underline">
+                          {listing.title}
+                        </span>
+                        <span className="block text-xs font-semibold text-charcoal-500">
+                          {formatPrice(listing.price)}
+                        </span>
+                      </span>
                     </Link>
+                  </td>
+
+                  <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                         STATUS_STYLE[listing.status as ListingStatus]
                       }`}
                     >
                       {STATUS_LABEL[listing.status as ListingStatus]}
                     </span>
-                  </div>
+                  </td>
 
-                  <p className="mt-1 text-base font-black text-charcoal-900">
-                    {formatPrice(listing.price)}
-                  </p>
+                  <td className="px-4 py-3 text-right tabular-nums text-charcoal-700">
+                    {listing.viewCount.toLocaleString("en-IN")}
+                  </td>
 
-                  <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-charcoal-500">
-                    <div className="flex items-center gap-1">
-                      <FiEye size={11} />
-                      <dt className="sr-only">Views</dt>
-                      <dd>{listing.viewCount.toLocaleString("en-IN")} views</dd>
+                  <td className="px-4 py-3 text-right text-charcoal-700">
+                    {/* A sold item's posting window is no longer meaningful —
+                        expires_at still holds whatever date it had when it
+                        sold, and showing it would read as a deadline that
+                        does not actually apply to a sold listing. */}
+                    {listing.status === "sold"
+                      ? "—"
+                      : new Date(listing.expiresAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-1.5">
+                      <Link
+                        to={`/listing/${listing.id}`}
+                        title="View listing"
+                        aria-label={`View ${listing.title}`}
+                        className={iconAction}
+                      >
+                        <FiEye size={13} />
+                      </Link>
+
+                      {listing.status === "active" && (
+                        <button
+                          type="button"
+                          disabled={busyId === listing.id}
+                          onClick={() => markSold(listing.id)}
+                          title="Mark as sold"
+                          aria-label={`Mark ${listing.title} as sold`}
+                          className={`${iconAction} disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          <FiCheckCircle size={13} />
+                        </button>
+                      )}
+
+                      {/* Only an expired listing can be renewed. A sold one is
+                          refused by the server anyway — offering the button
+                          would just be a route to an error message. */}
+                      {listing.status === "expired" && (
+                        <button
+                          type="button"
+                          disabled={busyId === listing.id}
+                          onClick={() => renew(listing.id)}
+                          title="Renew listing"
+                          aria-label={`Renew ${listing.title}`}
+                          className={`${iconAction} disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          <FiRefreshCw size={13} />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={busyId === listing.id}
+                        onClick={() => remove(listing.id)}
+                        title="Delete listing"
+                        aria-label={`Delete ${listing.title}`}
+                        className={`${iconAction} hover:border-rose-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        <FiTrash2 size={13} />
+                      </button>
                     </div>
-                    <div>
-                      <dt className="sr-only">Posted</dt>
-                      <dd>Posted {relativeTime(listing.postedAt)}</dd>
-                    </div>
-                    <div>
-                      <dt className="sr-only">Expires</dt>
-                      <dd>Expires {new Date(listing.expiresAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 border-t border-taupe px-4 py-3">
-                <Link to={`/listing/${listing.id}`} className={action}>
-                  <FiEdit2 size={12} />
-                  View
-                </Link>
-
-                {listing.status === "active" && (
-                  <button
-                    type="button"
-                    disabled={busyId === listing.id}
-                    onClick={() => markSold(listing.id)}
-                    className={`${action} disabled:cursor-not-allowed disabled:opacity-50`}
-                  >
-                    <FiCheckCircle size={12} />
-                    Mark as sold
-                  </button>
-                )}
-
-                {/* Only an expired listing can be renewed. A sold one is
-                    refused by the server anyway — offering the button would
-                    just be a route to an error message. */}
-                {listing.status === "expired" && (
-                  <button
-                    type="button"
-                    disabled={busyId === listing.id}
-                    onClick={() => renew(listing.id)}
-                    className={`${action} disabled:cursor-not-allowed disabled:opacity-50`}
-                  >
-                    <FiRefreshCw size={12} />
-                    Renew
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  disabled={busyId === listing.id}
-                  onClick={() => remove(listing.id)}
-                  className={`${action} text-charcoal-500 hover:border-rose-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50`}
-                >
-                  <FiTrash2 size={12} />
-                  {busyId === listing.id ? "Working…" : "Delete"}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Container>
   );

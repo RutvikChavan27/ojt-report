@@ -25,6 +25,7 @@ import {
   listListingCategories,
   listListings,
 } from "../services/marketplace.service";
+import { incrementListingViewCount } from "../repositories/marketplace.repository";
 import {
   searchListings,
   suggestSearches,
@@ -123,7 +124,14 @@ export async function getListings(
   }
 }
 
-/** GET /api/listings/:id */
+/**
+ * GET /api/listings/:id
+ *
+ * Also records a view: opening this endpoint is what "someone looked at this
+ * listing" means, and the seller dashboard's view count (see
+ * getMyListings in listing.controller.ts) reads from the same
+ * `listings.view_count` column this increments.
+ */
 export async function getListingById(
   req: Request,
   res: Response,
@@ -142,6 +150,15 @@ export async function getListingById(
     if (!listing) {
       sendError(res, 404, "Listing not found");
       return;
+    }
+
+    // Best-effort: a visitor must still get the listing they asked for even
+    // if this write fails, so a broken count is logged rather than turning
+    // a successful read into a 500.
+    try {
+      await incrementListingViewCount(rawId);
+    } catch (err) {
+      console.error("[listing] failed to record a view", err);
     }
 
     sendSuccess(res, listing);

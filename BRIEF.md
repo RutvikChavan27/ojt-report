@@ -32,7 +32,7 @@ Status key: ✅ done · 🟡 partial · ❌ not started · 🚫 built but out of
 ## 1. Where we actually are
 
 The frontend and backend are joined and deployed: the frontend
-(https://ojt-report-pi.vercel.app) calls the real API
+(https://devnco-bazaar.vercel.app) calls the real API
 (https://ojt-report-backend.onrender.com), which serves 100,000+ real
 listings from Postgres. Every screen the brief describes exists and is wired
 to a real endpoint: search with facets and URL state, listing details,
@@ -207,7 +207,7 @@ Nothing outside §4 exists in the frontend.
 
 - ✅ Readable commit history, small meaningful commits
 - ✅ **Deployed working URL** carrying all 100k listings, no login required to browse —
-  https://ojt-report-pi.vercel.app
+  https://devnco-bazaar.vercel.app
 - ✅ **Unit tests**, the six named cases, passing from one documented command
   (`npm test` in each of `backend/` and `frontend/`) — see root README's Tests section for exactly
   which case is which

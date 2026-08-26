@@ -209,6 +209,26 @@ export async function findListingById(
 }
 
 /**
+ * Records one open of a listing's detail page.
+ *
+ * A single UPDATE by primary key — O(1) regardless of how many listings
+ * exist, so this is safe to run on every detail-page view even with 100k+
+ * rows in the table; it never scans anything.
+ *
+ * Called only from the public GET /api/listings/:id path (see
+ * `getListingById` in marketplace.controller.ts), never from the shared
+ * `getListing()` used after a seller's own create/edit/sold/renew action —
+ * routing it through there too would count a seller opening their own
+ * listing to edit it as a "view".
+ */
+export async function incrementListingViewCount(id: string): Promise<void> {
+  await query(
+    `UPDATE listings SET view_count = view_count + 1 WHERE id = $1::bigint`,
+    [id],
+  );
+}
+
+/**
  * Who owns a listing, or null when there is no such listing.
  *
  * Deliberately returns only the id: an ownership check has no business loading
