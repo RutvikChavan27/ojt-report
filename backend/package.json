@@ -1,21 +1,19 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Thread store API (Express + PostgreSQL)",
+  "description": "Bazaar Marketplace API (Express + PostgreSQL)",
   "type": "module",
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "migrate": "tsx src/db/migrate.ts",
-    "seed:listings": "tsx src/db/seeds/seedListings100k.ts",
     "images:fetch": "tsx src/scripts/fetchListingImages.ts",
     "explain:facets": "tsx src/scripts/explainFacets.ts",
     "typecheck": "tsc --noEmit",
     "seed:marketplace": "tsx src/db/seeds/seedMarketplace.ts",
     "seed:marketplace100k": "tsx src/db/seeds/seedMarketplace100k.ts",
     "images:pexels": "tsx src/scripts/fetchPexelsImages.ts",
-    "images:items": "tsx src/scripts/fetchItemImages.ts",
     "images:upload": "tsx src/scripts/uploadImagesToStorage.ts",
     "images:repoint": "tsx src/scripts/rewritePhotoPaths.ts",
     "test": "vitest run"

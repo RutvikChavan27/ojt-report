@@ -80,8 +80,6 @@ export const CATEGORIES: Category[] = [
   { slug: "accessories", label: "Accessories" },
 ];
 
-export const CONDITIONS: Condition[] = ["New", "Like New", "Good", "Fair"];
-
 /** City plus the areas listings are placed in, so locations read realistically. */
 const CITIES: { city: string; areas: string[] }[] = [
   { city: "Pune", areas: ["Kothrud", "Baner", "Viman Nagar", "Hadapsar"] },
