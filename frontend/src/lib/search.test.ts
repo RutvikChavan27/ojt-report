@@ -24,6 +24,7 @@ describe("search params URL round trip", () => {
       page: 3,
       cursor: "eyJpZCI6IjEyMyJ9",
       cursorDir: "next",
+      fuzzy: true,
     };
 
     const roundTripped = paramsFromSearch(searchToParams(original));

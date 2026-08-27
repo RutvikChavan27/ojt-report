@@ -87,6 +87,9 @@ export async function searchListingsViaApi(
     page: params.page,
     cursor: params.cursor ?? undefined,
     cursorDir: params.cursorDir ?? undefined,
+    // Only meaningful with a query — see the matching guard on
+    // `SearchParams.fuzzy` in lib/search.ts.
+    fuzzy: params.q ? params.fuzzy || undefined : undefined,
   });
 
   return {
@@ -96,6 +99,7 @@ export async function searchListingsViaApi(
     perPage: result.perPage,
     pageCount: Math.max(Math.ceil(result.total / result.perPage), 1),
     suggestion: result.suggestion,
+    fuzzy: result.fuzzy,
     nextCursor: result.nextCursor,
     prevCursor: result.prevCursor,
     facets: {

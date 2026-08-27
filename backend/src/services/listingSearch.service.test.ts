@@ -166,3 +166,71 @@ describe("searchListings pagination never returns an empty page over a nonzero t
     }
   });
 });
+
+describe("searchListings stays on fuzzy matching across pages of the same search", () => {
+  // A long compound token with no natural word break, the same shape a real
+  // typo/compound listing title takes: to_tsvector treats it as one lexeme,
+  // so an exact search for a mere prefix of it finds nothing — only trigram
+  // similarity does. This is exactly the case that only ever matches via the
+  // fuzzy path, on every page, not just the first.
+  // Deliberately does NOT start with "ZZZVITEST" (unlike every other marker in
+  // this file): `seedListings` already prepends that as its own separate word
+  // on every fixture row, so a query starting with it would fuzzy-match every
+  // *other* fixture row in this file too via that shared prefix, defeating the
+  // isolation this marker exists for.
+  const STEM = "QWKXJMBLR7734QP";
+  const QUERY = "QWKXJMBLR7734"; // a strict prefix of STEM, not the whole token
+  const PER_PAGE = 24;
+  const TOTAL_ROWS = 26;
+
+  beforeAll(async () => {
+    await seedListings(
+      sellerId,
+      Array.from({ length: TOTAL_ROWS }, (_, index) => ({
+        title: `${STEM} item ${index}`,
+        categorySlug,
+      })),
+    );
+  });
+
+  it("page 1 finds nothing via exact match and falls back to fuzzy", async () => {
+    const result = await searchListings({
+      q: QUERY,
+      sort: "relevance",
+      page: 1,
+      perPage: PER_PAGE,
+    });
+
+    expect(result.fuzzy).toBe(true);
+    expect(result.total).toBe(TOTAL_ROWS);
+    expect(result.items.length).toBe(PER_PAGE);
+  });
+
+  it("page 2, told the search is fuzzy, returns the remainder instead of an empty exact-only miss", async () => {
+    const result = await searchListings({
+      q: QUERY,
+      sort: "relevance",
+      page: 2,
+      perPage: PER_PAGE,
+      fuzzy: true, // what the frontend now echoes back from page 1's own response
+    });
+
+    expect(result.fuzzy).toBe(true);
+    expect(result.total).toBe(TOTAL_ROWS);
+    expect(result.items.length).toBe(TOTAL_ROWS - PER_PAGE);
+  });
+
+  it("every item across both pages is a genuine match, not an unrelated listing", async () => {
+    const [page1, page2] = await Promise.all([
+      searchListings({ q: QUERY, sort: "relevance", page: 1, perPage: PER_PAGE }),
+      searchListings({ q: QUERY, sort: "relevance", page: 2, perPage: PER_PAGE, fuzzy: true }),
+    ]);
+
+    const allTitles = [...page1.items, ...page2.items].map((item) => item.title);
+    expect(allTitles).toHaveLength(TOTAL_ROWS);
+    expect(allTitles.every((title) => title.includes(STEM))).toBe(true);
+
+    // No duplicate across the two pages, and no gap: every seeded row shown exactly once.
+    expect(new Set(allTitles).size).toBe(TOTAL_ROWS);
+  });
+});

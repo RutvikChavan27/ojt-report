@@ -83,6 +83,16 @@ export type SearchParams = {
    */
   cursor: string | null;
   cursorDir: "next" | "prev" | null;
+  /**
+   * Whether this query only matches via typo-tolerant fuzzy search, echoed
+   * back from the first page's own response (see `ApiSearchResult.fuzzy`)
+   * and carried into later pages of the *same* search. Without this, page 2
+   * of a fuzzy-only search re-decides from scratch, finds the same exact-text
+   * miss page 1 did, and comes back empty even though page 1 just showed
+   * results — the backend has no other way to know page 2 belongs to the
+   * same fuzzy search rather than a fresh exact one.
+   */
+  fuzzy: boolean;
 };
 
 export const EMPTY_PARAMS: SearchParams = {
@@ -99,6 +109,7 @@ export const EMPTY_PARAMS: SearchParams = {
   page: 1,
   cursor: null,
   cursorDir: null,
+  fuzzy: false,
 };
 
 export type FacetValue = { value: string; label: string; count: number };
@@ -122,6 +133,8 @@ export type SearchResult = {
   /** Resume points for Next/Previous — see `SearchParams.cursor`. */
   nextCursor: string | null;
   prevCursor: string | null;
+  /** True when this result came from typo-tolerant matching — see `SearchParams.fuzzy`. */
+  fuzzy: boolean;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -169,6 +182,10 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
     page: number("page") ?? 1,
     cursor: search.get("cursor"),
     cursorDir: search.get("cursorDir") === "prev" ? "prev" : search.get("cursorDir") === "next" ? "next" : null,
+    // Only meaningful with a query — carrying it into a query-less URL by
+    // hand would just skip the (harmless, fast) exact-match attempt for no
+    // reason, but never actually finding anything to be fuzzy about.
+    fuzzy: q ? search.get("fuzzy") === "1" : false,
   };
 }
 
@@ -206,6 +223,9 @@ export function searchToParams(params: SearchParams): URLSearchParams {
     search.set("cursor", params.cursor);
     search.set("cursorDir", params.cursorDir);
   }
+  // Only meaningful alongside a query — see the matching guard in
+  // paramsFromSearch.
+  if (params.q && params.fuzzy) search.set("fuzzy", "1");
 
   return search;
 }

@@ -133,5 +133,8 @@ export function parseSearchRequest(queryString: Request["query"]): SearchRequest
     perPage: parsePositiveInt(queryString.perPage, 24),
     cursor: first(queryString.cursor),
     cursorDir: parseCursorDir(queryString.cursorDir),
+    // Echoed back from page 1's own response — see the comment on
+    // `SearchRequest.fuzzy` for why this needs to survive to later pages.
+    fuzzy: first(queryString.fuzzy) === "1" || first(queryString.fuzzy) === "true",
   };
 }

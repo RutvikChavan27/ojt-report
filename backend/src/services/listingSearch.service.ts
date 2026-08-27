@@ -47,6 +47,11 @@ export type SearchRequest = {
   /** Opaque token from a previous response's `nextCursor`/`prevCursor`. */
   cursor?: string;
   cursorDir?: "next" | "prev";
+  /**
+   * Echoed back from page 1's own response — see the fuzzy-fallback comment
+   * below for why a later page needs to be told, rather than deciding fresh.
+   */
+  fuzzy?: boolean;
 };
 
 /**
@@ -220,9 +225,18 @@ export async function searchListings(
   let total: number;
   let facetRows: FacetCountRow[];
 
-  // Only reach for the fuzzy path on a genuine miss: a later page legitimately
-  // comes back empty, and retrying there would silently mix the two rankings.
-  if (rows.length === 0 && request.q && requestedPage === 1) {
+  // Reach for the fuzzy path on a genuine miss on page 1, or when the client
+  // already told us this search only ever matched via fuzzy (see `fuzzy` on
+  // `SearchRequest`). That second condition is what keeps page 2 onward
+  // working at all for a fuzzy-only search: without it, every page after the
+  // first re-decides from scratch, sees the same exact-tsquery miss page 1
+  // did, and — because "only reach for fuzzy on page 1" used to be
+  // unconditional — silently gives up and returns zero results instead of
+  // continuing the same result set. Restricting the *auto-detect* itself to
+  // page 1 is still correct: a later page's own miss on tsquery must not
+  // retry fuzzy independently, or two different pages of one search could
+  // end up ranked by two different algorithms.
+  if (rows.length === 0 && request.q && (requestedPage === 1 || request.fuzzy)) {
     /* Same bet as the exact-search fan-out above, one level deeper: the fuzzy
        page, its count, its facets and its "did you mean" all start together
        rather than the page first and the rest after it. Awaiting the page

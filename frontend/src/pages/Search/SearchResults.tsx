@@ -89,14 +89,24 @@ function SearchResults() {
      which a full-screen takeover on every click would replace. */
   usePageGate(showSkeleton);
 
-  /* A page past the last real one (e.g. a bookmarked or hand-edited URL) comes
-     back from the API pointing at the last real page instead. The URL is
-     corrected to match so it stays the single source of truth — a reload or a
-     share of the link lands on the same page actually being shown, rather than
-     the out-of-range one that was asked for. */
+  /* Two things the server can settle that the URL needs to catch up to:
+     - A page past the last real one (e.g. a bookmarked or hand-edited URL)
+       comes back pointing at the last real page instead.
+     - The first page of a query that only matches via typo-tolerant search
+       comes back flagged `fuzzy`, which every later page of the *same*
+       search needs echoed back to it — see `SearchParams.fuzzy` — or page 2
+       silently re-decides from scratch, finds the same exact-text miss page
+       1 did, and comes back empty.
+     Either way the URL is corrected to match so it stays the single source of
+     truth — a reload or a shared link lands on the same thing actually shown,
+     rather than what was originally asked for. */
   useEffect(() => {
-    if (data && data.page !== params.page) {
-      setSearch(searchToParams({ ...params, page: data.page }), { replace: true });
+    if (!data) return;
+    if (data.page !== params.page || data.fuzzy !== params.fuzzy) {
+      setSearch(
+        searchToParams({ ...params, page: data.page, fuzzy: data.fuzzy }),
+        { replace: true },
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
@@ -115,6 +125,7 @@ function SearchResults() {
     suggestion: null,
     nextCursor: null,
     prevCursor: null,
+    fuzzy: params.fuzzy,
     facets: { category: [], city: [], condition: [], price: [] },
   };
 
@@ -161,6 +172,14 @@ function SearchResults() {
       // into a new filter or sort would seek through the wrong result set.
       next.cursor = null;
       next.cursorDir = null;
+    }
+    // `fuzzy` is only valid for the query text it was determined for. Changing
+    // the text itself must re-decide fresh on the next response — but a filter
+    // or sort change, which keeps the same text, must not silently reset it:
+    // that would drop a fuzzy-only search back to an exact-only one that finds
+    // nothing, the moment anything other than the page number changes.
+    if ("q" in patch) {
+      next.fuzzy = false;
     }
 
     /*

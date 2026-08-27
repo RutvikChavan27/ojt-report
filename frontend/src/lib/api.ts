@@ -403,6 +403,8 @@ export type SearchParams = {
   /** A previous response's `nextCursor`/`prevCursor`, paired with its direction. */
   cursor?: string;
   cursorDir?: "next" | "prev";
+  /** Echoed back from page 1's own `fuzzy` — see `SearchParams.fuzzy` in lib/search.ts. */
+  fuzzy?: boolean;
 };
 
 /**
