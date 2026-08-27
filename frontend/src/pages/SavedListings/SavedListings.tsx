@@ -47,8 +47,8 @@ function SavedListings() {
         Saved listings
       </h1>
       <p className="mt-1 text-sm text-charcoal-500">
-        {saved.length} {saved.length === 1 ? "listing" : "listings"} saved on this
-        device.
+        {saved.length} {saved.length === 1 ? "listing" : "listings"} saved to your
+        account.
       </p>
 
       <div className="mt-6">

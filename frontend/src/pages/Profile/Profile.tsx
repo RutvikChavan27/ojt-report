@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import Container from "../../components/layout/Container";
-import { FiBookmark, FiHeart, FiList, FiLogOut, FiUser } from "react-icons/fi";
-import { fetchMyListings } from "../../lib/api";
+import { FiBookmark, FiHeart, FiList, FiLogOut, FiTag, FiUser } from "react-icons/fi";
+import { fetchMyListings, fetchMyOffers } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../store/AuthContext";
 import { useSavedListings } from "../../store/SavedListingsContext";
@@ -10,7 +10,7 @@ import BackLink from "../../components/common/BackLink";
 
 /**
  * The signed-in user's own page: who they are, and the counts that lead into
- * their listings, saved items and saved searches.
+ * their listings, offers, saved items and saved searches.
  */
 function Profile() {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ function Profile() {
   const { count: savedCount } = useSavedListings();
   const { searches } = useSavedSearches();
   const { data: myListings } = useApi(fetchMyListings, []);
+  const { data: myOffers } = useApi(fetchMyOffers, []);
 
   // RequireAuth already guarantees a session; this only satisfies the type.
   if (!user) return null;
@@ -29,6 +30,13 @@ function Profile() {
       label: "My listings",
       value: (myListings ?? []).filter((listing) => listing.status === "active").length,
       caption: "active",
+    },
+    {
+      to: "/my-offers",
+      icon: <FiTag size={18} />,
+      label: "My offers",
+      value: (myOffers ?? []).length,
+      caption: "sent",
     },
     {
       to: "/saved",
@@ -76,7 +84,7 @@ function Profile() {
         </button>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {tiles.map((tile) => (
           <Link
             key={tile.to}

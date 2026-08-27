@@ -121,7 +121,9 @@ function App() {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/listing/:id" element={<ListingDetails />} />
           <Route path="/category/:category" element={<CategoryPage />} />
-          {/* Saved listings live on the device, so no account is needed */}
+          {/* Not gated: the page itself renders empty for a signed-out visitor
+              (SavedListingsContext holds no ids without a session) and the
+              heart toggle is what actually prompts login, same as elsewhere. */}
           <Route path="/saved" element={<SavedListings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
