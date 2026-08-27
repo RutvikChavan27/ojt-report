@@ -1,16 +1,18 @@
-import { FiClock, FiSearch, FiX } from "react-icons/fi";
+import { FiClock, FiGrid, FiX } from "react-icons/fi";
 import type { ApiSuggestion } from "../../lib/api";
 import type { RecentSearch } from "../../store/RecentSearchesContext";
 
 type SearchSuggestionsProps = {
-  /** Live matches from the database. Empty while the box is empty. */
+  /** Live category/subcategory matches from the taxonomy. Empty while the box is empty. */
   suggestions: ApiSuggestion[];
   /** This browser's previous queries, newest first. */
   recent: RecentSearch[];
   /** True while a lookup for the current text is still in flight. */
   loading?: boolean;
-  /** The chosen text becomes the query. */
-  onPick: (query: string) => void;
+  /** A picked category/subcategory to navigate into. */
+  onPickCategory: (suggestion: ApiSuggestion) => void;
+  /** A picked past search re-runs as a plain keyword search. */
+  onPickRecent: (query: string) => void;
   /** Drops one past search from the list. */
   onRemoveRecent: (query: string) => void;
   onClearRecent: () => void;
@@ -23,30 +25,23 @@ type SearchSuggestionsProps = {
  * the person has not said what they want yet, so their own history is the most
  * useful thing to offer; once there is text, matches from the database are.
  *
- * Suggestions show only the listing name — a plain list to pick from. Sellers
- * write titles as "<item> — <descriptor>" ("… — Excellent Condition", "… —
- * Plum"), so the descriptor after the em-dash is dropped for display, leaving
- * the item itself. The API still returns price and category (used elsewhere);
- * the dropdown keeps to the name so it reads as suggestions rather than results.
+ * Suggestions are category/subcategory navigation, not individual listings —
+ * typing "shirt" offers "Shirts" (under Men's Fashion) to click into, where the
+ * existing filters/sort/pagination narrow down to the exact item. This is
+ * deliberately not a preview of matching listing titles: with 145,000+ listings,
+ * a handful of titles picked essentially at random is a worse start than a
+ * correct category to browse.
  */
 function SearchSuggestions({
   suggestions,
   recent,
   loading = false,
-  onPick,
+  onPickCategory,
+  onPickRecent,
   onRemoveRecent,
   onClearRecent,
 }: SearchSuggestionsProps) {
   const showingRecent = suggestions.length === 0 && recent.length > 0;
-
-  /* The name shown for a suggestion: the title up to its first em-dash, so the
-     seller's trailing descriptor drops off. Only the em-dash (—) is cut, never a
-     plain hyphen, so names like "Wi-Fi" survive. Two titles can trim to the same
-     name (two "Used iPhone 13 Pro 128GB" listings), so the list is deduped while
-     keeping the order the server returned. */
-  const suggestionNames = Array.from(
-    new Set(suggestions.map((item) => item.title.split("—")[0].trim())),
-  );
 
   // Nothing to offer, and nothing in flight worth announcing.
   if (suggestions.length === 0 && recent.length === 0 && !loading) return null;
@@ -90,7 +85,7 @@ function SearchSuggestions({
                 aria-selected={false}
                 // onMouseDown, not onClick: the input's blur fires first and
                 // would unmount this list before a click could land.
-                onMouseDown={() => onPick(entry.query)}
+                onMouseDown={() => onPickRecent(entry.query)}
                 className="flex min-w-0 flex-1 items-center gap-3 py-3.5 text-left"
               >
                 <FiClock size={18} className="flex-shrink-0 text-charcoal-400" />
@@ -115,24 +110,39 @@ function SearchSuggestions({
             </li>
           ))}
 
-        {suggestionNames.map((name) => (
-          <li key={name}>
-            <button
-              type="button"
-              role="option"
-              aria-selected={false}
-              // Picks the trimmed name, so the box and the search that runs match
-              // what was shown rather than the longer stored title.
-              onMouseDown={() => onPick(name)}
-              className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-150 hover:bg-sand"
-            >
-              <FiSearch size={18} className="flex-shrink-0 text-charcoal-400" />
-              <span className="min-w-0 flex-1 truncate text-[15px] text-charcoal-900">
-                {name}
-              </span>
-            </button>
-          </li>
-        ))}
+        {suggestions.map((item) => {
+          // A subcategory match shows itself as the main line with its parent
+          // category underneath ("Shirts" / "Men's Fashion"); a top-level
+          // match has nothing more specific to show, so the category is the
+          // whole suggestion.
+          const primary = item.subcategoryLabel ?? item.categoryLabel;
+          const secondary = item.subcategoryLabel ? item.categoryLabel : null;
+          const key = `${item.categorySlug}:${item.subcategorySlug ?? ""}`;
+
+          return (
+            <li key={key}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={false}
+                onMouseDown={() => onPickCategory(item)}
+                className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-150 hover:bg-sand"
+              >
+                <FiGrid size={18} className="flex-shrink-0 text-charcoal-400" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-bold text-charcoal-900">
+                    {primary}
+                  </span>
+                  {secondary && (
+                    <span className="block truncate text-xs uppercase tracking-wide text-charcoal-400">
+                      {secondary}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Only announced when there is nothing else on screen, so the list does

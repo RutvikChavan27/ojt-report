@@ -13,6 +13,7 @@ describe("search params URL round trip", () => {
     const original: SearchParams = {
       q: "denim jacket",
       category: "mens-fashion",
+      subcategory: "mens-fashion--mens-jackets",
       city: "Pune",
       conditions: ["Good", "Fair"],
       priceBand: null,

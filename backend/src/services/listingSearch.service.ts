@@ -7,8 +7,8 @@ import {
   fetchFacetCounts,
   searchListingsExact,
   searchListingsFuzzy,
+  suggestCategories,
   suggestCorrection,
-  suggestListings,
   type CursorSeek,
   type FacetCountRow,
   type SearchRow,
@@ -32,6 +32,7 @@ const PLACEHOLDER_IMAGE = "/images/product-slim-fit-tee.jpg";
 export type SearchRequest = {
   q?: string;
   categorySlug?: string;
+  subcategorySlug?: string;
   audience?: string;
   city?: string;
   conditions?: string[];
@@ -112,34 +113,43 @@ const toDTO = (row: {
   image: resolveImagePath(row.image ?? PLACEHOLDER_IMAGE),
 });
 
-/** A type-ahead suggestion, as the dropdown needs it. */
+/**
+ * A type-ahead suggestion — a category or subcategory to navigate into, not a
+ * listing. `subcategorySlug`/`subcategoryLabel` are null for a top-level
+ * category match; when present, `categorySlug`/`categoryLabel` are that
+ * subcategory's *parent*, so the pair maps directly onto
+ * `/search?category=&subcategory=`.
+ */
 export type SuggestionDTO = {
-  title: string;
-  price: number;
-  category: string;
+  categorySlug: string;
   categoryLabel: string;
+  subcategorySlug: string | null;
+  subcategoryLabel: string | null;
 };
 
 /**
- * Type-ahead suggestions for a partial query.
+ * Type-ahead suggestions for a partial query — which category/subcategory it
+ * most likely means, not a list of matching listings. See `suggestCategories`
+ * for how a term with no literal category name (e.g. "shoes", filed under
+ * "Footwear") still resolves correctly.
  *
  * Kept separate from `searchListings` rather than reusing it with a small
  * `perPage`: a search runs the count and every facet alongside the page of
  * results, and none of that is wanted for a dropdown that fires while someone is
- * still typing. This is one indexed query, so it stays cheap enough to run per
+ * still typing. These are small, indexed queries, cheap enough to run per
  * keystroke-after-debounce.
  */
 export async function suggestSearches(
   q: string,
   limit?: number,
 ): Promise<SuggestionDTO[]> {
-  const rows = await suggestListings(q, limit);
+  const rows = await suggestCategories(q, limit);
 
   return rows.map((row) => ({
-    title: row.title,
-    price: Number(row.price),
-    category: row.category_slug,
-    categoryLabel: row.category_label,
+    categorySlug: row.categorySlug,
+    categoryLabel: row.categoryLabel,
+    subcategorySlug: row.subcategorySlug,
+    subcategoryLabel: row.subcategoryLabel,
   }));
 }
 

@@ -27,6 +27,8 @@ export type SortKey = "relevance" | "newest" | "price_asc" | "price_desc";
 export type ListingFilters = {
   q?: string;
   categorySlug?: string;
+  /** Narrows within categorySlug — e.g. "mens-fashion--mens-shirts". */
+  subcategorySlug?: string;
   audience?: string;
   city?: string;
   /** Empty means "any condition". */
@@ -62,6 +64,11 @@ export function buildListingWhere(
   if (filters.categorySlug) {
     values.push(filters.categorySlug);
     clauses.push(`l.category_slug = ${next()}`);
+  }
+
+  if (filters.subcategorySlug) {
+    values.push(filters.subcategorySlug);
+    clauses.push(`l.subcategory_slug = ${next()}`);
   }
 
   if (filters.audience) {

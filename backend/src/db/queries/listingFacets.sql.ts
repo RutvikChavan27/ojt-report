@@ -103,6 +103,12 @@ export function buildFacetCountsQuery(
       `l.posted_at >= now() - (${bind(filters.postedWithinDays)} || ' days')::interval`,
     );
   }
+  // Subcategory has no checkbox list of its own either — it narrows facet
+  // computation the same unconditional way category-page browsing already did
+  // before this filter existed.
+  if (filters.subcategorySlug) {
+    always.push(`l.subcategory_slug = ${bind(filters.subcategorySlug)}`);
+  }
 
   /* Whether every facet's own filter is unselected. When it is, "count with
      every filter but this one" is the same query for all six facets — there

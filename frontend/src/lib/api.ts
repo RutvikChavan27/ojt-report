@@ -99,12 +99,17 @@ export const fetchAuthProviders = () =>
 /** A link, not a fetch: the browser itself must visit Google. */
 export const googleSignInUrl = `${API_BASE}/api/auth/google`;
 
-/** One type-ahead suggestion. Mirrors the server's SuggestionDTO. */
+/**
+ * One type-ahead suggestion — a category or subcategory to navigate into.
+ * Mirrors the server's SuggestionDTO. `subcategorySlug` is null for a
+ * top-level category match; when set, `categorySlug`/`categoryLabel` are that
+ * subcategory's parent.
+ */
 export type ApiSuggestion = {
-  title: string;
-  price: number;
-  category: string;
+  categorySlug: string;
   categoryLabel: string;
+  subcategorySlug: string | null;
+  subcategoryLabel: string | null;
 };
 
 /**
@@ -356,6 +361,7 @@ export const searchListings = async (
 export type SearchParams = {
   q?: string;
   category?: string;
+  subcategory?: string;
   audience?: string;
   city?: string | string[];
   condition?: string | string[];

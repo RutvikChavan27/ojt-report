@@ -13,6 +13,22 @@
  */
 import { CATEGORIES, type Listing } from "../data/marketplace";
 
+/**
+ * A readable fallback label for a subcategory slug, e.g.
+ * "mens-fashion--mens-shirts" -> "Mens Shirts". Used where showing the
+ * subcategory by name matters (a breadcrumb, a filter chip) but fetching its
+ * real label would mean a second request just for display text — the slug
+ * already carries enough to read sensibly.
+ */
+export function humanizeSubcategorySlug(slug: string): string {
+  const own = slug.includes("--") ? slug.split("--").slice(1).join("--") : slug;
+  return own
+    .split("-")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export type SortKey = "relevance" | "newest" | "price_asc" | "price_desc";
 
 export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
@@ -48,6 +64,8 @@ const REAL_CONDITIONS = ["New with tags", "Like new", "Good", "Fair"];
 export type SearchParams = {
   q: string;
   category: string | null;
+  /** Only meaningful alongside `category` — its parent. */
+  subcategory: string | null;
   city: string | null;
   conditions: string[];
   /** A PRICE_BANDS id, or null when the shopper typed their own range. */
@@ -70,6 +88,7 @@ export type SearchParams = {
 export const EMPTY_PARAMS: SearchParams = {
   q: "",
   category: null,
+  subcategory: null,
   city: null,
   conditions: [],
   priceBand: null,
@@ -131,6 +150,7 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
   return {
     q,
     category: search.get("category"),
+    subcategory: search.get("subcategory"),
     city: search.get("city"),
     // Repeated keys, so a value containing a comma survives the round trip.
     // Validated against REAL_CONDITIONS (the backend's actual enum values)
@@ -161,6 +181,11 @@ export function searchToParams(params: SearchParams): URLSearchParams {
 
   if (params.q) search.set("q", params.q);
   if (params.category) search.set("category", params.category);
+  // Only meaningful with a category — a subcategory slug from a different
+  // category tree narrowing this one would just produce zero results.
+  if (params.category && params.subcategory) {
+    search.set("subcategory", params.subcategory);
+  }
   if (params.city) search.set("city", params.city);
   params.conditions.forEach((value) => search.append("condition", value));
   if (params.priceBand) search.set("price", params.priceBand);
@@ -192,6 +217,12 @@ export function describeFilters(
       CATEGORIES.find((entry) => entry.slug === params.category)?.label ??
       params.category;
     chips.push({ key: "category", label });
+  }
+  if (params.category && params.subcategory) {
+    chips.push({
+      key: "subcategory",
+      label: humanizeSubcategorySlug(params.subcategory),
+    });
   }
   if (params.city) chips.push({ key: "city", label: params.city });
   params.conditions.forEach((value) =>

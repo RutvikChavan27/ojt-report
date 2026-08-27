@@ -15,6 +15,7 @@ import Pagination from "../../components/search/Pagination";
 import SortDropdown from "../../components/search/SortDropdown";
 import {
   describeFilters,
+  humanizeSubcategorySlug,
   paramsFromSearch,
   searchToParams,
   type SearchParams,
@@ -130,6 +131,9 @@ function SearchResults() {
     ...(categoryLabel
       ? [{ label: categoryLabel, to: `/search?category=${params.category}` }]
       : []),
+    ...(categoryLabel && params.subcategory
+      ? [{ label: humanizeSubcategorySlug(params.subcategory) }]
+      : []),
     ...(params.q ? [{ label: `"${params.q}"` }] : []),
     ...(!categoryLabel && !params.q ? [{ label: "All listings" }] : []),
   ];
@@ -180,6 +184,12 @@ function SearchResults() {
       update({ priceBand: null, minPrice: null, maxPrice: null });
       return;
     }
+    // A subcategory with no category is meaningless, so clearing the
+    // category chip takes its subcategory with it.
+    if (key === "category") {
+      update({ category: null, subcategory: null });
+      return;
+    }
     update({ [key]: null } as Partial<SearchParams>);
   };
 
@@ -191,6 +201,7 @@ function SearchResults() {
     update({
       q: "",
       category: null,
+      subcategory: null,
       city: null,
       conditions: [],
       priceBand: null,

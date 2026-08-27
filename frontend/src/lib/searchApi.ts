@@ -75,6 +75,7 @@ export async function searchListingsViaApi(
   const result: ApiSearchResult = await apiSearch({
     q: params.q || undefined,
     category: params.category ?? undefined,
+    subcategory: params.category ? (params.subcategory ?? undefined) : undefined,
     city: params.city ?? undefined,
     condition: params.conditions.length ? params.conditions : undefined,
     minPrice: min,

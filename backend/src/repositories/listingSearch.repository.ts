@@ -274,79 +274,110 @@ export async function fetchFacetCounts(
   return rows;
 }
 
-export type SuggestionRow = {
-  title: string;
-  price: string;
-  category_slug: string;
-  category_label: string;
+/** One row from either candidate query below — a category or a subcategory. */
+type CategoryMatchRow = {
+  slug: string;
+  label: string;
+  parent_slug: string | null;
+  parent_label: string | null;
 };
 
 /**
- * Type-ahead suggestions for a partial query.
- *
- * Matched with a prefix `ILIKE` rather than the `tsvector`, because a person
- * halfway through typing "bicy" has not finished a word yet and full-text search
- * matches whole lexemes — "bicy" would find nothing until the "cle" arrived. The
- * trigram index on title serves the leading-wildcard pattern that a plain B-tree
- * could not.
- *
- * Distinct on title: at a hundred thousand listings the same phrase recurs across
- * many rows, and a dropdown repeating "iPhone 13" six times is worse than useless.
- * The cheapest row per title wins, which is the one a searcher most wants to see.
- *
- * Matching is a substring ILIKE so partial typing works ("iph" → iPhone), but the
- * results are then ranked so a whole-word hit beats an incidental one: typing
- * "car" puts "Dodge Durango … Car" above "Carbon Steel Wok" (which only matches
- * because "Carbon" starts with "car"). A generous candidate pool is fetched and
- * ranked in Node, since there are few distinct titles and the ordering that
- * matters — word relevance — is awkward to express in SQL safely.
- *
- * @param q partial query; under two characters returns nothing, since a single
- *          letter matches most of the table and the list would be noise.
- * @param limit how many suggestions to return, capped to keep the dropdown short.
- * @returns titles with price and category, most relevant first.
+ * A suggestion the search box can offer: a category, or a subcategory (in
+ * which case `categorySlug` is its *parent's* slug, so the pair is exactly
+ * what `/search?category=&subcategory=` needs — see SearchBar's onPick).
  */
-export async function suggestListings(
+export type CategorySuggestion = {
+  categorySlug: string;
+  categoryLabel: string;
+  subcategorySlug: string | null;
+  subcategoryLabel: string | null;
+};
+
+/** Under this, a single letter matches most of the taxonomy and the list would be noise. */
+const MIN_SUGGEST_QUERY_LENGTH = 2;
+
+const toSuggestion = (row: CategoryMatchRow): CategorySuggestion =>
+  row.parent_slug
+    ? {
+        categorySlug: row.parent_slug,
+        categoryLabel: row.parent_label ?? row.parent_slug,
+        subcategorySlug: row.slug,
+        subcategoryLabel: row.label,
+      }
+    : {
+        categorySlug: row.slug,
+        categoryLabel: row.label,
+        subcategorySlug: null,
+        subcategoryLabel: null,
+      };
+
+/**
+ * Type-ahead suggestions for a partial query — category/subcategory
+ * navigation, not individual listings. Typing "shirt" should offer "Men's
+ * Fashion → Shirts" to click into, not a list of listing titles to read one
+ * by one; the titles themselves only make sense once inside a category, where
+ * the existing filters/sort/pagination narrow them down.
+ *
+ * Two candidate sources, run together and merged here:
+ *
+ * 1. Direct label match — the query appears in a category or subcategory's
+ *    own name ("car" → "Cars", "laptop" → "Laptops"). Cheap: the whole
+ *    taxonomy is under 150 rows.
+ *
+ * 2. Listing-driven — the query has no literal category match ("shoes" is
+ *    filed under "Footwear"; "iphone" isn't a category name at all), so this
+ *    finds which category/subcategory the *listings* actually matching the
+ *    query mostly belong to, via the same trigram-indexed ILIKE the old
+ *    listing-title suggestions used. This is what makes the mapping work
+ *    without hand-writing a synonym table: it reads the real taxonomy off
+ *    the real data instead.
+ *
+ * Label matches are listed first (a name match is a stronger, cheaper signal
+ * than an inference from listing content); duplicates are dropped by slug.
+ *
+ * @param q partial query; under two characters returns nothing.
+ * @param limit how many suggestions to return, capped to keep the dropdown short.
+ */
+export async function suggestCategories(
   q: string,
   limit = 6,
-): Promise<SuggestionRow[]> {
+): Promise<CategorySuggestion[]> {
   const trimmed = q.trim();
-  if (trimmed.length < 2) return [];
+  if (trimmed.length < MIN_SUGGEST_QUERY_LENGTH) return [];
 
-  const { rows } = await query<SuggestionRow>(
-    `SELECT DISTINCT ON (l.title)
-            l.title,
-            l.price,
-            l.category_slug,
-            c.label AS category_label
-       FROM listings l
-       JOIN listing_categories c ON c.slug = l.category_slug
-      WHERE l.status = 'active'
-        AND l.title ILIKE '%' || $1 || '%'
-      ORDER BY l.title, l.price ASC
-      LIMIT 50`,
-    [trimmed],
-  );
+  const [labelMatches, listingMatches] = await Promise.all([
+    query<CategoryMatchRow>(
+      `SELECT c.slug, c.label, c.parent_slug, p.label AS parent_label
+         FROM listing_categories c
+         LEFT JOIN listing_categories p ON p.slug = c.parent_slug
+        WHERE c.label ILIKE '%' || $1 || '%'
+        ORDER BY (c.label ILIKE $1 || '%') DESC, length(c.label) ASC
+        LIMIT 6`,
+      [trimmed],
+    ),
+    query<CategoryMatchRow>(
+      `SELECT c.slug, c.label, c.parent_slug, p.label AS parent_label
+         FROM listings l
+         JOIN listing_categories c ON c.slug = COALESCE(l.subcategory_slug, l.category_slug)
+         LEFT JOIN listing_categories p ON p.slug = c.parent_slug
+        WHERE l.status = 'active' AND l.title ILIKE '%' || $1 || '%'
+        GROUP BY c.slug, c.label, c.parent_slug, p.label
+        ORDER BY count(*) DESC
+        LIMIT 6`,
+      [trimmed],
+    ),
+  ]);
 
-  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const wholeWord = new RegExp(`\\b${escaped}\\b`, "i"); // "car" in "… Car"
-  const wordStart = new RegExp(`\\b${escaped}`, "i"); // also matches "Carbon"
-
-  /* Relevance: a whole-word match (2) outranks a word that merely starts with
-     the query (1), which outranks a match buried mid-word (0). Ties break on the
-     shorter title, then price. This is what pushes "Carbon Steel Wok" below the
-     actual cars for "car" without dropping partial-typing support. */
-  const score = (title: string): number =>
-    wholeWord.test(title) ? 2 : wordStart.test(title) ? 1 : 0;
-
-  return rows
-    .sort(
-      (a, b) =>
-        score(b.title) - score(a.title) ||
-        a.title.length - b.title.length ||
-        Number(a.price) - Number(b.price),
-    )
-    .slice(0, Math.min(Math.max(limit, 1), 10));
+  const seen = new Set<string>();
+  const merged: CategorySuggestion[] = [];
+  for (const row of [...labelMatches.rows, ...listingMatches.rows]) {
+    if (seen.has(row.slug)) continue;
+    seen.add(row.slug);
+    merged.push(toSuggestion(row));
+    if (merged.length >= Math.min(Math.max(limit, 1), 10)) break;
+  }
+  return merged;
 }
 
 /** Levenshtein distance, capped early since only small edits are worth ranking. */

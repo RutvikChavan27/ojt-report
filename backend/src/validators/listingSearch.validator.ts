@@ -119,6 +119,7 @@ export function parseSearchRequest(queryString: Request["query"]): SearchRequest
   return {
     q,
     categorySlug: first(queryString.category) || undefined,
+    subcategorySlug: first(queryString.subcategory) || undefined,
     audience: parseAudience(queryString.audience),
     city: first(queryString.city) || undefined,
     conditions: parseList(queryString.condition, CONDITIONS),

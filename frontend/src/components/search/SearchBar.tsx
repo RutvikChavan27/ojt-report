@@ -5,6 +5,20 @@ import SearchSuggestions from "./SearchSuggestions";
 import { fetchSuggestions, type ApiSuggestion } from "../../lib/api";
 import { useRecentSearches } from "../../store/RecentSearchesContext";
 
+/** Builds `/search?category=&subcategory=&city=`, dropping whichever is absent. */
+function categorySearchUrl(
+  suggestion: ApiSuggestion,
+  city: string | null,
+): string {
+  const search = new URLSearchParams();
+  search.set("category", suggestion.categorySlug);
+  if (suggestion.subcategorySlug) {
+    search.set("subcategory", suggestion.subcategorySlug);
+  }
+  if (city) search.set("city", city);
+  return `/search?${search.toString()}`;
+}
+
 type SearchBarProps = {
   /** Seeds the box, e.g. when landing on /search?q=iphone. */
   initialQuery?: string;
@@ -98,6 +112,18 @@ function SearchBar({
     navigate(`/search?${search.toString()}`);
   };
 
+  /**
+   * Clicking a category/subcategory suggestion browses into it directly —
+   * this is category navigation, not a keyword search, so no `q` is set and
+   * the box is cleared rather than filled with the category's name.
+   */
+  const pickCategory = (suggestion: ApiSuggestion) => {
+    setValue("");
+    setSuggestions([]);
+    setOpen(false);
+    navigate(categorySearchUrl(suggestion, city));
+  };
+
   const tall = size === "large";
 
   return (
@@ -176,7 +202,8 @@ function SearchBar({
           // Up to five of the most recent; storage keeps more, the dropdown shows a tidy few.
           recent={value.trim() ? [] : recent.slice(0, 5)}
           loading={loading}
-          onPick={(query) => {
+          onPickCategory={pickCategory}
+          onPickRecent={(query) => {
             setValue(query);
             runSearch(query);
           }}
