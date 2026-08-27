@@ -49,11 +49,15 @@ export function prefetchRoute(name: RouteChunk): void {
  * The routes worth having ready before they are asked for.
  *
  * Browsing is the common path through the site — someone lands, searches or
- * opens a category, then opens a listing — so those two chunks earn their
- * bandwidth. The rest (posting, auth, the dashboard) stay on demand rather than
- * being pulled down for every visitor who will never sign in.
+ * opens a category, then opens a listing — so those chunks earn their
+ * bandwidth. "home" belongs here too: it is the landing page's own primary
+ * button ("Browse marketplace"), not a secondary path, and leaving it out
+ * meant that click paid for a chunk download it could have avoided entirely —
+ * the one navigation this prefetch exists to make instant. The rest (posting,
+ * auth) stay on demand rather than being pulled down for every visitor who
+ * will never sign in.
  */
-const LIKELY_NEXT: RouteChunk[] = ["search", "listing"];
+const LIKELY_NEXT: RouteChunk[] = ["home", "search", "listing"];
 
 /**
  * Warms the likely-next chunks once the browser is otherwise idle.

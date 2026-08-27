@@ -281,14 +281,39 @@ const withImage = <T extends { image: string }>(listing: T): T => ({
   image: imageUrl(listing.image),
 });
 
+/**
+ * Dashboard cache — the same pattern as `fetchCategories` below, and for the
+ * same reason: the Welcome page and the Home page both render this data one
+ * navigation apart (Welcome fetches it for its floating listing cards, Home
+ * fetches it again moments later for the page itself), so without this every
+ * "Browse marketplace" click paid for the identical request twice. Storing
+ * the in-flight promise, not just the resolved value, also means the two
+ * calls that really do land in the same tick (StrictMode's double-invoke in
+ * dev, or a fast remount) share one request instead of firing two.
+ */
+const DASHBOARD_TTL_MS = 20_000;
+let dashboardCache: { at: number; value: Promise<ApiDashboard> } | null = null;
+
 /** Everything the homepage renders, in one round trip. */
 export const fetchDashboard = async (): Promise<ApiDashboard> => {
-  const data = await apiRequest<ApiDashboard>("/api/dashboard");
-  return {
+  if (dashboardCache && Date.now() - dashboardCache.at < DASHBOARD_TTL_MS) {
+    return dashboardCache.value;
+  }
+
+  const value = apiRequest<ApiDashboard>("/api/dashboard").then((data) => ({
     ...data,
     recent: data.recent.map(withImage),
     categories: data.categories.map(withImage),
-  };
+  }));
+
+  // A failed request must not be cached, or one blip disables the homepage
+  // for the next 20 seconds. Dropping it lets the next caller retry immediately.
+  value.catch(() => {
+    if (dashboardCache?.value === value) dashboardCache = null;
+  });
+
+  dashboardCache = { at: Date.now(), value };
+  return value;
 };
 
 /**

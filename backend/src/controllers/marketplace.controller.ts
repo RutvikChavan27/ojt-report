@@ -49,14 +49,31 @@ function parsePositiveInt(value: unknown, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-/** GET /api/dashboard — everything the homepage renders, in one call. */
+/**
+ * GET /api/dashboard — everything the homepage renders, in one call.
+ *
+ * Carries the same Server-Timing breakdown as /api/search/listings — this is
+ * the other endpoint the Welcome-to-Home transition depends on, so its cache
+ * hits and misses are worth being able to see the same way.
+ */
 export async function getDashboardData(
   _req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    sendSuccess(res, await getDashboard());
+    const dbStart = process.hrtime.bigint();
+    const result = await getDashboard();
+    const dbEnd = process.hrtime.bigint();
+
+    const appStart = res.locals.startAt as bigint | undefined;
+    const timings = [`db;dur=${Number(dbEnd - dbStart) / 1e6}`];
+    if (appStart !== undefined) {
+      timings.push(`appOverhead;dur=${Number(dbStart - appStart) / 1e6}`);
+    }
+    res.setHeader("Server-Timing", timings.join(", "));
+
+    sendSuccess(res, result);
   } catch (err) {
     next(err);
   }

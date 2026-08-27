@@ -23,6 +23,21 @@ import type {
 /** How many recent listings the homepage grid shows. */
 const DASHBOARD_RECENT_LIMIT = 10;
 
+/**
+ * Dashboard cache.
+ *
+ * The payload is identical for every visitor (nothing here is scoped to a
+ * session), and the Welcome page and the Home page each request it one
+ * navigation apart — every "Browse marketplace" click was paying for the same
+ * three-query round trip twice, plus paying it again for the next visitor to
+ * land on either page within the same few seconds. A short TTL absorbs all of
+ * that at the cost of the homepage's counts and "fresh listings" being up to
+ * this many seconds stale, which nothing on the page depends on being
+ * second-accurate.
+ */
+const DASHBOARD_CACHE_MS = 30_000;
+let dashboardCache: { at: number; value: Promise<DashboardDTO> } | null = null;
+
 const PLACEHOLDER_IMAGE = "/images/product-slim-fit-tee.jpg";
 
 /** A listing with no photo rows still needs something to render. */
@@ -150,18 +165,33 @@ export async function getListing(id: string): Promise<ListingDetailDTO | null> {
  * costs nothing extra here.
  */
 export async function getDashboard(): Promise<DashboardDTO> {
-  const [recent, categories, totalListings] = await Promise.all([
-    listListings({ page: 1, perPage: DASHBOARD_RECENT_LIMIT }),
-    listListingCategories(),
-    countAllListings(),
-  ]);
+  if (dashboardCache && Date.now() - dashboardCache.at < DASHBOARD_CACHE_MS) {
+    return dashboardCache.value;
+  }
 
-  return {
-    totalActive: recent.total,
-    totalListings,
-    recent: recent.items,
-    categories,
-  };
+  const value = (async () => {
+    const [recent, categories, totalListings] = await Promise.all([
+      listListings({ page: 1, perPage: DASHBOARD_RECENT_LIMIT }),
+      listListingCategories(),
+      countAllListings(),
+    ]);
+
+    return {
+      totalActive: recent.total,
+      totalListings,
+      recent: recent.items,
+      categories,
+    };
+  })();
+
+  // A failed build must not be cached, or one blip breaks the homepage for
+  // the next 30 seconds. Dropping it lets the next request retry immediately.
+  value.catch(() => {
+    if (dashboardCache?.value === value) dashboardCache = null;
+  });
+
+  dashboardCache = { at: Date.now(), value };
+  return value;
 }
 
 /** Browsable categories with live listing counts. */
