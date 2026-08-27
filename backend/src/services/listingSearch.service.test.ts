@@ -234,3 +234,73 @@ describe("searchListings stays on fuzzy matching across pages of the same search
     expect(new Set(allTitles).size).toBe(TOTAL_ROWS);
   });
 });
+
+describe("searchListings fuzzy matching excludes noise that only ties the trigram index's loose prefilter", () => {
+  // `word_similarity` scores a query against the closest-matching *word* in a
+  // title, not the title as a whole — so a title that shares only a short,
+  // coincidental trigram overlap with the query can still clear the database's
+  // loose `<%` prefilter (0.2), same as a genuine near-typo match does. This is
+  // exactly the bug reported in production: searching "dumbbell" returned
+  // laptops, cars and phones once the ~464 genuine matches ran out, because
+  // every one of them coincidentally scored ~0.25 against the query via an
+  // unrelated shared word ("— Well Maintained" etc.) — a score `<%` accepts
+  // just as readily as it accepts a real typo match.
+  //
+  // Verified directly against Postgres before writing this fixture (not
+  // guessed): word_similarity('ZQXDUMBELQVWX', 'ZQXDUMBBELLQVWX ...') = 0.667,
+  // word_similarity('ZQXDUMBELQVWX', '... ZQXCAMELQVWX ... Well ...') =
+  // 0.421 — both clear `<%`'s 0.2 threshold, but only the first is a real
+  // match. 0.421 / 0.667 = 0.63, below `FUZZY_RELEVANCE_RATIO` (0.8), so the
+  // fix must exclude it.
+  const QUERY = "ZQXDUMBELQVWX";
+  const GENUINE_MARKER = "ZQXDUMBBELLQVWX";
+  const NOISE_MARKER = "ZQXCAMELQVWX";
+  const GENUINE_COUNT = 5;
+  const NOISE_COUNT = 5;
+
+  beforeAll(async () => {
+    await seedListings(sellerId, [
+      ...Array.from({ length: GENUINE_COUNT }, (_, index) => ({
+        title: `${GENUINE_MARKER} Adjustable Set ${index}kg`,
+        categorySlug,
+      })),
+      ...Array.from({ length: NOISE_COUNT }, (_, index) => ({
+        title: `Used ${NOISE_MARKER} Backpack ${index} — Well Serviced`,
+        categorySlug,
+      })),
+    ]);
+  });
+
+  it("only the genuine near-typo matches are returned, not the coincidentally-scored noise", async () => {
+    const result = await searchListings({
+      q: QUERY,
+      sort: "relevance",
+      page: 1,
+      perPage: 24,
+    });
+
+    expect(result.fuzzy).toBe(true);
+    expect(result.total).toBe(GENUINE_COUNT);
+    expect(result.items).toHaveLength(GENUINE_COUNT);
+    expect(result.items.every((item) => item.title.includes(GENUINE_MARKER))).toBe(true);
+    expect(result.items.some((item) => item.title.includes(NOISE_MARKER))).toBe(false);
+  });
+
+  it("the facet counts describe the same relevant-only set as the results, not the noise-inflated one", async () => {
+    const result = await searchListings({
+      q: QUERY,
+      sort: "relevance",
+      page: 1,
+      perPage: 24,
+    });
+
+    const categoryFacet = result.facets.category.find(
+      (entry) => entry.value === categorySlug,
+    );
+    // Every fixture row in this block (genuine and noise) shares the same
+    // category, so a facet count still describing the noise would read 10,
+    // not 5 — this is the same "total/rows/facets must agree" invariant the
+    // count assertion above checks, applied to the facets query instead.
+    expect(categoryFacet?.count).toBe(GENUINE_COUNT);
+  });
+});

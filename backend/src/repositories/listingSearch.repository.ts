@@ -27,6 +27,7 @@ import {
   buildListingWhere,
   buildKeysetClause,
   buildOrderBy,
+  fuzzyRelevanceClause,
   keysetOrderBy,
   LISTING_COLUMNS,
   LISTING_JOINS,
@@ -174,6 +175,13 @@ export async function searchListingsFuzzy(
   // "hoodei" scored far below the threshold against "Pepe Jeans Zip Hoodie" and
   // only short titles ever matched. Both operators use the same GIN trigram
   // index on title.
+  //
+  // `<%` alone is a loose, fixed, database-wide prefilter — good for using the
+  // index cheaply, not for deciding what's actually relevant. At this table's
+  // size, that looseness lets thousands of unrelated titles through purely by
+  // coincidental trigram overlap (see `fuzzyRelevanceClause`), so a second,
+  // per-query condition narrows the indexed candidates down to only the ones
+  // reasonably close to the *best* match this specific search found.
   const { rows } = await query<SearchRow>(
     `WITH ranked AS (
        SELECT l.id, l.title, l.category_slug, l.audience, l.brand, l.size,
@@ -182,6 +190,7 @@ export async function searchListingsFuzzy(
        FROM listings l
        WHERE ${where.text}
          AND $1 <% l.title
+         AND ${fuzzyRelevanceClause("$1")}
        ORDER BY rank DESC, l.posted_at DESC, l.id DESC
        LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}
      )
@@ -234,7 +243,7 @@ export async function countSearchMatches(
   const textClause = !hasQuery
     ? ""
     : options.fuzzy
-      ? "AND $1 <% l.title"
+      ? `AND $1 <% l.title AND ${fuzzyRelevanceClause("$1")}`
       : "AND l.search_vector @@ websearch_to_tsquery('english', $1)";
 
   const { rows } = await query<{ total: string }>(

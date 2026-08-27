@@ -24,6 +24,74 @@
 /** Sorts the API accepts. `relevance` is only meaningful with a query. */
 export type SortKey = "relevance" | "newest" | "price_asc" | "price_desc";
 
+/**
+ * How close a fuzzy match must be to the *best* match found for the same
+ * query to count as genuinely relevant, rather than being let through only
+ * because it cleared the index's own loose prefilter.
+ *
+ * `word_similarity` scores the query against the closest-matching *window*
+ * within a title, not the title as a whole. At this catalogue's scale
+ * (100,000+ titles), a short, unremarkable word that happens to recur across
+ * many unrelated titles (a condition phrase like "— Well Maintained" showing
+ * up on furniture, electronics and vehicles alike) coincidentally scores at
+ * or near the trigram index's own threshold against almost *any* query — high
+ * enough to pass `<%`, indistinguishable by score from noise. A genuine typo
+ * match ("dumbell" for "Dumbbell Set", 0.7) sits far above that noise floor
+ * (0.25); this ratio keeps the gap between them from being a coincidence the
+ * query has to get lucky on.
+ *
+ * Relative rather than a single fixed cutoff, because "how good the best
+ * match is" varies enormously by query — a near-exact typo scores close to 1,
+ * a longer or more garbled one much lower — and a fixed threshold tuned for
+ * one would wrongly admit noise for the other, or wrongly exclude the best
+ * match for the other.
+ */
+export const FUZZY_RELEVANCE_RATIO = 0.8;
+
+/**
+ * A floor under the ratio above, for the case where even the *best* fuzzy
+ * match is itself only as good as the noise around it (no real match exists
+ * for the query at all) — without this, a ratio applied to an already-low
+ * best score would still admit everything tied with it.
+ */
+export const FUZZY_RELEVANCE_FLOOR = 0.3;
+
+/**
+ * A fuzzy match only counts when it is reasonably close to the best match
+ * found for this same query — not merely above the trigram index's own loose
+ * prefilter (`<%`, a fixed database-wide threshold chosen to keep the index
+ * useful, not to define "relevant"). See `FUZZY_RELEVANCE_RATIO` for why.
+ *
+ * Deliberately scoped to `status = 'active'` and the query alone, not to
+ * whichever other filters (category, price, ...) happen to be selected: how
+ * good a "genuine" match looks for a given search term is a property of the
+ * term itself, not of an unrelated filter someone also has selected, and
+ * scoping it globally is what keeps this clause identical everywhere it's
+ * used — the rows query, the count query, and the facets query all compute
+ * "relevant" the same way regardless of which of *their* other filters are
+ * active, which is what keeps their results describing the same set.
+ *
+ * The subquery references only the bind parameter at `queryPlaceholder`, not
+ * any column of the outer query — so Postgres evaluates it once per query
+ * (an "InitPlan"), not once per candidate row, and it costs about the same as
+ * the `<%` prefilter it reads from: both scan the same GIN-trigram-narrowed
+ * candidate set, not the full table.
+ *
+ * Every query that filters, counts or facets a fuzzy search must use this
+ * exact clause, or its results will describe a different set of rows than
+ * the others do — see `searchListingsFuzzy`, `countSearchMatches`'s fuzzy
+ * branch, and the facet query's fuzzy branch.
+ */
+export function fuzzyRelevanceClause(queryPlaceholder: string): string {
+  return `word_similarity(${queryPlaceholder}, l.title) >= GREATEST(
+    (SELECT MAX(word_similarity(${queryPlaceholder}, l2.title))
+       FROM listings l2
+      WHERE l2.status = 'active' AND ${queryPlaceholder} <% l2.title
+    ) * ${FUZZY_RELEVANCE_RATIO},
+    ${FUZZY_RELEVANCE_FLOOR}
+  )`;
+}
+
 export type ListingFilters = {
   q?: string;
   /** Empty means "any category". Narrowed with ANY(...), same as conditions. */
