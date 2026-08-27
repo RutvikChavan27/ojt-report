@@ -241,12 +241,16 @@ function SearchResults() {
       postedWithinDays: null,
     });
 
-  const handleSaveSearch = () => {
+  const handleSaveSearch = async () => {
     const name =
       [params.q || "All listings", params.city].filter(Boolean).join(" in ") ||
       "All listings";
-    save(name, searchToParams(params).toString());
-    setSavedNotice(true);
+    // `save` itself opens the login prompt when signed out (and returns
+    // false without saving anything) — so this button stays clickable either
+    // way, same as the Like heart elsewhere, rather than being disabled and
+    // silently unable to ever reach that prompt.
+    const saved = await save(name, searchToParams(params).toString());
+    if (saved) setSavedNotice(true);
   };
 
   return (
@@ -359,9 +363,7 @@ function SearchResults() {
               <button
                 type="button"
                 onClick={handleSaveSearch}
-                disabled={!user}
-                title={user ? undefined : "Log in to save a search"}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-2.5 text-sm font-bold text-cyan-700 transition hover:border-transparent hover:bg-gradient-to-r hover:from-[#00c9ff] hover:to-[#92fe9d] hover:text-charcoal-900 disabled:cursor-not-allowed disabled:border-taupe disabled:text-charcoal-400 disabled:hover:border-taupe disabled:hover:bg-none"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-2.5 text-sm font-bold text-cyan-700 transition hover:border-transparent hover:bg-gradient-to-r hover:from-[#00c9ff] hover:to-[#92fe9d] hover:text-charcoal-900"
               >
                 <FiBookmark size={14} />
                 Save this search

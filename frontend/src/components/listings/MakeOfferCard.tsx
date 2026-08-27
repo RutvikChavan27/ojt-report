@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FiCheck, FiTag } from "react-icons/fi";
 import { createOffer } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 import { useAuth } from "../../store/AuthContext";
+import { currentReturnPath } from "../../lib/returnTo";
 
 type MakeOfferCardProps = {
   listingId: string;
@@ -27,6 +28,7 @@ type MakeOfferCardProps = {
  */
 function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOfferCardProps) {
   const { user } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,11 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
             Make an Offer
           </button>
           <p className="mt-2 text-xs text-charcoal-400">
-            <Link to="/login" className="font-semibold text-cyan-700 hover:underline">
+            <Link
+              to="/login"
+              state={{ from: currentReturnPath(location) }}
+              className="font-semibold text-cyan-700 hover:underline"
+            >
               Log in
             </Link>{" "}
             to make an offer.

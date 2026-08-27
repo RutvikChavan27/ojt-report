@@ -96,8 +96,18 @@ export const logoutUser = () =>
 export const fetchAuthProviders = () =>
   apiRequest<{ google: boolean }>("/api/auth/providers");
 
-/** A link, not a fetch: the browser itself must visit Google. */
-export const googleSignInUrl = `${API_BASE}/api/auth/google`;
+/**
+ * A link, not a fetch: the browser itself must visit Google.
+ *
+ * `returnTo` — the page sign-in was started from — travels as a query param
+ * here because that's the only channel available: the browser is about to
+ * leave the SPA entirely (Google, then the backend's callback) and come back
+ * days-of-round-trips later as a fresh page load, so no in-memory React state
+ * survives the trip. The backend validates it's an internal path before
+ * storing or using it — see getGoogleStart/getGoogleCallback.
+ */
+export const googleSignInUrl = (returnTo?: string): string =>
+  `${API_BASE}/api/auth/google${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`;
 
 /**
  * One type-ahead suggestion — a category or subcategory to navigate into.

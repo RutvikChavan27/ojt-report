@@ -5,6 +5,7 @@ import { FiArrowRight, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
+import { isSafeReturnPath } from "../../lib/returnTo";
 
 /** Matches the server's minimum, so a rejection never comes as a surprise. */
 const MIN_PASSWORD_LENGTH = 8;
@@ -33,7 +34,8 @@ function Register() {
   const [submitting, setSubmitting] = useState(false);
 
   /** Where RequireAuth wanted to send them, if they arrived from a gate. */
-  const from = (location.state as { from?: string } | null)?.from;
+  const rawFrom = (location.state as { from?: string } | null)?.from;
+  const from = isSafeReturnPath(rawFrom) ? rawFrom : undefined;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -164,7 +166,7 @@ function Register() {
             </div>
 
             <a
-              href={googleSignInUrl}
+              href={googleSignInUrl(from)}
               className="flex w-full items-center justify-center gap-2.5 rounded-full border border-taupe py-3 text-sm font-semibold text-charcoal-900 transition hover:bg-sand"
             >
               <FcGoogle size={18} />
@@ -175,7 +177,11 @@ function Register() {
 
         <p className="mt-6 text-center text-sm text-charcoal-500">
           Already have an account?{" "}
-          <Link to="/login" className="font-bold text-charcoal-900 hover:underline">
+          <Link
+            to="/login"
+            state={from ? { from } : undefined}
+            className="font-bold text-charcoal-900 hover:underline"
+          >
             Log in
           </Link>
         </p>

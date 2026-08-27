@@ -5,6 +5,7 @@ import { FiArrowRight, FiLock, FiMail } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
+import { isSafeReturnPath } from "../../lib/returnTo";
 
 /**
  * Sign-in.
@@ -60,7 +61,12 @@ function Login() {
   const [autofillLocked, setAutofillLocked] = useState(true);
   const unlockAutofill = () => setAutofillLocked(false);
 
-  const from = (location.state as { from?: string } | null)?.from;
+  const rawFrom = (location.state as { from?: string } | null)?.from;
+  // Re-validated here even though every call site is only ever supposed to
+  // pass an internal path — this is the value that actually goes into
+  // `navigate()`, so it must not depend on every caller having gotten that
+  // right, only on this one check.
+  const from = isSafeReturnPath(rawFrom) ? rawFrom : undefined;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -167,7 +173,7 @@ function Login() {
 
             {/* A link, not a fetch: the browser itself must visit Google. */}
             <a
-              href={googleSignInUrl}
+              href={googleSignInUrl(from)}
               className="flex w-full items-center justify-center gap-2.5 rounded-full border border-taupe py-3 text-sm font-semibold text-charcoal-900 transition hover:bg-sand"
             >
               <FcGoogle size={18} />
@@ -178,7 +184,11 @@ function Login() {
 
         <p className="mt-6 text-center text-sm text-charcoal-500">
           New to Bazaar Marketplace?{" "}
-          <Link to="/register" className="font-bold text-charcoal-900 hover:underline">
+          <Link
+            to="/register"
+            state={from ? { from } : undefined}
+            className="font-bold text-charcoal-900 hover:underline"
+          >
             Create an account
           </Link>
         </p>

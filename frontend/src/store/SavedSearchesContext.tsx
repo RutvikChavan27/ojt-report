@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   createSavedSearch,
   deleteSavedSearch,
@@ -19,13 +19,15 @@ import { paramsFromSearch } from "../lib/search";
 import { searchListingsViaApi } from "../lib/searchApi";
 import { useAuth } from "./AuthContext";
 import { useConfirm } from "./ConfirmContext";
+import { currentReturnPath } from "../lib/returnTo";
 
 /** A saved search, exactly as the API returns it. */
 export type SavedSearch = ApiSavedSearch;
 
 type SavedSearchesValue = {
   searches: SavedSearch[];
-  save: (name: string, query: string) => Promise<void>;
+  /** Resolves `true` once actually saved — `false` when signed out (a login prompt was shown instead) or cancelled, so the caller can tell a real save apart from either. */
+  save: (name: string, query: string) => Promise<boolean>;
   remove: (id: string) => void;
   /** New matches since last checked — the "3 new listings" badge. */
   newCount: (search: SavedSearch) => number;
@@ -69,9 +71,10 @@ async function currentTotal(query: string): Promise<number | null> {
  * Nothing is stored for a logged-out visitor: `save` opens the login prompt.
  */
 export function SavedSearchesProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const confirm = useConfirm();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [searches, setSearches] = useState<SavedSearch[]>([]);
   /** Live totals by saved-search id, as last fetched — drives the badge. */
@@ -134,14 +137,18 @@ export function SavedSearchesProvider({ children }: { children: ReactNode }) {
       confirmLabel: "Log in",
       cancelLabel: "Not now",
     });
-    if (ok) navigate("/login");
-  }, [confirm, navigate]);
+    if (ok) navigate("/login", { state: { from: currentReturnPath(location) } });
+  }, [confirm, navigate, location]);
 
   const save = useCallback(
-    async (name: string, query: string) => {
+    async (name: string, query: string): Promise<boolean> => {
+      // Same brief-window reasoning as SavedListingsContext.toggle: don't
+      // decide "not signed in" off a still-loading auth check.
+      if (loading) return false;
+
       if (!user) {
         await promptLogin();
-        return;
+        return false;
       }
 
       // Baseline is what exists now, so the badge starts at zero rather than
@@ -151,8 +158,9 @@ export function SavedSearchesProvider({ children }: { children: ReactNode }) {
 
       setSearches((current) => [row, ...current]);
       setTotals((current) => ({ ...current, [row.id]: total }));
+      return true;
     },
-    [user, promptLogin],
+    [user, loading, promptLogin],
   );
 
   const remove = useCallback((id: string) => {

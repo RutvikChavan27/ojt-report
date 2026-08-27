@@ -3,6 +3,7 @@ import Container from "../layout/Container";
 import { Link, useLocation } from "react-router-dom";
 import { FiLogIn, FiUserPlus } from "react-icons/fi";
 import { useAuth } from "../../store/AuthContext";
+import { currentReturnPath } from "../../lib/returnTo";
 
 type RequireAuthProps = {
   /** What the account is needed for, e.g. "sell something". */
@@ -29,7 +30,7 @@ type RequireAuthProps = {
 function RequireAuth({ action, children }: RequireAuthProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const from = location.pathname + location.search;
+  const from = currentReturnPath(location);
 
   // Waiting on /me. Showing a refusal here would flash it at someone who is in
   // fact signed in, every time they reload the page.

@@ -35,6 +35,14 @@
  * The `state` value used in steps 1 and 3 is a security check (explained
  * further down at getGoogleStart) that stops a stranger from tricking someone
  * into completing someone else's login.
+ *
+ * `returnTo` rides alongside `state` the same way: the frontend passes the
+ * page it wants back (e.g. `/listing/123`) as a query param on step 1,
+ * getGoogleStart saves it in the session next to the CSRF state, and
+ * getGoogleCallback reads it back out to redirect somewhere other than the
+ * homepage once sign-in succeeds. It has to travel through the *session*
+ * rather than as a query param Google echoes back — Google's own redirect
+ * URI is fixed and only carries `code`/`state`, nothing this app adds.
  */
 import crypto from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
@@ -49,6 +57,7 @@ import {
 import { findUserById } from "../repositories/user.repository";
 import { parseCredentials, parseRegistration } from "../validators/auth.validator";
 import { sendError, sendSuccess } from "../utils/response";
+import { isSafeReturnPath, withAuthMarker } from "../utils/returnTo";
 
 /**
  * Starts a fresh session for a user id — this is what actually "logs someone
@@ -205,6 +214,14 @@ export function getGoogleStart(req: Request, res: Response): void {
   // one this browser was actually issued.
   const state = crypto.randomBytes(16).toString("hex");
   req.session.oauthState = state;
+
+  // Where to send the browser back to once sign-in succeeds — validated here
+  // (an attacker-controlled query param) rather than trusted purely because
+  // it made it into the session; see getGoogleCallback, which validates it
+  // again on the way out for the same reason.
+  const returnTo = req.query.returnTo;
+  req.session.returnTo = isSafeReturnPath(returnTo) ? returnTo : undefined;
+
   req.session.save(() => res.redirect(buildAuthoriseUrl(state)));
 }
 
@@ -233,9 +250,11 @@ export async function getGoogleCallback(
   const code = typeof req.query.code === "string" ? req.query.code : null;
   const state = typeof req.query.state === "string" ? req.query.state : null;
   const expectedState = req.session.oauthState;
+  const returnTo = req.session.returnTo;
 
-  // Consume the state either way, so a value cannot be replayed.
+  // Consume both either way, so neither can be replayed on a later attempt.
   req.session.oauthState = undefined;
+  req.session.returnTo = undefined;
 
   if (req.query.error) return fail("google_denied");
   if (!code || !state || !expectedState || state !== expectedState) {
@@ -246,10 +265,17 @@ export async function getGoogleCallback(
     const profile = await fetchGoogleProfile(code);
     const user = await signInWithGoogle(profile);
     await startSession(req, user.id);
-    // Straight to the main browsing page rather than the logged-out Welcome
-    // screen — that page's whole point is "log in or create an account",
-    // which is exactly what someone who just did either doesn't need to see.
-    res.redirect(`${config.clientUrl}/home?auth=google_ok`);
+    // Back to wherever sign-in was started from — a listing, a search, a
+    // gated page — rather than the homepage regardless of that. Falls back to
+    // the main browsing page (not the logged-out Welcome screen: that page's
+    // whole point is "log in or create an account", which someone who just
+    // did either doesn't need to see) only when no return path was captured,
+    // e.g. sign-in started directly from /login with no prior page to return to.
+    // Re-validated here even though getGoogleStart already checked it once —
+    // this is the value that actually goes into a redirect, so it must not
+    // depend on that earlier check alone having been correct.
+    const destination = isSafeReturnPath(returnTo) ? returnTo : "/home";
+    res.redirect(`${config.clientUrl}${withAuthMarker(destination, "google_ok")}`);
   } catch (err) {
     console.error("[auth] Google sign-in failed:", (err as Error).message);
     fail("google_failed", err instanceof GoogleAuthError ? err.code : undefined);

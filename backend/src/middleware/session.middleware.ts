@@ -19,6 +19,8 @@ declare module "express-session" {
     userId?: number;
     /** Anti-CSRF value for an in-flight OAuth round trip. */
     oauthState?: string;
+    /** Where to send the browser back to once that OAuth round trip succeeds — see getGoogleStart/getGoogleCallback. */
+    returnTo?: string;
   }
 }
 
