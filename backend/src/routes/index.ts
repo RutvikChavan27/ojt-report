@@ -42,6 +42,14 @@ import {
   postSavedSearch,
   postSavedSearchViewed,
 } from "../controllers/saved.controller";
+import {
+  getMyOffers,
+  getReceivedOffers,
+  postOffer,
+  postOfferAccept,
+  postOfferCounter,
+  postOfferReject,
+} from "../controllers/offer.controller";
 import { requireAuth, requireListingOwner } from "../middleware/auth.middleware";
 
 /**
@@ -112,5 +120,18 @@ router.get("/saved-searches", requireAuth, getSavedSearches);
 router.post("/saved-searches", requireAuth, postSavedSearch);
 router.delete("/saved-searches/:id", requireAuth, deleteSavedSearchById);
 router.post("/saved-searches/:id/viewed", requireAuth, postSavedSearchViewed);
+
+/* Offers. Every route is behind requireAuth: there is no anonymous offer.
+   Ownership of an *offer* (as opposed to a listing) is enforced inside the
+   service/repository, not by a route-level guard — accepting or rejecting one
+   is only valid for whichever side's turn it is to answer, which depends on
+   the offer's current status, not a single fixed owner column the way a
+   listing has. See listingOffers.service.ts. */
+router.post("/offers", requireAuth, postOffer);
+router.get("/offers/mine", requireAuth, getMyOffers);
+router.get("/offers/received", requireAuth, getReceivedOffers);
+router.post("/offers/:id/accept", requireAuth, postOfferAccept);
+router.post("/offers/:id/reject", requireAuth, postOfferReject);
+router.post("/offers/:id/counter", requireAuth, postOfferCounter);
 
 export default router;

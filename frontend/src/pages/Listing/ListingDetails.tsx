@@ -13,6 +13,7 @@ import EmptyState from "../../components/common/EmptyState";
 import ListingDetailsSkeleton from "../../components/common/ListingDetailsSkeleton";
 import ListingGallery from "../../components/listings/ListingGallery";
 import ListingGrid from "../../components/listings/ListingGrid";
+import MakeOfferCard from "../../components/listings/MakeOfferCard";
 import SellerCard from "../../components/listings/SellerCard";
 import { formatPrice, placeLabel, relativeTime } from "../../lib/format";
 import { fetchListing, searchListings } from "../../lib/api";
@@ -221,6 +222,13 @@ function ListingDetails() {
         {/* Right: the actions, kept in view while the detail is read */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <SellerCard seller={listing.seller} available={listing.status === "active"} />
+
+          <MakeOfferCard
+            listingId={listing.id}
+            listingPrice={listing.price}
+            sellerId={listing.seller.sellerId}
+            available={listing.status === "active"}
+          />
 
           <button
             type="button"

@@ -40,6 +40,7 @@ const ListingDetails = lazy(routeChunks.listing);
 const CategoryPage = lazy(routeChunks.category);
 const PostAd = lazy(routeChunks.postAd);
 const MyListings = lazy(routeChunks.myListings);
+const MyOffers = lazy(routeChunks.myOffers);
 const SavedSearches = lazy(routeChunks.savedSearches);
 const SavedListings = lazy(routeChunks.savedListings);
 const Login = lazy(routeChunks.login);
@@ -154,6 +155,14 @@ function App() {
             element={
               <RequireAuth action="save searches">
                 <SavedSearches />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/my-offers"
+            element={
+              <RequireAuth action="see your offers">
+                <MyOffers />
               </RequireAuth>
             }
           />

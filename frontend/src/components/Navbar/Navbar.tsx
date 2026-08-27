@@ -218,6 +218,9 @@ function Navbar() {
                     <Link to="/my-listings" onClick={closeAll} className={menuItem}>
                       My listings
                     </Link>
+                    <Link to="/my-offers" onClick={closeAll} className={menuItem}>
+                      My offers
+                    </Link>
                     <button
                       type="button"
                       onClick={async () => {
@@ -302,6 +305,9 @@ function Navbar() {
             )}
             <Link to="/my-listings" onClick={closeAll} className={menuItem}>
               My listings
+            </Link>
+            <Link to="/my-offers" onClick={closeAll} className={menuItem}>
+              My offers
             </Link>
             <Link to="/saved" onClick={closeAll} className={menuItem}>
               Saved listings

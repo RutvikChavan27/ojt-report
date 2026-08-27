@@ -124,6 +124,7 @@ export async function getListing(id: string): Promise<ListingDetailDTO | null> {
     image: imageOrPlaceholder(row.image),
     images: images.map(resolveImagePath),
     seller: {
+      sellerId: row.seller_id,
       name: row.seller_name,
       memberSince: row.seller_created_at.toISOString(),
       phoneMasked: maskPhone(row.seller_phone),

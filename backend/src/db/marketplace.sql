@@ -190,6 +190,38 @@ CREATE TABLE IF NOT EXISTS saved_searches (
 ALTER TABLE saved_searches
   ADD COLUMN IF NOT EXISTS seen_count INTEGER NOT NULL DEFAULT 0;
 
+DO $$ BEGIN
+  CREATE TYPE offer_status AS ENUM ('pending', 'accepted', 'rejected', 'countered');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- A buyer's price offer on a listing, and the seller's response to it.
+--
+-- Deliberately not a messaging system: one row is one proposal and, at most,
+-- one counter-proposal. If a buyer wants to negotiate past a counter, they
+-- submit a new offer (a new row) rather than this one growing an unbounded
+-- back-and-forth — see listingOffers.repository.ts.
+--
+-- seller_id is copied from listings.seller_id at creation time rather than
+-- joined on every read. "Offers received" is a query the seller dashboard
+-- runs on every visit, and filtering directly on listing_offers.seller_id
+-- lets it use a plain index instead of joining every offer through listings
+-- first. A listing's owner never changes in this app, so this can never
+-- drift from the listing it points at.
+CREATE TABLE IF NOT EXISTS listing_offers (
+  id BIGSERIAL PRIMARY KEY,
+  listing_id BIGINT NOT NULL REFERENCES listings (id) ON DELETE CASCADE,
+  buyer_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  seller_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  offered_price NUMERIC(10, 2) NOT NULL CHECK (offered_price > 0),
+  -- Set only once the seller counters; stays null through a plain accept or
+  -- reject of the original offer.
+  counter_price NUMERIC(10, 2) CHECK (counter_price IS NULL OR counter_price > 0),
+  status offer_status NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Listings a user has saved (the wishlist). A join row per (user, listing), so
 -- ownership is the primary key itself — a user can only ever read or delete
 -- their own rows, and saving the same listing twice is a no-op rather than a
@@ -280,6 +312,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS listing_photos_one_primary_idx
 
 CREATE INDEX IF NOT EXISTS saved_searches_user_idx
   ON saved_searches (user_id, created_at DESC);
+
+-- The buyer's "My Offers" and the seller's "Offers Received", each newest first.
+CREATE INDEX IF NOT EXISTS listing_offers_buyer_idx
+  ON listing_offers (buyer_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS listing_offers_seller_idx
+  ON listing_offers (seller_id, updated_at DESC);
+
+-- Whether this buyer already has an open offer on this listing, checked before
+-- a new one is created.
+CREATE INDEX IF NOT EXISTS listing_offers_listing_buyer_idx
+  ON listing_offers (listing_id, buyer_id);
 
 -- Neighbourhood or area within `city`, e.g. "Bandra" for a Mumbai listing.
 --

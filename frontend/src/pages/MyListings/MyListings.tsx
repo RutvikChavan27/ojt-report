@@ -11,11 +11,16 @@ import {
 import EmptyState from "../../components/common/EmptyState";
 import ListingTableSkeleton from "../../components/common/ListingTableSkeleton";
 import ImageWithLoader from "../../components/common/ImageWithLoader";
+import OfferCard from "../../components/offers/OfferCard";
 import { formatPrice } from "../../lib/format";
 import {
+  acceptOffer,
+  counterOffer,
   deleteListing,
   fetchMyListings,
+  fetchReceivedOffers,
   markListingSold,
+  rejectOffer,
   renewListing,
 } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
@@ -24,6 +29,8 @@ import { useConfirm } from "../../store/ConfirmContext";
 import BackLink from "../../components/common/BackLink";
 
 type ListingStatus = "active" | "sold" | "expired";
+/** A fourth, non-listing-status tab: offers received on this seller's listings. */
+type DashboardTab = ListingStatus | "offers";
 
 /**
  * What each status is called on screen.
@@ -63,12 +70,18 @@ const STATUS_STYLE: Record<ListingStatus, string> = {
  * here, and every write is checked against `listings.seller_id` on the server.
  */
 function MyListings() {
-  const [tab, setTab] = useState<ListingStatus>("active");
+  const [tab, setTab] = useState<DashboardTab>("active");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const confirm = useConfirm();
 
   const { data, loading, error, reload } = useApi(fetchMyListings, []);
+  const {
+    data: offersData,
+    loading: offersLoading,
+    error: offersError,
+    reload: reloadOffers,
+  } = useApi(fetchReceivedOffers, []);
 
   /* First load only. The refetch after each sold/renew/delete leaves the table on
      screen, so gating on `loading` alone would black out the dashboard every time
@@ -76,11 +89,27 @@ function MyListings() {
   usePageGate(loading && !data);
 
   const listings = data ?? [];
+  const offers = offersData ?? [];
 
   const visible = listings.filter((listing) => listing.status === tab);
 
   const countFor = (status: ListingStatus) =>
     listings.filter((listing) => listing.status === status).length;
+
+  /** Runs one offer action, then refetches the offers list. */
+  const runOffer = async (id: string, action: () => Promise<unknown>) => {
+    if (busyId) return;
+    setBusyId(id);
+    setActionError(null);
+    try {
+      await action();
+      reloadOffers();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "That did not work.");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   /**
    * Runs one action, then refetches.
@@ -178,6 +207,19 @@ function MyListings() {
             {STATUS_LABEL[status]} ({countFor(status)})
           </button>
         ))}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "offers"}
+          onClick={() => setTab("offers")}
+          className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-bold transition ${
+            tab === "offers"
+              ? "border-cyan-500 text-cyan-700"
+              : "border-transparent text-charcoal-500 hover:text-cyan-600"
+          }`}
+        >
+          Offers Received ({offers.length})
+        </button>
       </div>
 
       {actionError && (
@@ -189,7 +231,46 @@ function MyListings() {
         </p>
       )}
 
-      {loading ? (
+      {tab === "offers" ? (
+        offersLoading ? (
+          <ListingTableSkeleton />
+        ) : offersError ? (
+          <div className="mt-8">
+            <EmptyState title="Could not load your offers" description={offersError}>
+              <button
+                type="button"
+                onClick={reloadOffers}
+                className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+              >
+                Try again
+              </button>
+            </EmptyState>
+          </div>
+        ) : offers.length === 0 ? (
+          <div className="mt-8">
+            <EmptyState
+              title="No offers yet"
+              description="When a buyer makes an offer on one of your listings, it shows up here."
+            />
+          </div>
+        ) : (
+          <ul className="mt-6 space-y-4">
+            {offers.map((offer) => (
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                viewer="seller"
+                busy={busyId === offer.id}
+                onAccept={() => runOffer(offer.id, () => acceptOffer(offer.id))}
+                onReject={() => runOffer(offer.id, () => rejectOffer(offer.id))}
+                onCounter={(price) =>
+                  runOffer(offer.id, () => counterOffer(offer.id, price))
+                }
+              />
+            ))}
+          </ul>
+        )
+      ) : loading ? (
         <ListingTableSkeleton />
       ) : error ? (
         <div className="mt-8">

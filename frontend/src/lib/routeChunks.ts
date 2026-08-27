@@ -19,6 +19,7 @@ export const routeChunks = {
   category: () => import("../pages/Category/CategoryPage"),
   postAd: () => import("../pages/PostAd/PostAd"),
   myListings: () => import("../pages/MyListings/MyListings"),
+  myOffers: () => import("../pages/MyOffers/MyOffers"),
   savedSearches: () => import("../pages/SavedSearches/SavedSearches"),
   savedListings: () => import("../pages/SavedListings/SavedListings"),
   login: () => import("../pages/Auth/Login"),

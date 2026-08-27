@@ -44,6 +44,8 @@ export type ListingDTO = {
 
 /** Who a listing belongs to, as much of them as a buyer may see. */
 export type ListingSellerDTO = {
+  /** Needed client-side only to hide "Make an Offer" from the listing's own owner. */
+  sellerId: number;
   name: string;
   /** ISO timestamp of the account's creation, for "Member since". */
   memberSince: string;
@@ -175,4 +177,29 @@ export type ListingCategoryDTO = {
   audience: string;
   total: number;
   image: string;
+};
+
+export type OfferStatus = "pending" | "accepted" | "rejected" | "countered";
+
+/**
+ * A buyer's price offer on a listing, from either side's point of view — the
+ * same shape serves the buyer's "My Offers" and the seller's "Offers
+ * Received", so the frontend has one type and one card component for both.
+ */
+export type OfferDTO = {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  /** Primary photo, already resolved to a servable path. */
+  listingImage: string;
+  /** The listing's current asking price, read fresh — never copied onto the offer row. */
+  listingPrice: number;
+  /** "active" once more means new actions (accept/reject/counter) are meaningful, not just visible. */
+  listingStatus: string;
+  offeredPrice: number;
+  /** Set only once the seller counters. */
+  counterPrice: number | null;
+  status: OfferStatus;
+  createdAt: string;
+  updatedAt: string;
 };

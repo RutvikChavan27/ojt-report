@@ -186,6 +186,8 @@ export type ListingCardData = Pick<
 
 /** Mirrors ListingSellerDTO. */
 export type ApiSeller = {
+  /** Needed only to hide "Make an Offer" on the seller's own listing. */
+  sellerId: number;
   name: string;
   memberSince: string;
   /** Masked teaser shown before "Contact Seller" is pressed. */
@@ -524,6 +526,66 @@ export const markSavedSearchViewed = (id: string, seenCount: number) =>
     `/api/saved-searches/${encodeURIComponent(id)}/viewed`,
     { method: "POST", body: { seenCount } },
   );
+
+/* ------------------------------------------------------------------- offers */
+
+export type ApiOfferStatus = "pending" | "accepted" | "rejected" | "countered";
+
+/** A buyer's price offer on a listing. Mirrors OfferDTO — the same shape for
+ *  both the buyer's "My Offers" and the seller's "Offers Received". */
+export type ApiOffer = {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  listingImage: string;
+  listingPrice: number;
+  listingStatus: string;
+  offeredPrice: number;
+  counterPrice: number | null;
+  status: ApiOfferStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const withOfferImage = (offer: ApiOffer): ApiOffer => ({
+  ...offer,
+  listingImage: imageUrl(offer.listingImage),
+});
+
+/** Makes an offer on a listing. Requires a session; the server assigns the buyer. */
+export const createOffer = (listingId: string, offeredPrice: number) =>
+  apiRequest<ApiOffer>("/api/offers", {
+    method: "POST",
+    body: { listingId, offeredPrice },
+  }).then((offer) => withOfferImage(offer));
+
+/** The signed-in user's own offers, newest activity first. */
+export const fetchMyOffers = async (): Promise<ApiOffer[]> => {
+  const data = await apiRequest<ApiOffer[]>("/api/offers/mine");
+  return data.map(withOfferImage);
+};
+
+/** Offers made on the signed-in user's own listings. */
+export const fetchReceivedOffers = async (): Promise<ApiOffer[]> => {
+  const data = await apiRequest<ApiOffer[]>("/api/offers/received");
+  return data.map(withOfferImage);
+};
+
+export const acceptOffer = (id: string) =>
+  apiRequest<ApiOffer>(`/api/offers/${encodeURIComponent(id)}/accept`, {
+    method: "POST",
+  }).then((offer) => withOfferImage(offer));
+
+export const rejectOffer = (id: string) =>
+  apiRequest<ApiOffer>(`/api/offers/${encodeURIComponent(id)}/reject`, {
+    method: "POST",
+  }).then((offer) => withOfferImage(offer));
+
+export const counterOffer = (id: string, counterPrice: number) =>
+  apiRequest<ApiOffer>(`/api/offers/${encodeURIComponent(id)}/counter`, {
+    method: "POST",
+    body: { counterPrice },
+  }).then((offer) => withOfferImage(offer));
 
 /* -------------------------------------------------------------------- upload */
 

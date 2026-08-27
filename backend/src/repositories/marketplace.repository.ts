@@ -39,6 +39,7 @@ export type ListingRow = {
 export type ListingDetailRow = ListingRow & {
   description: string;
   images: string[];
+  seller_id: number;
   seller_name: string;
   seller_created_at: Date;
   seller_phone: string | null;
@@ -182,6 +183,7 @@ export async function findListingById(
        l.posted_at,
        l.view_count,
        l.status::text,
+       l.seller_id,
        u.display_name AS seller_name,
        u.created_at AS seller_created_at,
        u.phone AS seller_phone,
