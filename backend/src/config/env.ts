@@ -31,6 +31,26 @@ function requireEnv(name: string): string {
 }
 
 /**
+ * Reads the session-cookie signing secret. Falls back to an insecure,
+ * published-in-this-file default in development — except in production,
+ * where that fallback is exactly the kind of well-known string that lets
+ * anyone forge a valid session cookie by signing one with it themselves. A
+ * real value is required there, the same way `DATABASE_URL` always is.
+ */
+function readSessionSecret(): string {
+  const value = process.env.SESSION_SECRET;
+  if (value) return value;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "SESSION_SECRET is not set. Set it in the hosting platform's environment " +
+        "variables before deploying — the development fallback must never sign " +
+        "session cookies in production."
+    );
+  }
+  return "dev-only-insecure-session-secret";
+}
+
+/**
  * Origins allowed to call the API with credentials.
  *
  * A list rather than a single value because the frontend legitimately runs on
@@ -82,9 +102,10 @@ export const config = {
   clientUrl: clientUrls[0],
   /**
    * Signs the session cookie. The development fallback exists so the app runs
-   * out of the box; `npm start` refuses to boot without a real value set.
+   * out of the box; production refuses to boot without a real value set —
+   * see `readSessionSecret` above.
    */
-  sessionSecret: process.env.SESSION_SECRET ?? "dev-only-insecure-session-secret",
+  sessionSecret: readSessionSecret(),
   isProduction: process.env.NODE_ENV === "production",
   /** Google OAuth. Empty means the Google routes report themselves unavailable. */
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
