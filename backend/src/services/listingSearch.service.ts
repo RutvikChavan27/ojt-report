@@ -256,7 +256,16 @@ export async function searchListings(
     const fuzzySuggestion = suggestCorrection(request.q);
 
     rows = await fuzzyRows;
-    fuzzy = rows.length > 0;
+    // A later page of an *already-known* fuzzy search (`request.fuzzy`) stays
+    // fuzzy even when this particular page's rows come back empty — that
+    // emptiness means "nothing at this offset" (a page past the real last
+    // one, see the self-heal below), not "this search turned out not to be
+    // fuzzy after all." Getting this wrong previously fell through to the
+    // `else` branch below and reported the *exact*-match total (0, since an
+    // exact-tsquery miss is what reached the fuzzy path to begin with)
+    // instead of the real fuzzy total — which then also defeated the
+    // self-heal, since it only runs when `total > 0`.
+    fuzzy = rows.length > 0 || Boolean(request.fuzzy);
 
     if (fuzzy) {
       void optimisticTotal.catch(() => undefined);
@@ -304,7 +313,14 @@ export async function searchListings(
     total = freshTotal;
     if (freshTotal > 0) {
       page = Math.min(requestedPage, Math.max(1, Math.ceil(freshTotal / perPage)));
-      rows = await searchListingsExact({ ...options, offset: (page - 1) * perPage });
+      // Must match whichever path produced `total` — an exact-tsquery
+      // re-fetch here for a fuzzy search would just repeat the exact-match
+      // miss that reached the fuzzy path in the first place, landing back on
+      // an empty page despite a correct, nonzero `total`.
+      const healedOptions = { ...options, offset: (page - 1) * perPage };
+      rows = fuzzy
+        ? await searchListingsFuzzy(healedOptions)
+        : await searchListingsExact(healedOptions);
     }
   }
 

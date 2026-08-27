@@ -233,6 +233,32 @@ describe("searchListings stays on fuzzy matching across pages of the same search
     // No duplicate across the two pages, and no gap: every seeded row shown exactly once.
     expect(new Set(allTitles).size).toBe(TOTAL_ROWS);
   });
+
+  /**
+   * A stale link/bookmark to a deep page of a fuzzy search — plausible any
+   * time the true match count shrinks after the page was first loaded (e.g.
+   * a stricter relevance filter shipping, or matching rows expiring/selling)
+   * — must land on the real last page, not report zero results despite the
+   * search genuinely having matches. `fuzzy: true` here is exactly what a
+   * real browser tab would still be sending, echoed from that now-stale
+   * page 1 response.
+   */
+  it("a page past the real last page, on an already-known fuzzy search, self-heals instead of reporting zero", async () => {
+    const lastPage = Math.ceil(TOTAL_ROWS / PER_PAGE);
+    const result = await searchListings({
+      q: QUERY,
+      sort: "relevance",
+      page: lastPage + 5,
+      perPage: PER_PAGE,
+      fuzzy: true,
+    });
+
+    expect(result.fuzzy).toBe(true);
+    expect(result.total).toBe(TOTAL_ROWS);
+    expect(result.page).toBe(lastPage);
+    expect(result.items.length).toBe(TOTAL_ROWS - (lastPage - 1) * PER_PAGE);
+    expect(result.items.every((item) => item.title.includes(STEM))).toBe(true);
+  });
 });
 
 describe("searchListings fuzzy matching excludes noise that only ties the trigram index's loose prefilter", () => {
