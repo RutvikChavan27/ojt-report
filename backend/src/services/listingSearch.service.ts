@@ -262,19 +262,36 @@ export async function searchListings(
     [total, facetRows] = await Promise.all([optimisticTotal, optimisticFacets]);
   }
 
-  // A page past the last real one — someone jumping straight to a high page
-  // number, or a filter narrowing the results out from under an already-open
-  // one — comes back with no rows even though matches exist. Re-fetch the
-  // last real page instead of handing back a blank grid over a nonzero total.
+  // A page past the last real one comes back with no rows even though
+  // `total` said matches exist — self-heal by checking reality again right
+  // now, rather than trusting the count from a moment ago.
+  //
+  // This is not only "someone hand-typed a page number past the end."
+  // `total` and this page's rows are two separate queries, dispatched
+  // together and each reading its own snapshot of a table that is never
+  // still — 100k+ listings, an expiry sweep every five minutes, sellers
+  // editing/selling/deleting continuously. The two can legitimately
+  // disagree by the time both finish, and that gap is not proportional to
+  // how deep into the results the page is: it can land on *any* page,
+  // including one equal to (not just past) the `total`-implied last page —
+  // which a check of `requestedPage > pageCount` alone would miss, because
+  // on the exact last page those two are equal by definition. The fix is to
+  // treat "rows came back empty despite a nonzero total" as the signal,
+  // re-count for what is true *now*, and land on whatever page that current
+  // truth says is last — rather than assume the original `total` was ever
+  // wrong, or that the requested page was necessarily invalid.
   //
   // Only meaningful for an `offset` request: a cursor seek coming back empty
   // means "nothing more in that direction", which is what an already-disabled
   // Next/Previous button prevents the client from ever asking for on purpose.
   let page = requestedPage;
-  const pageCount = Math.max(1, Math.ceil(total / perPage));
-  if (!seek && rows.length === 0 && total > 0 && requestedPage > pageCount) {
-    page = pageCount;
-    rows = await searchListingsExact({ ...options, offset: (page - 1) * perPage });
+  if (!seek && rows.length === 0 && total > 0) {
+    const freshTotal = await countSearchMatches({ ...request, fuzzy });
+    total = freshTotal;
+    if (freshTotal > 0) {
+      page = Math.min(requestedPage, Math.max(1, Math.ceil(freshTotal / perPage)));
+      rows = await searchListingsExact({ ...options, offset: (page - 1) * perPage });
+    }
   }
 
   const hasQuery = Boolean(request.q);
