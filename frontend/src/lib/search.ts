@@ -63,8 +63,8 @@ const REAL_CONDITIONS = ["New with tags", "Like new", "Good", "Fair"];
 
 export type SearchParams = {
   q: string;
-  category: string | null;
-  /** Only meaningful alongside `category` — its parent. */
+  categories: string[];
+  /** Only meaningful alongside exactly one selected category — its parent. */
   subcategory: string | null;
   city: string | null;
   conditions: string[];
@@ -87,7 +87,7 @@ export type SearchParams = {
 
 export const EMPTY_PARAMS: SearchParams = {
   q: "",
-  category: null,
+  categories: [],
   subcategory: null,
   city: null,
   conditions: [],
@@ -149,7 +149,9 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
 
   return {
     q,
-    category: search.get("category"),
+    // Repeated keys, same as condition — one or many categories can be selected.
+    categories: search.getAll("category"),
+    // Only meaningful with exactly one category (see searchToParams).
     subcategory: search.get("subcategory"),
     city: search.get("city"),
     // Repeated keys, so a value containing a comma survives the round trip.
@@ -180,10 +182,12 @@ export function searchToParams(params: SearchParams): URLSearchParams {
   const search = new URLSearchParams();
 
   if (params.q) search.set("q", params.q);
-  if (params.category) search.set("category", params.category);
-  // Only meaningful with a category — a subcategory slug from a different
-  // category tree narrowing this one would just produce zero results.
-  if (params.category && params.subcategory) {
+  params.categories.forEach((value) => search.append("category", value));
+  // Only meaningful with exactly one category selected — a subcategory
+  // slug narrowing a browse across several categories at once would just
+  // produce zero results, and picking a second category is what leaves
+  // single-category browsing in the first place (see FilterSidebar).
+  if (params.categories.length === 1 && params.subcategory) {
     search.set("subcategory", params.subcategory);
   }
   if (params.city) search.set("city", params.city);
@@ -212,13 +216,11 @@ export function describeFilters(
 ): { key: string; label: string }[] {
   const chips: { key: string; label: string }[] = [];
 
-  if (params.category) {
-    const label =
-      CATEGORIES.find((entry) => entry.slug === params.category)?.label ??
-      params.category;
-    chips.push({ key: "category", label });
-  }
-  if (params.category && params.subcategory) {
+  params.categories.forEach((slug) => {
+    const label = CATEGORIES.find((entry) => entry.slug === slug)?.label ?? slug;
+    chips.push({ key: `category:${slug}`, label });
+  });
+  if (params.categories.length === 1 && params.subcategory) {
     chips.push({
       key: "subcategory",
       label: humanizeSubcategorySlug(params.subcategory),

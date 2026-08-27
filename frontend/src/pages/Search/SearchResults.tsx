@@ -120,16 +120,23 @@ function SearchResults() {
 
   const chips = describeFilters(params);
 
-  /** Home / <Category> / "<query>" — whichever parts of that apply. */
-  const categoryLabel = params.category
-    ? ((categories ?? []).find((entry) => entry.slug === params.category)
-        ?.label ?? params.category)
+  /**
+   * Home / <Category> / "<query>" — whichever parts of that apply.
+   *
+   * Only shown for exactly one selected category: with several selected at
+   * once there is no single category this search is "inside", and the
+   * filter chips below already list every one of them.
+   */
+  const singleCategory = params.categories.length === 1 ? params.categories[0] : null;
+  const categoryLabel = singleCategory
+    ? ((categories ?? []).find((entry) => entry.slug === singleCategory)
+        ?.label ?? singleCategory)
     : null;
 
   const trail = [
     { label: "Home", to: "/home" },
     ...(categoryLabel
-      ? [{ label: categoryLabel, to: `/search?category=${params.category}` }]
+      ? [{ label: categoryLabel, to: `/search?category=${singleCategory}` }]
       : []),
     ...(categoryLabel && params.subcategory
       ? [{ label: humanizeSubcategorySlug(params.subcategory) }]
@@ -184,10 +191,15 @@ function SearchResults() {
       update({ priceBand: null, minPrice: null, maxPrice: null });
       return;
     }
-    // A subcategory with no category is meaningless, so clearing the
-    // category chip takes its subcategory with it.
-    if (key === "category") {
-      update({ category: null, subcategory: null });
+    if (key.startsWith("category:")) {
+      const value = key.slice("category:".length);
+      // A subcategory only means anything alongside exactly one category, so
+      // removing any category chip takes it with it — same rule as toggling
+      // one off in the sidebar.
+      update({
+        categories: params.categories.filter((entry) => entry !== value),
+        subcategory: null,
+      });
       return;
     }
     update({ [key]: null } as Partial<SearchParams>);
@@ -200,7 +212,7 @@ function SearchResults() {
   const clearAll = () =>
     update({
       q: "",
-      category: null,
+      categories: [],
       subcategory: null,
       city: null,
       conditions: [],

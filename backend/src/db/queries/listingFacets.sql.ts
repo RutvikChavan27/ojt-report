@@ -127,7 +127,7 @@ export function buildFacetCountsQuery(
      own filter" per group, so it only applies when there is nothing to
      exclude. */
   const noFacetFilterSelected =
-    !filters.categorySlug &&
+    !filters.categorySlugs?.length &&
     !filters.audience &&
     !filters.city &&
     !filters.conditions?.length &&
@@ -185,8 +185,8 @@ export function buildFacetCountsQuery(
   /* Each facet's own predicate. "true" when nothing is selected, which makes
      that facet's flag a no-op rather than a special case in every branch. */
   const own: Record<FacetKey, string> = {
-    category: filters.categorySlug
-      ? `l.category_slug = ${bind(filters.categorySlug)}`
+    category: filters.categorySlugs?.length
+      ? `l.category_slug = ANY(${bind(filters.categorySlugs)}::text[])`
       : "true",
     audience: filters.audience
       ? `l.audience = ${bind(filters.audience)}::listing_audience`

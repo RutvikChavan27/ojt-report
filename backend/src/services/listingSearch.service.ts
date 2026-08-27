@@ -31,7 +31,7 @@ const PLACEHOLDER_IMAGE = "/images/product-slim-fit-tee.jpg";
 
 export type SearchRequest = {
   q?: string;
-  categorySlug?: string;
+  categorySlugs?: string[];
   subcategorySlug?: string;
   audience?: string;
   city?: string;

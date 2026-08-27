@@ -20,7 +20,11 @@ type CategoryStripProps = {
  */
 function CategoryStrip({ bare = false }: CategoryStripProps) {
   const [search] = useSearchParams();
-  const active = search.get("category");
+  // Multiple categories can be selected at once from the sidebar now; this
+  // strip only has a single active link to highlight, so it shows one only
+  // when the search is unambiguously "inside" one category.
+  const selected = search.getAll("category");
+  const active = selected.length === 1 ? selected[0] : null;
 
   return (
     <nav

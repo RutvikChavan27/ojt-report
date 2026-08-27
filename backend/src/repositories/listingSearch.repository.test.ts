@@ -79,7 +79,7 @@ describe("facet counts against a fixture with hand-known answers", () => {
     // neither of which is the filter just applied — narrow to A's rows only.
     const rows = await fetchFacetCounts({
       q: MARKER,
-      categorySlug: categories[0],
+      categorySlugs: [categories[0]],
       fuzzy: false,
     });
 
@@ -118,7 +118,7 @@ describe("combined filters, including a search term", () => {
   it("returns only the row satisfying every filter at once (search term + category + city + price range)", async () => {
     const rows = await searchListingsExact({
       q: MARKER,
-      categorySlug: categories[0],
+      categorySlugs: [categories[0]],
       city: "ComboCityX",
       minPrice: 500,
       maxPrice: 5000,
@@ -131,6 +131,20 @@ describe("combined filters, including a search term", () => {
     // must be absent entirely, each failing exactly one of the four filters.
     expect(rows.length).toBe(1);
     expect(rows[0].title).toContain("match");
+  });
+
+  it("selecting more than one category returns rows from any of them, not just the first", async () => {
+    const rows = await searchListingsExact({
+      q: MARKER,
+      categorySlugs: categories,
+      sort: "relevance",
+      limit: 10,
+      offset: 0,
+    });
+
+    // Every fixture row above is category A or B, so all four come back once
+    // the category filter stops narrowing to a single one.
+    expect(rows.length).toBe(4);
   });
 });
 

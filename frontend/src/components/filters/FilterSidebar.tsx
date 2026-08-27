@@ -31,7 +31,7 @@ function FilterSidebar({
 }: FilterSidebarProps) {
   /** Single-select groups behave as radio buttons that can be unset. */
   const toggleSingle = (
-    key: "category" | "city" | "priceBand",
+    key: "city" | "priceBand",
     value: string,
   ) => onChange({ [key]: params[key] === value ? null : value });
 
@@ -40,6 +40,21 @@ function FilterSidebar({
       conditions: params.conditions.includes(value)
         ? params.conditions.filter((entry) => entry !== value)
         : [...params.conditions, value],
+    });
+
+  /**
+   * Category is multi-select, same as condition. Any change to which
+   * categories are selected clears `subcategory` too — it only means
+   * anything alongside exactly one category (see SearchParams), and picking
+   * a second category or leaving the one it belonged to is exactly what
+   * makes it stop applying.
+   */
+  const toggleCategory = (value: string) =>
+    onChange({
+      categories: params.categories.includes(value)
+        ? params.categories.filter((entry) => entry !== value)
+        : [...params.categories, value],
+      subcategory: null,
     });
 
   return (
@@ -65,8 +80,8 @@ function FilterSidebar({
         <FilterSection title="Category">
           <FacetCheckboxList
             options={facets.category}
-            selected={new Set(params.category ? [params.category] : [])}
-            onToggle={(value) => toggleSingle("category", value)}
+            selected={new Set(params.categories)}
+            onToggle={toggleCategory}
           />
         </FilterSection>
 

@@ -26,8 +26,9 @@ export type SortKey = "relevance" | "newest" | "price_asc" | "price_desc";
 
 export type ListingFilters = {
   q?: string;
-  categorySlug?: string;
-  /** Narrows within categorySlug — e.g. "mens-fashion--mens-shirts". */
+  /** Empty means "any category". Narrowed with ANY(...), same as conditions. */
+  categorySlugs?: string[];
+  /** Narrows within categorySlugs — e.g. "mens-fashion--mens-shirts". Only meaningful alongside exactly one category. */
   subcategorySlug?: string;
   audience?: string;
   city?: string;
@@ -61,9 +62,11 @@ export function buildListingWhere(
   const values: unknown[] = [];
   const next = () => `$${startIndex + values.length}`;
 
-  if (filters.categorySlug) {
-    values.push(filters.categorySlug);
-    clauses.push(`l.category_slug = ${next()}`);
+  // = ANY(array) rather than IN (...), same reasoning as conditions below: one
+  // placeholder covers any number of selected categories.
+  if (filters.categorySlugs && filters.categorySlugs.length > 0) {
+    values.push(filters.categorySlugs);
+    clauses.push(`l.category_slug = ANY(${next()}::text[])`);
   }
 
   if (filters.subcategorySlug) {

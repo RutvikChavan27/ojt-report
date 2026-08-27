@@ -360,7 +360,7 @@ export const searchListings = async (
 
 export type SearchParams = {
   q?: string;
-  category?: string;
+  category?: string | string[];
   subcategory?: string;
   audience?: string;
   city?: string | string[];

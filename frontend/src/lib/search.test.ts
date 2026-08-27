@@ -12,7 +12,7 @@ describe("search params URL round trip", () => {
   it("recovers every field of a fully-populated search", () => {
     const original: SearchParams = {
       q: "denim jacket",
-      category: "mens-fashion",
+      categories: ["mens-fashion"],
       subcategory: "mens-fashion--mens-jackets",
       city: "Pune",
       conditions: ["Good", "Fair"],
@@ -52,6 +52,21 @@ describe("search params URL round trip", () => {
 
     const roundTripped = paramsFromSearch(search);
     expect(roundTripped.conditions).toEqual(["Good", "Fair"]);
+  });
+
+  it("keeps repeated category values distinct through the round trip, dropping a subcategory that no longer applies", () => {
+    const search = searchToParams({
+      ...EMPTY_PARAMS,
+      categories: ["mobiles", "cars"],
+      // Meaningless with two categories selected — must not survive the trip.
+      subcategory: "mobiles--smartphones",
+    });
+    expect(search.getAll("category")).toEqual(["mobiles", "cars"]);
+    expect(search.has("subcategory")).toBe(false);
+
+    const roundTripped = paramsFromSearch(search);
+    expect(roundTripped.categories).toEqual(["mobiles", "cars"]);
+    expect(roundTripped.subcategory).toBeNull();
   });
 
   it("leaves cursorDir null for a hand-edited URL that carries a cursor alone", () => {
