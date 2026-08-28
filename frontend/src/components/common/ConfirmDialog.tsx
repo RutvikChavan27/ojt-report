@@ -182,7 +182,12 @@ function ConfirmDialog({
           </Button>
           <Button
             ref={confirmRef}
-            variant={tone === "danger" ? "danger" : "primary"}
+            // Same bordered look as Cancel beside it for the ordinary case —
+            // a bare, border-less fill here was the odd one out next to
+            // Cancel's cyan-500 border. `danger` stays its own solid-red
+            // exception (Button.tsx's own carve-out for "this destroys
+            // something"), untouched.
+            variant={tone === "danger" ? "danger" : "outline"}
             onClick={() => setClosing("confirm")}
           >
             {confirmLabel}
