@@ -88,10 +88,10 @@ function Welcome() {
   const { data: pool } = useApi(() => fetchListings({ perPage: 48 }), []);
 
   const showcase: ApiListing[] = (pool?.items ?? []).filter(hasProductPhoto);
-  // Total, not active-only: the expiry sweep constantly retires old listings
-  // out of active browsing, and a headline stat that visibly shrinks as that
-  // runs reads as the site losing listings rather than staying tidy.
-  const totalListings = data?.totalListings ?? 0;
+  // Active-only, not the all-time total: a shopper reading "N listings" here
+  // means "N things I could actually buy right now" — counting sold/expired
+  // rows too would overstate what is really browsable.
+  const activeListings = data?.totalActive ?? 0;
 
   /* One listing per slot, in order, so no two cards show the same item. Slots
      beyond the number available are dropped rather than repeating one. */
@@ -234,9 +234,9 @@ function Welcome() {
             </p>
           )}
 
-          {totalListings > 0 && (
+          {activeListings > 0 && (
             <p className="mt-4 animate-[fade-in_0.5s_ease-out_both] text-xs text-charcoal-400 [animation-delay:860ms] motion-reduce:animate-none">
-              {totalListings.toLocaleString("en-IN")} total listings on Bazaar Marketplace
+              {activeListings.toLocaleString("en-IN")} active listings on Bazaar Marketplace
             </p>
           )}
 

@@ -7,12 +7,12 @@ import type { ApiListing } from "../../lib/api";
 
 type HeroSearchProps = {
   /**
-   * Every listing ever posted, regardless of status — deliberately the
-   * total rather than the active-only count, so the headline number isn't
-   * confused with (and doesn't fluctuate with) the expiry sweep retiring
-   * old listings out of active browsing.
+   * Listings actually live and browsable right now — sold, expired and
+   * otherwise inactive rows excluded. The headline claims "N things you
+   * could buy today", so it has to be the count someone could actually
+   * click into, not every row ever created.
    */
-  totalListings: number;
+  activeListings: number;
   /** Newest listings, used by the live ticker. Real rows, not sample copy. */
   recent?: ApiListing[];
 };
@@ -44,7 +44,7 @@ const POPULAR = [
  * colour reserved for the handful of things worth drawing the eye to — the
  * live count, the trust pill, and hover states.
  */
-function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
+function HeroSearch({ activeListings, recent = [] }: HeroSearchProps) {
   /** Entry animation, staggered so the eye lands on the headline first. */
   const rise = (delayMs: number) =>
     `animate-[rise-in_0.6s_ease-out_both] [animation-delay:${delayMs}ms] motion-reduce:animate-none`;
@@ -61,8 +61,8 @@ function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || totalListings === 0) {
-      setShownCount(totalListings);
+    if (reduced || activeListings === 0) {
+      setShownCount(activeListings);
       return;
     }
 
@@ -74,7 +74,7 @@ function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
       const progress = Math.min((now - start) / DURATION, 1);
       // Ease-out cubic: fast at first, settling gently onto the real number.
       const eased = 1 - (1 - progress) ** 3;
-      setShownCount(Math.round(totalListings * eased));
+      setShownCount(Math.round(activeListings * eased));
       if (progress < 1) frame = requestAnimationFrame(step);
     };
 
@@ -84,13 +84,13 @@ function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
        count showing 0 while the API had already returned 127. The number is
        information; the animation is decoration. This guarantees the real value
        lands even if not one frame is ever painted. */
-    const settle = setTimeout(() => setShownCount(totalListings), DURATION + 150);
+    const settle = setTimeout(() => setShownCount(activeListings), DURATION + 150);
 
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(settle);
     };
-  }, [totalListings]);
+  }, [activeListings]);
 
   /**
    * A real listing, rotating every few seconds.
@@ -181,7 +181,7 @@ function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
           <span className="font-black tabular-nums text-cyan-600">
             {shownCount.toLocaleString("en-IN")}
           </span>{" "}
-          total listings on Bazaar Marketplace. Find a good deal, or sell what
+          active listings on Bazaar Marketplace. Find a good deal, or sell what
           you no longer need — free to browse, no account needed.
         </p>
 
