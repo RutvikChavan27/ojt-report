@@ -40,14 +40,14 @@ const PANEL_BASE =
  * Shared by every panel's own items — kept exported so a caller that can't go
  * through `DropdownMenu`/`Select` still matches exactly.
  *
- * `charcoal-100` rather than `sand`: sand is a warm cream, and sitting on the
- * panel's own pale-cyan `bg-mist` it read as a greenish tint on hover —
- * exactly the inconsistency between Categories and Location this was meant
- * to remove. `charcoal-100` is a true neutral gray, so a hovered row reads
- * the same way regardless of which panel it's in.
+ * No hover fill at all, on purpose: a background wash here (first `sand`,
+ * then a supposedly-neutral `charcoal-100`) kept reading as an unwanted tint
+ * against the panel's own pale-cyan `bg-mist`. Darkening the text on hover is
+ * enough of a "you're over this row" cue without introducing a fill colour
+ * to get wrong a third time.
  */
 export const dropdownItemClassName =
-  "block w-full rounded-xl px-3 py-2 text-left text-sm text-charcoal-700 transition hover:bg-charcoal-100 hover:text-charcoal-900 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
+  "block w-full rounded-xl px-3 py-2 text-left text-sm text-charcoal-700 transition hover:text-charcoal-900 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
 
 /**
  * Open state plus "close on an outside click or Escape" — the one behaviour
