@@ -1,32 +1,72 @@
 import {
+  Children,
+  isValidElement,
   useEffect,
   useRef,
   useState,
   type ReactNode,
-  type SelectHTMLAttributes,
 } from "react";
 import { FiChevronDown } from "react-icons/fi";
 
 /**
  * The one dropdown look, used everywhere something opens a list of choices —
- * a menu (Categories, the account menu, the searches menu) or a native
- * `<select>` (sort, location, a form's category/condition/city picker).
+ * a menu (Categories, the account menu, the searches menu) or a single-choice
+ * picker (sort, location, a form's category/condition/city field).
  *
- * Both share the same trigger chrome: a `cyan-500` border visible at rest
- * (not only once opened or focused), the same light `bg-mist` wash Button's
- * `outline` variant uses, and a chevron. Before this, three different custom
- * menus each hand-rolled their own open/outside-click/Escape handling
- * (verbatim near-duplicates of each other), and native selects were styled
- * two different ways depending on which page they were on — see
- * `DropdownMenu` and `Select` below for the two shapes that replace both.
+ * Both share the same trigger chrome (a `cyan-500` border visible at rest,
+ * the same light `bg-mist` wash Button's `outline` variant uses, one
+ * `FiChevronDown`) and the same panel chrome (`PANEL_BASE` below). Before
+ * this, several custom menus each hand-rolled their own open/outside-click/
+ * Escape handling, and single-choice fields used a native `<select>` — which
+ * cannot be restyled once open: what appears is the browser's own OS-drawn
+ * popup, in its own colours and font, with its own arrow drawn *in addition
+ * to* whatever icon sits next to it. `DropdownMenu` and `Select` below both
+ * render their open panel as ordinary DOM (not delegated to the browser), so
+ * there is exactly one look for "this is open" anywhere in the app.
  */
 
 const TRIGGER_BASE =
-  "flex items-center gap-2 rounded-full border border-cyan-500 bg-mist text-sm font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out motion-reduce:transform-none";
+  "flex items-center gap-2 rounded-full border border-cyan-500 bg-mist text-sm font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Exported so a trigger that can't be a plain `<button>`/`<label>` (rare) can still match exactly. */
 export const dropdownTriggerClassName = (open?: boolean) =>
   `${TRIGGER_BASE} h-11 pl-4 pr-4${open ? " bg-mist-dark" : ""}`;
+
+/** The open panel's chrome — identical whether it holds menu items or choices. */
+const PANEL_BASE =
+  "rounded-2xl border border-taupe bg-mist p-2 shadow-xl shadow-charcoal-900/5 animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none";
+
+/** Shared by every panel's own items — kept exported so a caller that can't go through `DropdownMenu`/`Select` still matches exactly. */
+export const dropdownItemClassName =
+  "block w-full rounded-xl px-3 py-2 text-left text-sm text-charcoal-700 transition hover:bg-sand hover:text-charcoal-900 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
+
+/**
+ * Open state plus "close on an outside click or Escape" — the one behaviour
+ * every dropdown here needs, previously copied by hand into each one.
+ */
+function useDropdownOpen<T extends HTMLElement>() {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<T>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return { open, setOpen, rootRef };
+}
 
 export type DropdownMenuProps = {
   /** The clickable trigger's own content — an icon, a label, whatever the caller needs; the surrounding chrome and chevron are added here. */
@@ -45,11 +85,6 @@ export type DropdownMenuProps = {
 /**
  * A button that opens a positioned panel underneath it — Categories, the
  * account menu, the saved-searches menu.
- *
- * Owns the part that used to be copied three times almost verbatim: open
- * state, closing on an outside click, closing on Escape, and the panel's
- * chrome/entrance animation. What varies per caller (trigger content, panel
- * content, panel width) is everything this component takes as props.
  */
 export function DropdownMenu({
   label,
@@ -60,26 +95,8 @@ export function DropdownMenu({
   className,
   "aria-label": ariaLabel,
 }: DropdownMenuProps) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const { open, setOpen, rootRef } = useDropdownOpen<HTMLDivElement>();
   const close = () => setOpen(false);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
 
   return (
     <div ref={rootRef} className={`relative ${className ?? ""}`}>
@@ -100,7 +117,7 @@ export function DropdownMenu({
 
       {open && (
         <div
-          className={`absolute top-full mt-2 rounded-2xl border border-taupe bg-mist p-2 shadow-xl shadow-charcoal-900/5 animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none ${
+          className={`absolute top-full mt-2 ${PANEL_BASE} ${
             align === "right" ? "right-0" : "left-0"
           } ${panelClassName ?? ""}`}
         >
@@ -111,20 +128,40 @@ export function DropdownMenu({
   );
 }
 
-/** Shared by every `DropdownMenu` panel's own links/buttons — kept exported so a panel item matches exactly without redeclaring it. */
-export const dropdownItemClassName =
-  "block rounded-xl px-3 py-2 text-sm text-charcoal-700 transition hover:bg-sand hover:text-charcoal-900";
+type SelectOption = { value: string; label: ReactNode; disabled?: boolean };
 
-export type SelectProps = Omit<
-  SelectHTMLAttributes<HTMLSelectElement>,
-  "size"
-> & {
-  /** A leading icon (e.g. a location pin) — the wrapper's own slot, not the select's. */
+/** Reads the `<option>` elements a caller passed as `children`, same as a native `<select>` would. */
+function optionsFromChildren(children: ReactNode): SelectOption[] {
+  const options: SelectOption[] = [];
+  Children.forEach(children, (child) => {
+    if (!isValidElement<{ value?: unknown; disabled?: boolean; children?: ReactNode }>(child)) {
+      return;
+    }
+    options.push({
+      value: String(child.props.value ?? ""),
+      label: child.props.children,
+      disabled: child.props.disabled,
+    });
+  });
+  return options;
+}
+
+export type SelectProps = {
+  id?: string;
+  /** A leading icon (e.g. a location pin) — the trigger's own slot. */
   icon?: ReactNode;
-  /** Named distinctly from the native `size` attribute (a character-width hint, not used here). */
   size?: "sm" | "md";
-  /** Classes for the wrapping `<label>` — width, responsive display, etc. The border/background/height stay fixed. */
+  /** Classes for the wrapping element — width, responsive display, etc. The border/background/height stay fixed. */
   wrapperClassName?: string;
+  className?: string;
+  value: string;
+  onChange: (value: string) => void;
+  /** Blocks submitting the enclosing form while unset — see `PostAd`'s `handleSubmit`, which checks this explicitly since a plain `<div>` has no native constraint validation to lean on. */
+  required?: boolean;
+  disabled?: boolean;
+  "aria-label"?: string;
+  /** `<option>` elements, exactly as a native `<select>` would take them. */
+  children: ReactNode;
 };
 
 const SELECT_SIZE_CLASSES: Record<"sm" | "md", string> = {
@@ -133,31 +170,81 @@ const SELECT_SIZE_CLASSES: Record<"sm" | "md", string> = {
 };
 
 /**
- * A native `<select>` with the same trigger chrome as `DropdownMenu` — a
- * `<select>` already handles its own open/close and keyboard behaviour, so
- * this only supplies the look, not the interaction logic `DropdownMenu`
- * needs for a custom panel.
+ * A single-choice picker with the same trigger chrome as `DropdownMenu`, and
+ * the same custom-rendered panel — not a native `<select>`. A native one
+ * looks right closed, but its open state is drawn by the browser itself and
+ * cannot be given this app's colours, font, or spacing; this renders its own
+ * panel instead, so open looks exactly like every other dropdown here.
+ *
+ * Takes `<option>` children the same way a native `<select>` does, so a
+ * caller migrating from one reads the same either way — only `onChange` is
+ * simpler, receiving the new value directly rather than a change event.
  */
 export function Select({
+  id,
   icon,
   size = "md",
   wrapperClassName,
   className,
+  value,
+  onChange,
+  required,
+  disabled,
+  "aria-label": ariaLabel,
   children,
-  ...rest
 }: SelectProps) {
+  const { open, setOpen, rootRef } = useDropdownOpen<HTMLDivElement>();
+  const options = optionsFromChildren(children);
+  const selected = options.find((option) => option.value === value);
+
   return (
-    <label
-      className={`flex items-center gap-2 rounded-full border border-cyan-500 bg-mist transition-all duration-200 focus-within:ring-2 focus-within:ring-cyan-500/20 ${SELECT_SIZE_CLASSES[size]} ${wrapperClassName ?? ""}`}
-    >
-      {icon}
-      <select
-        className={`min-w-0 flex-1 cursor-pointer bg-transparent font-semibold text-charcoal-900 outline-none ${className ?? ""}`}
-        {...rest}
+    <div ref={rootRef} className={`relative ${wrapperClassName ?? ""}`}>
+      <button
+        type="button"
+        id={id}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-required={required}
+        onClick={() => setOpen((current) => !current)}
+        className={`w-full text-left ${TRIGGER_BASE} ${SELECT_SIZE_CLASSES[size]} ${className ?? ""}`}
       >
-        {children}
-      </select>
-      <FiChevronDown size={14} className="pointer-events-none flex-shrink-0 text-charcoal-400" />
-    </label>
+        {icon}
+        <span className="min-w-0 flex-1 truncate">{selected?.label}</span>
+        <FiChevronDown
+          size={14}
+          className={`flex-shrink-0 text-charcoal-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute left-0 top-full z-20 mt-2 max-h-72 w-full min-w-[10rem] overflow-y-auto ${PANEL_BASE}`}
+          role="listbox"
+        >
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              disabled={option.disabled}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+              className={
+                option.value === value
+                  ? "block w-full rounded-xl bg-cyan-500 px-3 py-2 text-left text-sm font-semibold text-charcoal-900"
+                  : dropdownItemClassName
+              }
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

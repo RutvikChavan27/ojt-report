@@ -21,7 +21,7 @@ function SortDropdown({ value, onChange, hasQuery }: SortDropdownProps) {
       <Select
         size="sm"
         value={value}
-        onChange={(event) => onChange(event.target.value as SortKey)}
+        onChange={(next) => onChange(next as SortKey)}
         aria-label="Sort results"
       >
         {SORT_OPTIONS.map((option) => (

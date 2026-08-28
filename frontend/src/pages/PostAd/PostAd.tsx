@@ -216,6 +216,23 @@ function PostAd() {
       setError("Add at least one photo — listings without photos rarely sell.");
       return;
     }
+    // Title/description/price/area are still native inputs, so the browser's
+    // own required-field check covers them before this ever runs. Category,
+    // condition and city are Select's custom listbox, not a real form
+    // control — it has nothing built in to enforce "required" with, so it's
+    // checked by hand here instead.
+    if (!category) {
+      setError("Choose a category.");
+      return;
+    }
+    if (!condition) {
+      setError("Choose a condition.");
+      return;
+    }
+    if (!city) {
+      setError("Choose a city.");
+      return;
+    }
 
     submittingRef.current = true;
     try {
@@ -487,7 +504,7 @@ function PostAd() {
               <Select
                 id="post-ad-category"
                 value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                onChange={setCategory}
                 required
                 wrapperClassName="mt-1.5 w-full"
               >
@@ -507,9 +524,7 @@ function PostAd() {
               <Select
                 id="post-ad-condition"
                 value={condition}
-                onChange={(event) =>
-                  setCondition(event.target.value as Condition)
-                }
+                onChange={(next) => setCondition(next as Condition)}
                 required
                 wrapperClassName="mt-1.5 w-full"
               >
@@ -553,7 +568,7 @@ function PostAd() {
               <Select
                 id="post-ad-city"
                 value={city}
-                onChange={(event) => setCity(event.target.value)}
+                onChange={setCity}
                 required
                 wrapperClassName="mt-1.5 w-full"
               >

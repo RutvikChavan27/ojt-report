@@ -23,7 +23,7 @@ function LocationSelector({
       icon={<FiMapPin size={16} className="flex-shrink-0 text-charcoal-400" />}
       aria-label="Location"
       value={value ?? ""}
-      onChange={(event) => onChange(event.target.value || null)}
+      onChange={(next) => onChange(next || null)}
       wrapperClassName={className}
     >
       <option value="">All India</option>
