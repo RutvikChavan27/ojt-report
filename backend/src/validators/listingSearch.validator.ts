@@ -23,6 +23,8 @@ import type { SearchRequest } from "../services/listingSearch.service";
 const SORTS = new Set<SortKey>(["relevance", "newest", "price_asc", "price_desc"]);
 const AUDIENCES = new Set(["Men", "Women", "Unisex"]);
 const CONDITIONS = new Set(["New with tags", "Like new", "Good", "Fair"]);
+/** Must match PRICE_BAND_SQL's ids (db/queries/listingSearch.sql.ts) and the frontend's PRICE_BANDS (lib/search.ts). */
+const PRICE_BAND_IDS = new Set(["0-5000", "5000-20000", "20000-50000", "50000-"]);
 
 /** Longer than this is not a real search; trigram cost grows with length. */
 const MAX_QUERY_LENGTH = 120;
@@ -121,10 +123,11 @@ export function parseSearchRequest(queryString: Request["query"]): SearchRequest
     categorySlugs: parseList(queryString.category),
     subcategorySlug: first(queryString.subcategory) || undefined,
     audience: parseAudience(queryString.audience),
-    city: first(queryString.city) || undefined,
+    cities: parseList(queryString.city),
     conditions: parseList(queryString.condition, CONDITIONS),
     sizes: parseList(queryString.size),
     colours: parseList(queryString.colour),
+    priceBands: parseList(queryString.priceBand, PRICE_BAND_IDS),
     minPrice,
     maxPrice,
     postedWithinDays: parseNumber(queryString.postedWithin),

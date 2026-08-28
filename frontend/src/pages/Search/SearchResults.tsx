@@ -206,8 +206,18 @@ function SearchResults() {
       update({ conditions: params.conditions.filter((entry) => entry !== value) });
       return;
     }
+    if (key.startsWith("city:")) {
+      const value = key.slice("city:".length);
+      update({ cities: params.cities.filter((entry) => entry !== value) });
+      return;
+    }
+    if (key.startsWith("price:")) {
+      const value = key.slice("price:".length);
+      update({ priceBands: params.priceBands.filter((entry) => entry !== value) });
+      return;
+    }
     if (key === "price") {
-      update({ priceBand: null, minPrice: null, maxPrice: null });
+      update({ priceBands: [], minPrice: null, maxPrice: null });
       return;
     }
     if (key.startsWith("category:")) {
@@ -233,9 +243,9 @@ function SearchResults() {
       q: "",
       categories: [],
       subcategory: null,
-      city: null,
+      cities: [],
       conditions: [],
-      priceBand: null,
+      priceBands: [],
       minPrice: null,
       maxPrice: null,
       postedWithinDays: null,
@@ -243,7 +253,7 @@ function SearchResults() {
 
   const handleSaveSearch = async () => {
     const name =
-      [params.q || "All listings", params.city].filter(Boolean).join(" in ") ||
+      [params.q || "All listings", params.cities.join(", ")].filter(Boolean).join(" in ") ||
       "All listings";
     // `save` itself opens the login prompt when signed out (and returns
     // false without saving anything) — so this button stays clickable either
@@ -282,7 +292,7 @@ function SearchResults() {
           <p className="text-sm text-charcoal-500">
             {results.total.toLocaleString("en-IN")}{" "}
             {results.total === 1 ? "listing" : "listings"}
-            {params.city ? ` in ${params.city}` : ""}
+            {params.cities.length > 0 ? ` in ${params.cities.join(", ")}` : ""}
           </p>
 
           <div className="flex items-center gap-2">

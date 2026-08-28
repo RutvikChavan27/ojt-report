@@ -20,7 +20,7 @@
  * As with listingSearch.sql, nothing user-supplied is ever concatenated: only
  * fragments this module authored itself.
  */
-import { fuzzyRelevanceClause } from "./listingSearch.sql";
+import { fuzzyRelevanceClause, PRICE_BAND_SQL } from "./listingSearch.sql";
 import type { ListingFilters, SqlFragment } from "./listingSearch.sql";
 
 /** The filters rendered as checkbox lists, so the ones that need counts. */
@@ -35,19 +35,6 @@ export const FACET_KEYS = [
 ] as const;
 
 export type FacetKey = (typeof FACET_KEYS)[number];
-
-/**
- * Price bands, bucketed into the ids the client already uses.
- *
- * These ids are the contract with PRICE_BANDS in the frontend search helpers —
- * renaming a band here means renaming it there.
- */
-const PRICE_BAND_SQL = `CASE
-      WHEN l.price < 5000 THEN '0-5000'
-      WHEN l.price < 20000 THEN '5000-20000'
-      WHEN l.price < 50000 THEN '20000-50000'
-      ELSE '50000-'
-    END`;
 
 /** Where each facet's value comes from on the listings row. */
 const FACET_COLUMN: Record<FacetKey, string> = {
@@ -130,10 +117,11 @@ export function buildFacetCountsQuery(
   const noFacetFilterSelected =
     !filters.categorySlugs?.length &&
     !filters.audience &&
-    !filters.city &&
+    !filters.cities?.length &&
     !filters.conditions?.length &&
     !filters.sizes?.length &&
     !filters.colours?.length &&
+    !filters.priceBands?.length &&
     filters.minPrice === undefined &&
     filters.maxPrice === undefined;
 
@@ -192,7 +180,9 @@ export function buildFacetCountsQuery(
     audience: filters.audience
       ? `l.audience = ${bind(filters.audience)}::listing_audience`
       : "true",
-    city: filters.city ? `l.city = ${bind(filters.city)}` : "true",
+    city: filters.cities?.length
+      ? `l.city = ANY(${bind(filters.cities)}::text[])`
+      : "true",
     condition: filters.conditions?.length
       ? `l.condition = ANY(${bind(filters.conditions)}::listing_condition[])`
       : "true",
@@ -206,8 +196,14 @@ export function buildFacetCountsQuery(
        unconditional filters and in here. Counted with the other filters but
        not its own, the remaining bands keep their counts after one is picked —
        narrowing unconditionally would show every other band as zero and leave
-       no way to switch. */
+       no way to switch. Bands and a typed min/max are alternatives on the
+       frontend (see ListingFilters.priceBands), but both are applied here —
+       like any other two filters, together as AND — if a request somehow
+       carries both. */
     price: [
+      filters.priceBands?.length
+        ? `(${PRICE_BAND_SQL}) = ANY(${bind(filters.priceBands)}::text[])`
+        : null,
       filters.minPrice !== undefined
         ? `l.price >= ${bind(filters.minPrice)}`
         : null,

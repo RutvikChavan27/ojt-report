@@ -33,18 +33,6 @@ const SORT_MAP: Record<string, string> = {
   relevance: "relevance",
 };
 
-/** The band the shopper picked, or the range they typed. */
-function priceRange(params: SearchParams): { min?: number; max?: number } {
-  if (params.priceBand) {
-    const band = PRICE_BANDS.find((entry) => entry.id === params.priceBand);
-    if (band) return { min: band.min, max: band.max };
-  }
-  return {
-    min: params.minPrice ?? undefined,
-    max: params.maxPrice ?? undefined,
-  };
-}
-
 const toFacet = (values: ApiFacetValue[]) =>
   values.map((entry) => ({
     value: entry.value,
@@ -70,18 +58,20 @@ function priceFacet(values: ApiFacetValue[]) {
 export async function searchListingsViaApi(
   params: SearchParams,
 ): Promise<SearchResult> {
-  const { min, max } = priceRange(params);
-
   const result: ApiSearchResult = await apiSearch({
     q: params.q || undefined,
     category: params.categories.length > 0 ? params.categories : undefined,
     // Only meaningful alongside exactly one selected category — see SearchParams.
     subcategory:
       params.categories.length === 1 ? (params.subcategory ?? undefined) : undefined,
-    city: params.city ?? undefined,
+    city: params.cities.length > 0 ? params.cities : undefined,
     condition: params.conditions.length ? params.conditions : undefined,
-    minPrice: min,
-    maxPrice: max,
+    priceBand: params.priceBands.length > 0 ? params.priceBands : undefined,
+    // Bands and a typed range are alternatives, not additions — see
+    // SearchParams.priceBands — so the typed range is only sent when no band
+    // is selected, same as the sidebar already enforces on the way in.
+    minPrice: params.priceBands.length === 0 ? params.minPrice ?? undefined : undefined,
+    maxPrice: params.priceBands.length === 0 ? params.maxPrice ?? undefined : undefined,
     postedWithin: params.postedWithinDays ?? undefined,
     sort: SORT_MAP[params.sort] ?? params.sort,
     page: params.page,

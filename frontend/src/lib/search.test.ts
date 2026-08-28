@@ -14,9 +14,9 @@ describe("search params URL round trip", () => {
       q: "denim jacket",
       categories: ["mens-fashion"],
       subcategory: "mens-fashion--mens-jackets",
-      city: "Pune",
+      cities: ["Pune", "Mumbai"],
       conditions: ["Good", "Fair"],
-      priceBand: null,
+      priceBands: [],
       minPrice: 500,
       maxPrice: 5000,
       postedWithinDays: 7,
@@ -68,6 +68,28 @@ describe("search params URL round trip", () => {
     const roundTripped = paramsFromSearch(search);
     expect(roundTripped.categories).toEqual(["mobiles", "cars"]);
     expect(roundTripped.subcategory).toBeNull();
+  });
+
+  it("keeps repeated city values distinct through the round trip, same as category/condition", () => {
+    const search = searchToParams({ ...EMPTY_PARAMS, cities: ["Pune", "Mumbai"] });
+    expect(search.getAll("city")).toEqual(["Pune", "Mumbai"]);
+
+    const roundTripped = paramsFromSearch(search);
+    expect(roundTripped.cities).toEqual(["Pune", "Mumbai"]);
+  });
+
+  it("keeps repeated price band values distinct through the round trip, and drops one that isn't a real band id", () => {
+    const search = searchToParams({ ...EMPTY_PARAMS, priceBands: ["0-5000", "50000-"] });
+    expect(search.getAll("price")).toEqual(["0-5000", "50000-"]);
+
+    const roundTripped = paramsFromSearch(search);
+    expect(roundTripped.priceBands).toEqual(["0-5000", "50000-"]);
+
+    // A hand-edited URL with a made-up band id must not silently pass through
+    // to the API as a bind value the backend then has to reject on its own —
+    // same defensive validation `conditions` already gets against REAL_CONDITIONS.
+    const tampered = paramsFromSearch(new URLSearchParams("price=not-a-real-band"));
+    expect(tampered.priceBands).toEqual([]);
   });
 
   it("leaves cursorDir null for a hand-edited URL that carries a cursor alone", () => {

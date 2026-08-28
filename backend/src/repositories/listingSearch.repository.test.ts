@@ -95,6 +95,36 @@ describe("facet counts against a fixture with hand-known answers", () => {
     expect(city.find((r) => r.value === "FacetCityA")?.total).toBe("4");
     expect(city.find((r) => r.value === "FacetCityB")?.total).toBe("3");
   });
+
+  it("selecting more than one city (OR within the filter) widens the other facets' counts to match — not the same as a single city", async () => {
+    // Both cities selected together is the same set of rows as no city filter
+    // at all (9 + 3 = all 12) — proving the two selected values are OR'd
+    // together, not narrowed further as if only the last one applied.
+    const bothCities = await fetchFacetCounts({
+      q: MARKER,
+      cities: ["FacetCityA", "FacetCityB"],
+      fuzzy: false,
+    });
+    const condition = bothCities.filter((row) => row.facet === "condition");
+    expect(condition.find((r) => r.value === "Good")?.total).toBe("9"); // 4 + 5
+    expect(condition.find((r) => r.value === "Fair")?.total).toBe("3");
+
+    // City is its own facet, so its own list is unaffected by which cities
+    // are selected — same invariant category already relies on.
+    const city = bothCities.filter((row) => row.facet === "city");
+    expect(city.find((r) => r.value === "FacetCityA")?.total).toBe("9");
+    expect(city.find((r) => r.value === "FacetCityB")?.total).toBe("3");
+
+    // A single city, for contrast: condition narrows to just that city's rows.
+    const oneCity = await fetchFacetCounts({
+      q: MARKER,
+      cities: ["FacetCityB"],
+      fuzzy: false,
+    });
+    const conditionOneCity = oneCity.filter((row) => row.facet === "condition");
+    expect(conditionOneCity.find((r) => r.value === "Fair")?.total).toBe("3");
+    expect(conditionOneCity.find((r) => r.value === "Good")?.total).toBeUndefined();
+  });
 });
 
 describe("combined filters, including a search term", () => {
@@ -119,7 +149,7 @@ describe("combined filters, including a search term", () => {
     const rows = await searchListingsExact({
       q: MARKER,
       categorySlugs: [categories[0]],
-      city: "ComboCityX",
+      cities: ["ComboCityX"],
       minPrice: 500,
       maxPrice: 5000,
       sort: "relevance",
@@ -145,6 +175,47 @@ describe("combined filters, including a search term", () => {
     // Every fixture row above is category A or B, so all four come back once
     // the category filter stops narrowing to a single one.
     expect(rows.length).toBe(4);
+  });
+
+  it("selecting more than one city returns rows from any of them, not just the first — same OR-within-a-filter rule as category", async () => {
+    const rows = await searchListingsExact({
+      q: MARKER,
+      cities: ["ComboCityX", "ComboCityY"],
+      sort: "relevance",
+      limit: 10,
+      offset: 0,
+    });
+
+    // Every fixture row above is ComboCityX or ComboCityY, so all four come
+    // back once the city filter stops narrowing to a single one.
+    expect(rows.length).toBe(4);
+  });
+
+  it("still ANDs across different filter groups even when each one is itself multi-select", async () => {
+    // categorySlugs is multi-select (both categories — an OR that, on its
+    // own, would admit all 4 rows, including "wrong category"), but it is
+    // still ANDed against city and price: only rows that ALSO match
+    // ComboCityX AND the price range survive.
+    const rows = await searchListingsExact({
+      q: MARKER,
+      categorySlugs: categories,
+      cities: ["ComboCityX"],
+      minPrice: 500,
+      maxPrice: 5000,
+      sort: "relevance",
+      limit: 10,
+      offset: 0,
+    });
+
+    // "match" (category A) and "wrong category" (category B) both satisfy
+    // city + price now that category no longer excludes B — proving the
+    // category OR is real — while "wrong city" and "wrong price" are still
+    // correctly excluded by their respective filters regardless.
+    const titles = rows.map((row) => row.title).sort();
+    expect(titles).toEqual([
+      `ZZZVITEST ${MARKER} match`,
+      `ZZZVITEST ${MARKER} wrong category`,
+    ]);
   });
 });
 

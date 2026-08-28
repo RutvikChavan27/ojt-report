@@ -66,10 +66,14 @@ export type SearchParams = {
   categories: string[];
   /** Only meaningful alongside exactly one selected category — its parent. */
   subcategory: string | null;
-  city: string | null;
+  cities: string[];
   conditions: string[];
-  /** A PRICE_BANDS id, or null when the shopper typed their own range. */
-  priceBand: string | null;
+  /**
+   * Selected PRICE_BANDS ids — an alternative to a typed min/max, not a
+   * further narrowing of it (same relationship as `categories`/`subcategory`):
+   * picking any band clears whatever was typed, and vice versa.
+   */
+  priceBands: string[];
   minPrice: number | null;
   maxPrice: number | null;
   postedWithinDays: number | null;
@@ -99,9 +103,9 @@ export const EMPTY_PARAMS: SearchParams = {
   q: "",
   categories: [],
   subcategory: null,
-  city: null,
+  cities: [],
   conditions: [],
-  priceBand: null,
+  priceBands: [],
   minPrice: null,
   maxPrice: null,
   postedWithinDays: null,
@@ -166,7 +170,8 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
     categories: search.getAll("category"),
     // Only meaningful with exactly one category (see searchToParams).
     subcategory: search.get("subcategory"),
-    city: search.get("city"),
+    // Repeated keys, same as category/condition — one or many cities.
+    cities: search.getAll("city"),
     // Repeated keys, so a value containing a comma survives the round trip.
     // Validated against REAL_CONDITIONS (the backend's actual enum values)
     // above, so a condition arriving from a link, a reload, or the filter
@@ -174,7 +179,11 @@ export function paramsFromSearch(search: URLSearchParams): SearchParams {
     conditions: search
       .getAll("condition")
       .filter((value) => REAL_CONDITIONS.includes(value)),
-    priceBand: search.get("price"),
+    // Repeated keys, same as category/condition. Validated against the real
+    // band ids for the same reason conditions are validated above.
+    priceBands: search
+      .getAll("price")
+      .filter((value) => PRICE_BANDS.some((band) => band.id === value)),
     minPrice: number("minPrice"),
     maxPrice: number("maxPrice"),
     postedWithinDays: number("postedWithin"),
@@ -207,9 +216,9 @@ export function searchToParams(params: SearchParams): URLSearchParams {
   if (params.categories.length === 1 && params.subcategory) {
     search.set("subcategory", params.subcategory);
   }
-  if (params.city) search.set("city", params.city);
+  params.cities.forEach((value) => search.append("city", value));
   params.conditions.forEach((value) => search.append("condition", value));
-  if (params.priceBand) search.set("price", params.priceBand);
+  params.priceBands.forEach((value) => search.append("price", value));
   if (params.minPrice !== null) search.set("minPrice", String(params.minPrice));
   if (params.maxPrice !== null) search.set("maxPrice", String(params.maxPrice));
   if (params.postedWithinDays !== null) {
@@ -246,15 +255,15 @@ export function describeFilters(
       label: humanizeSubcategorySlug(params.subcategory),
     });
   }
-  if (params.city) chips.push({ key: "city", label: params.city });
+  params.cities.forEach((value) => chips.push({ key: `city:${value}`, label: value }));
   params.conditions.forEach((value) =>
     chips.push({ key: `condition:${value}`, label: value }),
   );
-  if (params.priceBand) {
-    const label =
-      PRICE_BANDS.find((entry) => entry.id === params.priceBand)?.label ??
-      params.priceBand;
-    chips.push({ key: "price", label });
+  if (params.priceBands.length > 0) {
+    params.priceBands.forEach((value) => {
+      const label = PRICE_BANDS.find((entry) => entry.id === value)?.label ?? value;
+      chips.push({ key: `price:${value}`, label });
+    });
   } else if (params.minPrice !== null || params.maxPrice !== null) {
     chips.push({
       key: "price",

@@ -34,10 +34,11 @@ export type SearchRequest = {
   categorySlugs?: string[];
   subcategorySlug?: string;
   audience?: string;
-  city?: string;
+  cities?: string[];
   conditions?: string[];
   sizes?: string[];
   colours?: string[];
+  priceBands?: string[];
   minPrice?: number;
   maxPrice?: number;
   postedWithinDays?: number;

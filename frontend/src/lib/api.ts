@@ -383,8 +383,8 @@ export const fetchListing = async (id: string): Promise<ApiListingDetail> => {
  * Faceted search. Every filter, the sort and the page are the server's job —
  * the frontend sends the query string and renders what comes back.
  *
- * Repeatable filters (condition, size, colour, city) are passed as arrays and
- * serialised as repeated keys, which is what the validator expects.
+ * Repeatable filters (condition, size, colour, city, priceBand) are passed as
+ * arrays and serialised as repeated keys, which is what the validator expects.
  */
 export const searchListings = async (
   params: SearchParams,
@@ -404,6 +404,7 @@ export type SearchParams = {
   condition?: string | string[];
   size?: string | string[];
   colour?: string | string[];
+  priceBand?: string | string[];
   minPrice?: number;
   maxPrice?: number;
   postedWithin?: number;

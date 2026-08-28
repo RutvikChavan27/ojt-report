@@ -29,33 +29,46 @@ function FilterSidebar({
   onClearAll,
   activeCount,
 }: FilterSidebarProps) {
-  /** Single-select groups behave as radio buttons that can be unset. */
-  const toggleSingle = (
-    key: "city" | "priceBand",
+  /**
+   * Every checkbox-based filter group is multi-select the same way: toggling
+   * one value in or out of its own array leaves every other selected value —
+   * in this group and every other — untouched. `extra` carries a group's own
+   * side effect (clearing `subcategory` alongside `categories`, clearing the
+   * typed price range alongside `priceBands`), applied on every toggle in
+   * that group rather than only when picking the first value, since leaving
+   * it second-guesses which toggle "started" a multi-select group.
+   */
+  const toggleMulti = (
+    key: "categories" | "cities" | "conditions" | "priceBands",
     value: string,
-  ) => onChange({ [key]: params[key] === value ? null : value });
-
-  const toggleCondition = (value: string) =>
+    extra?: Partial<SearchParams>,
+  ) =>
     onChange({
-      conditions: params.conditions.includes(value)
-        ? params.conditions.filter((entry) => entry !== value)
-        : [...params.conditions, value],
+      [key]: params[key].includes(value)
+        ? params[key].filter((entry) => entry !== value)
+        : [...params[key], value],
+      ...extra,
     });
+
+  const toggleCondition = (value: string) => toggleMulti("conditions", value);
+
+  const toggleCity = (value: string) => toggleMulti("cities", value);
 
   /**
-   * Category is multi-select, same as condition. Any change to which
-   * categories are selected clears `subcategory` too — it only means
-   * anything alongside exactly one category (see SearchParams), and picking
-   * a second category or leaving the one it belonged to is exactly what
-   * makes it stop applying.
+   * Any change to which categories are selected clears `subcategory` too —
+   * it only means anything alongside exactly one category (see
+   * SearchParams), and picking a second category or leaving the one it
+   * belonged to is exactly what makes it stop applying.
    */
   const toggleCategory = (value: string) =>
-    onChange({
-      categories: params.categories.includes(value)
-        ? params.categories.filter((entry) => entry !== value)
-        : [...params.categories, value],
-      subcategory: null,
-    });
+    toggleMulti("categories", value, { subcategory: null });
+
+  /**
+   * Bands and a typed range are alternatives, not additions (same relationship
+   * as categories/subcategory) — picking any band clears whatever was typed.
+   */
+  const togglePriceBand = (value: string) =>
+    toggleMulti("priceBands", value, { minPrice: null, maxPrice: null });
 
   return (
     <div>
@@ -88,24 +101,16 @@ function FilterSidebar({
         <FilterSection title="Location">
           <FacetCheckboxList
             options={facets.city}
-            selected={new Set(params.city ? [params.city] : [])}
-            onToggle={(value) => toggleSingle("city", value)}
+            selected={new Set(params.cities)}
+            onToggle={toggleCity}
           />
         </FilterSection>
 
         <FilterSection title="Price">
           <FacetCheckboxList
             options={facets.price}
-            selected={new Set(params.priceBand ? [params.priceBand] : [])}
-            onToggle={(value) =>
-              // Bands and a typed range are alternatives, not additions, so
-              // choosing a band clears whatever was typed.
-              onChange({
-                priceBand: params.priceBand === value ? null : value,
-                minPrice: null,
-                maxPrice: null,
-              })
-            }
+            selected={new Set(params.priceBands)}
+            onToggle={togglePriceBand}
           />
 
           <div className="flex items-center gap-2 pt-1">
@@ -117,7 +122,7 @@ function FilterSidebar({
               onChange={(event) =>
                 onChange({
                   minPrice: event.target.value === "" ? null : Number(event.target.value),
-                  priceBand: null,
+                  priceBands: [],
                 })
               }
               aria-label="Minimum price"
@@ -132,7 +137,7 @@ function FilterSidebar({
               onChange={(event) =>
                 onChange({
                   maxPrice: event.target.value === "" ? null : Number(event.target.value),
-                  priceBand: null,
+                  priceBands: [],
                 })
               }
               aria-label="Maximum price"

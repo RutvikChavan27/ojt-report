@@ -99,18 +99,43 @@ export type ListingFilters = {
   /** Narrows within categorySlugs — e.g. "mens-fashion--mens-shirts". Only meaningful alongside exactly one category. */
   subcategorySlug?: string;
   audience?: string;
-  city?: string;
+  /** Empty means "any city". Narrowed with ANY(...), same as conditions. */
+  cities?: string[];
   /** Empty means "any condition". */
   conditions?: string[];
   /** Empty means "any size". */
   sizes?: string[];
   /** Empty means "any colour". */
   colours?: string[];
+  /**
+   * Selected `PRICE_BANDS` ids (see PRICE_BAND_SQL) — an alternative to
+   * minPrice/maxPrice, not a further narrowing of it: the UI clears one
+   * whenever the other is set, since "under ₹5,000" and "above ₹20,000, under
+   * ₹40,000" answer the same question two different ways. Both are still
+   * applied here if a hand-built URL somehow carries both, same as any other
+   * two filters — AND, not a special case.
+   */
+  priceBands?: string[];
   minPrice?: number;
   maxPrice?: number;
   /** "Posted within" in days. */
   postedWithinDays?: number;
 };
+
+/**
+ * Buckets a price into one of `PRICE_BANDS`' (see lib/search.ts on the
+ * frontend) ids — `'0-5000'`, `'5000-20000'`, `'20000-50000'`, `'50000-'`.
+ * Shared between the price facet (which needs to *count* listings per band)
+ * and multi-select band filtering (which needs to *match* listings against
+ * one or more selected bands) — both are "which band is this row in?",
+ * answered the same way so the two can never disagree.
+ */
+export const PRICE_BAND_SQL = `CASE
+      WHEN l.price < 5000 THEN '0-5000'
+      WHEN l.price < 20000 THEN '5000-20000'
+      WHEN l.price < 50000 THEN '20000-50000'
+      ELSE '50000-'
+    END`;
 
 /** A fragment plus the values its placeholders refer to. */
 export type SqlFragment = { text: string; values: unknown[] };
@@ -147,9 +172,9 @@ export function buildListingWhere(
     clauses.push(`l.audience = ${next()}::listing_audience`);
   }
 
-  if (filters.city) {
-    values.push(filters.city);
-    clauses.push(`l.city = ${next()}`);
+  if (filters.cities && filters.cities.length > 0) {
+    values.push(filters.cities);
+    clauses.push(`l.city = ANY(${next()}::text[])`);
   }
 
   // = ANY(array) rather than IN (...), so one placeholder covers any number of
@@ -167,6 +192,11 @@ export function buildListingWhere(
   if (filters.colours && filters.colours.length > 0) {
     values.push(filters.colours);
     clauses.push(`l.colour = ANY(${next()}::text[])`);
+  }
+
+  if (filters.priceBands && filters.priceBands.length > 0) {
+    values.push(filters.priceBands);
+    clauses.push(`(${PRICE_BAND_SQL}) = ANY(${next()}::text[])`);
   }
 
   if (filters.minPrice !== undefined) {
