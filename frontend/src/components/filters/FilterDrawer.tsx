@@ -61,7 +61,7 @@ function FilterDrawer({
       className="fixed inset-0 z-100 lg:hidden"
     >
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 cursor-pointer bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 

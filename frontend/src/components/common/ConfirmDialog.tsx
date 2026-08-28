@@ -142,7 +142,7 @@ function ConfirmDialog({
       <div
         aria-hidden
         onClick={() => setClosing("cancel")}
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${
+        className={`absolute inset-0 cursor-pointer bg-black/50 backdrop-blur-sm ${
           closing
             ? "animate-[scrim-out_150ms_ease-in_forwards]"
             : "animate-[scrim-in_180ms_ease-out]"

@@ -85,6 +85,44 @@ body {
   background-attachment: fixed;
 }
 
+/* --- Cursor: pointer on everything actually clickable --------------------
+   Browsers are inconsistent about this out of the box: `<a href>` gets
+   `cursor: pointer` for free, but `<button>`, `<select>` and a checkbox/radio
+   (or its label, which toggles it too) all default to `cursor: default` —
+   the plain arrow, as if they were inert text. That reads as "is this
+   clickable?" doubt on exactly the controls that most need to look pressable.
+
+   Covers every semantic/native interactive element site-wide in one place,
+   rather than adding `cursor-pointer` by hand to every button this app
+   already has. A non-semantic stand-in for a button (a `<div>`/`<span>` with
+   its own `onClick`) isn't matched by any of this — the browser has no way
+   to know it's interactive either, so those still need `cursor-pointer`
+   added explicitly at the call site, same as before.
+
+   The `:disabled`/`aria-disabled` rule after it exists so a control that
+   cannot be used right now never *looks* like one that can — an explicit
+   `disabled:cursor-not-allowed` utility at a call site still wins (it's more
+   specific), this only sets the sane default where nobody bothered to. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+select:not(:disabled),
+summary,
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+label:has(input[type="checkbox"]:not(:disabled)),
+label:has(input[type="radio"]:not(:disabled)) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+select:disabled,
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  cursor: not-allowed;
+}
+
 /* Promo banner eases in, then breathes very slightly. */
 @keyframes banner-in {
   from {
