@@ -90,6 +90,7 @@ export async function searchListingsViaApi(
     pageCount: Math.max(Math.ceil(result.total / result.perPage), 1),
     suggestion: result.suggestion,
     fuzzy: result.fuzzy,
+    categoryFallback: result.categoryFallback,
     nextCursor: result.nextCursor,
     prevCursor: result.prevCursor,
     facets: {

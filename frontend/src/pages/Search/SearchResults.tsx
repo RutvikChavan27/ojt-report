@@ -66,6 +66,15 @@ function SearchResults() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  /* Set once, right after a response arrives with `categoryFallback` — the
+     redirect below immediately drops `q` from the URL, so this is the only
+     record left that the category now showing came from a dead-end query
+     rather than being picked directly. Cleared whenever the query changes
+     again (see `update`). */
+  const [fallbackNotice, setFallbackNotice] = useState<{
+    query: string;
+    label: string;
+  } | null>(null);
 
   const params = useMemo(() => paramsFromSearch(search), [search]);
 
@@ -103,6 +112,34 @@ function SearchResults() {
      rather than what was originally asked for. */
   useEffect(() => {
     if (!data) return;
+
+    // A query that named no listing text but a real category ("mobile" ->
+    // Mobiles) comes back as that category's own listings plus this flag.
+    // The redirect drops `q` and selects the category instead, so every page
+    // after this one is an ordinary category browse — no fallback-specific
+    // handling needed anywhere else, including in this same effect's other
+    // branch below.
+    if (data.categoryFallback) {
+      setFallbackNotice({
+        query: params.q,
+        label: data.categoryFallback.subcategoryLabel ?? data.categoryFallback.categoryLabel,
+      });
+      setSearch(
+        searchToParams({
+          ...params,
+          q: "",
+          categories: [data.categoryFallback.categorySlug],
+          subcategory: data.categoryFallback.subcategorySlug,
+          page: 1,
+          cursor: null,
+          cursorDir: null,
+          fuzzy: false,
+        }),
+        { replace: true },
+      );
+      return;
+    }
+
     if (data.page !== params.page || data.fuzzy !== params.fuzzy) {
       setSearch(
         searchToParams({ ...params, page: data.page, fuzzy: data.fuzzy }),
@@ -127,6 +164,7 @@ function SearchResults() {
     nextCursor: null,
     prevCursor: null,
     fuzzy: params.fuzzy,
+    categoryFallback: null,
     facets: { category: [], city: [], condition: [], price: [] },
   };
 
@@ -181,6 +219,7 @@ function SearchResults() {
     // nothing, the moment anything other than the page number changes.
     if ("q" in patch) {
       next.fuzzy = false;
+      setFallbackNotice(null);
     }
 
     /*
@@ -315,6 +354,13 @@ function SearchResults() {
           </div>
         </div>
       </div>
+
+      {fallbackNotice && (
+        <div className="mt-4 rounded-lg bg-cyan-50 px-4 py-2.5 text-sm text-cyan-800">
+          No listings matched “{fallbackNotice.query}” — showing{" "}
+          <span className="font-bold">{fallbackNotice.label}</span> instead.
+        </div>
+      )}
 
       {/* The active search term and every filter, each removable on its own,
           with one "Clear all" that resets the lot. Shows whenever there is a

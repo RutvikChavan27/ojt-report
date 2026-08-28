@@ -139,6 +139,18 @@ export type SearchResult = {
   prevCursor: string | null;
   /** True when this result came from typo-tolerant matching — see `SearchParams.fuzzy`. */
   fuzzy: boolean;
+  /**
+   * Set when the query matched no listing text at all but named a real
+   * category/subcategory — see `ApiSearchResult.categoryFallback`. The
+   * results page uses this once, right after the response arrives, to
+   * redirect the URL to a plain category browse; nothing else reads it.
+   */
+  categoryFallback: {
+    categorySlug: string;
+    categoryLabel: string;
+    subcategorySlug: string | null;
+    subcategoryLabel: string | null;
+  } | null;
 };
 
 /* -------------------------------------------------------------------------- */

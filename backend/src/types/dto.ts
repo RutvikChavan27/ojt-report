@@ -159,6 +159,21 @@ export type ListingSearchDTO = {
   fuzzy: boolean;
   /** Closest real title to a misspelled query, for "did you mean". */
   suggestion: string | null;
+  /**
+   * Set when the query itself matched no listing (neither exact nor fuzzy —
+   * "mobile" finds no title/description that says "mobile"; every phone
+   * listing names a brand and model instead) but names a real category or
+   * subcategory, e.g. "Mobiles". `items`/`total`/`facets` are then that
+   * category's own active listings, not a text match — the frontend uses
+   * this to say so and to move the address bar to a normal category browse
+   * (`?category=...`) rather than carrying the dead-end query forward.
+   */
+  categoryFallback: {
+    categorySlug: string;
+    categoryLabel: string;
+    subcategorySlug: string | null;
+    subcategoryLabel: string | null;
+  } | null;
   facets: ListingFacetsDTO;
   /**
    * Opaque keyset tokens for the row immediately after/before this page.

@@ -330,3 +330,44 @@ describe("searchListings fuzzy matching excludes noise that only ties the trigra
     expect(categoryFacet?.count).toBe(GENUINE_COUNT);
   });
 });
+
+describe("category-name fallback for a query with no text match at all", () => {
+  /**
+   * "mobile" is a real gap in the live catalogue, not a constructed one: no
+   * phone listing's title or description ever says the word "mobile" (they
+   * name a brand and model instead — "Samsung Galaxy S8 Smartphone"), so
+   * both the exact and fuzzy paths miss completely, even though the
+   * "Mobiles" category obviously exists and holds thousands of active
+   * listings. Verified directly against the deployed dataset before writing
+   * this test, so it isn't asserting against a guess. This one query
+   * against the real 145k-row dataset instead of an isolated fixture: the
+   * feature being tested is specifically "what the real taxonomy resolves a
+   * real absence-of-match to", which a synthetic marker can't stand in for.
+   */
+  it("falls back to the Mobiles category when the query matches no listing text but names a category", async () => {
+    const result = await searchListings({
+      q: "mobile",
+      sort: "relevance",
+      page: 1,
+      perPage: 24,
+    });
+
+    expect(result.fuzzy).toBe(false);
+    expect(result.categoryFallback).not.toBeNull();
+    expect(result.categoryFallback?.categorySlug).toBe("mobiles");
+    expect(result.total).toBeGreaterThan(0);
+    expect(result.items.length).toBeGreaterThan(0);
+    expect(result.page).toBe(1);
+  });
+
+  it("does not trigger for a query that already has a genuine text match", async () => {
+    const result = await searchListings({
+      q: "dumbbell",
+      sort: "relevance",
+      page: 1,
+      perPage: 24,
+    });
+
+    expect(result.categoryFallback).toBeNull();
+  });
+});

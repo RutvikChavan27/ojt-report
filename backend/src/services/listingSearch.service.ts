@@ -286,6 +286,54 @@ export async function searchListings(
     [total, facetRows] = await Promise.all([optimisticTotal, optimisticFacets]);
   }
 
+  /**
+   * A third tier, past exact and fuzzy: the query itself matched no title
+   * and no description at all — not a typo (fuzzy already ruled that out),
+   * a genuine vocabulary gap. "mobile" is the case that motivated this: no
+   * phone listing's title or description ever says the word "mobile" (they
+   * name a brand and model instead), so tsquery and trigram both miss, even
+   * though the *category* is named exactly that. Reuses the same
+   * label-matching lookup the type-ahead dropdown already uses for "mob" ->
+   * "Mobiles", so a query that literally names a category or subcategory
+   * still lands somewhere instead of a bare "no results" — no separate
+   * synonym table to maintain.
+   *
+   * Only attempted on page 1 of a query that missed completely (`total`
+   * reaching 0 here means the exact search's own count agreed there was
+   * nothing, and `!fuzzy` means the fuzzy attempt above didn't find anything
+   * either) — the same "auto-detect once, not on every page" rule the fuzzy
+   * fallback follows above, for the same reason: a later page must not
+   * re-decide the search algorithm independently of page 1.
+   */
+  let categoryFallback: ListingSearchDTO["categoryFallback"] = null;
+  if (request.q && rows.length === 0 && total === 0 && !fuzzy && requestedPage === 1 && !seek) {
+    const [match] = await suggestCategories(request.q, 1);
+    if (match) {
+      const fallbackOptions = {
+        ...options,
+        q: undefined,
+        categorySlugs: [match.categorySlug],
+        subcategorySlug: match.subcategorySlug ?? undefined,
+        offset: 0,
+        seek: null,
+      };
+      const [fallbackRows, fallbackTotal, fallbackFacets] = await Promise.all([
+        searchListingsExact(fallbackOptions),
+        countSearchMatches({ ...fallbackOptions, fuzzy: false }),
+        fetchFacetCounts({ ...fallbackOptions, fuzzy: false }),
+      ]);
+      rows = fallbackRows;
+      total = fallbackTotal;
+      facetRows = fallbackFacets;
+      categoryFallback = {
+        categorySlug: match.categorySlug,
+        categoryLabel: match.categoryLabel,
+        subcategorySlug: match.subcategorySlug,
+        subcategoryLabel: match.subcategoryLabel,
+      };
+    }
+  }
+
   // A page past the last real one comes back with no rows even though
   // `total` said matches exist — self-heal by checking reality again right
   // now, rather than trusting the count from a moment ago.
@@ -308,7 +356,7 @@ export async function searchListings(
   // Only meaningful for an `offset` request: a cursor seek coming back empty
   // means "nothing more in that direction", which is what an already-disabled
   // Next/Previous button prevents the client from ever asking for on purpose.
-  let page = requestedPage;
+  let page = categoryFallback ? 1 : requestedPage;
   if (!seek && rows.length === 0 && total > 0) {
     const freshTotal = await countSearchMatches({ ...request, fuzzy });
     total = freshTotal;
@@ -325,7 +373,10 @@ export async function searchListings(
     }
   }
 
-  const hasQuery = Boolean(request.q);
+  // A category-fallback result was fetched with no text query at all (see
+  // above) — its rows carry no rank to put in a cursor, whatever `request.q`
+  // itself still says.
+  const hasQuery = Boolean(request.q) && !categoryFallback;
   const first = rows[0] as SearchRow | undefined;
   const last = rows[rows.length - 1] as SearchRow | undefined;
   const nextCursor = last
@@ -348,6 +399,7 @@ export async function searchListings(
     sort: request.sort,
     fuzzy,
     suggestion,
+    categoryFallback,
     facets: groupFacets(facetRows),
   };
 }

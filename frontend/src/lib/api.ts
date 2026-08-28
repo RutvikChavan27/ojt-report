@@ -272,6 +272,19 @@ export type ApiSearchResult = {
   fuzzy: boolean;
   /** Closest real title to a misspelled query, for "did you mean". */
   suggestion: string | null;
+  /**
+   * Set when the query matched no listing text at all but names a real
+   * category/subcategory ("mobile" -> Mobiles) — `items`/`total`/`facets`
+   * above are then that category's own listings, not a text match. Present
+   * so the results page can say so and move the address bar to a normal
+   * category browse instead of carrying the dead-end query forward.
+   */
+  categoryFallback: {
+    categorySlug: string;
+    categoryLabel: string;
+    subcategorySlug: string | null;
+    subcategoryLabel: string | null;
+  } | null;
   facets: ApiFacets;
   /** Resume points for Next/Previous — see `SearchParams.cursor`. */
   nextCursor: string | null;
