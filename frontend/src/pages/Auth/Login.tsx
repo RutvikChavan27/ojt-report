@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Container from "../../components/layout/Container";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiArrowRight, FiLock, FiMail } from "react-icons/fi";
+import { FiArrowRight, FiMail } from "react-icons/fi";
+import PasswordInput from "../../components/common/PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
@@ -124,23 +125,18 @@ function Login() {
             />
           </div>
 
-          <div className="relative mt-4">
-            <FiLock size={16} className={icon} />
-            <input
-              type="password"
-              name="password"
-              id="login-password"
-              placeholder="Password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              readOnly={autofillLocked}
-              onFocus={unlockAutofill}
-              onPointerDown={unlockAutofill}
-              required
-              className={field}
-            />
-          </div>
+          <PasswordInput
+            name="password"
+            id="login-password"
+            placeholder="Password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            readOnly={autofillLocked}
+            onFocus={unlockAutofill}
+            onPointerDown={unlockAutofill}
+            required
+          />
 
           {error && (
             <p

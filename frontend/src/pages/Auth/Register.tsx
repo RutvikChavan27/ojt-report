@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Container from "../../components/layout/Container";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiArrowRight, FiLock, FiMail, FiUser } from "react-icons/fi";
+import { FiArrowRight, FiMail, FiUser } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
 import { isSafeReturnPath } from "../../lib/returnTo";
+import PasswordInput from "../../components/common/PasswordInput";
 
 /** Matches the server's minimum, so a rejection never comes as a surprise. */
 const MIN_PASSWORD_LENGTH = 8;
@@ -105,36 +106,26 @@ function Register() {
             />
           </div>
 
-          <div className="relative mt-4">
-            <FiLock size={16} className={icon} />
-            <input
-              type="password"
-              name="new-password"
-              id="register-password"
-              placeholder={`Password (${MIN_PASSWORD_LENGTH}+ characters)`}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={MIN_PASSWORD_LENGTH}
-              required
-              className={field}
-            />
-          </div>
+          <PasswordInput
+            name="new-password"
+            id="register-password"
+            placeholder={`Password (${MIN_PASSWORD_LENGTH}+ characters)`}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            required
+          />
 
-          <div className="relative mt-4">
-            <FiLock size={16} className={icon} />
-            <input
-              type="password"
-              name="confirm-password"
-              id="register-confirm"
-              placeholder="Confirm password"
-              value={confirm}
-              onChange={(event) => setConfirm(event.target.value)}
-              autoComplete="new-password"
-              required
-              className={field}
-            />
-          </div>
+          <PasswordInput
+            name="confirm-password"
+            id="register-confirm"
+            placeholder="Confirm password"
+            value={confirm}
+            onChange={(event) => setConfirm(event.target.value)}
+            autoComplete="new-password"
+            required
+          />
 
           {error && (
             <p
