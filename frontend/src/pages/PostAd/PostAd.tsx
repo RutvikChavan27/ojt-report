@@ -357,7 +357,9 @@ function PostAd() {
               : "It is saved and now appears in search, its category, and your listings. You can edit or remove it at any time."}
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Button to={`/listing/${postedId}`}>View listing</Button>
+            <Button to={`/listing/${postedId}`} variant="outline">
+              View listing
+            </Button>
             <Button to="/my-listings" variant="outline">
               Go to my listings
             </Button>
