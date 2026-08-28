@@ -150,19 +150,40 @@ export function DropdownMenu({
   );
 }
 
-type SelectOption = { value: string; label: ReactNode; disabled?: boolean };
+type SelectOption = {
+  value: string;
+  label: ReactNode;
+  disabled?: boolean;
+  /**
+   * Same meaning as a native `<option hidden>`: shown as the trigger's own
+   * label when it's the current value (a placeholder like "Choose a
+   * category" for nothing picked yet), but left out of the opened list —
+   * the heading above the trigger already says "Category", so repeating
+   * "Choose a category" as a selectable row under it (which a real choice
+   * can never usefully return to) was showing the prompt twice.
+   */
+  hidden?: boolean;
+};
 
 /** Reads the `<option>` elements a caller passed as `children`, same as a native `<select>` would. */
 function optionsFromChildren(children: ReactNode): SelectOption[] {
   const options: SelectOption[] = [];
   Children.forEach(children, (child) => {
-    if (!isValidElement<{ value?: unknown; disabled?: boolean; children?: ReactNode }>(child)) {
+    if (
+      !isValidElement<{
+        value?: unknown;
+        disabled?: boolean;
+        hidden?: boolean;
+        children?: ReactNode;
+      }>(child)
+    ) {
       return;
     }
     options.push({
       value: String(child.props.value ?? ""),
       label: child.props.children,
       disabled: child.props.disabled,
+      hidden: child.props.hidden,
     });
   });
   return options;
@@ -245,29 +266,31 @@ export function Select({
           className={`absolute left-0 top-full z-20 mt-2 max-h-72 w-full min-w-[10rem] overflow-y-auto ${PANEL_BASE}`}
           role="listbox"
         >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              aria-selected={option.value === value}
-              disabled={option.disabled}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-              // Same row look as every other dropdown's items, selected or
-              // not — a solid cyan-500 fill here used to make an open Select
-              // look like a different, darker-hovering dropdown from
-              // Categories/DropdownMenu, which have no such highlighted
-              // state at all. The trigger itself already shows the current
-              // choice; the open panel does not need to repeat it with a
-              // fill.
-              className={dropdownItemClassName}
-            >
-              {option.label}
-            </button>
-          ))}
+          {options
+            .filter((option) => !option.hidden)
+            .map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                disabled={option.disabled}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                // Same row look as every other dropdown's items, selected or
+                // not — a solid cyan-500 fill here used to make an open Select
+                // look like a different, darker-hovering dropdown from
+                // Categories/DropdownMenu, which have no such highlighted
+                // state at all. The trigger itself already shows the current
+                // choice; the open panel does not need to repeat it with a
+                // fill.
+                className={dropdownItemClassName}
+              >
+                {option.label}
+              </button>
+            ))}
         </div>
       )}
     </div>

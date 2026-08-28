@@ -543,7 +543,7 @@ function PostAd() {
                 required
                 wrapperClassName="mt-1.5 w-full"
               >
-                <option value="">Choose a category</option>
+                <option value="" hidden>Choose a category</option>
                 {(categories ?? []).map((entry) => (
                   <option key={entry.slug} value={entry.slug}>
                     {entry.label}
@@ -563,7 +563,7 @@ function PostAd() {
                 required
                 wrapperClassName="mt-1.5 w-full"
               >
-                <option value="">Choose a condition</option>
+                <option value="" hidden>Choose a condition</option>
                 {CONDITIONS.map((entry) => (
                   <option key={entry} value={entry}>
                     {entry}
@@ -607,7 +607,7 @@ function PostAd() {
                 required
                 wrapperClassName="mt-1.5 w-full"
               >
-                <option value="">Choose a city</option>
+                <option value="" hidden>Choose a city</option>
                 {CITY_NAMES.map((entry) => (
                   <option key={entry} value={entry}>
                     {entry}
