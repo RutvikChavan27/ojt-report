@@ -28,9 +28,16 @@ import { FiChevronDown } from "react-icons/fi";
 const TRIGGER_BASE =
   "flex items-center gap-2 rounded-full border border-cyan-500 bg-mist text-sm font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-50";
 
-/** Exported so a trigger that can't be a plain `<button>`/`<label>` (rare) can still match exactly. */
-export const dropdownTriggerClassName = (open?: boolean) =>
-  `${TRIGGER_BASE} h-11 pl-4 pr-4${open ? " bg-mist-dark" : ""}`;
+/**
+ * Exported so a trigger that can't be a plain `<button>`/`<label>` (rare) can
+ * still match exactly. Stays the same `bg-mist` open or closed — it used to
+ * switch to a darker `bg-mist-dark` while open, which (being noticeably more
+ * teal than the rest of this blue-bordered chrome) read as an unwanted
+ * colour change and, since `Select`'s own trigger never had that state to
+ * begin with, was the actual source of Categories and Location looking
+ * inconsistent.
+ */
+export const dropdownTriggerClassName = `${TRIGGER_BASE} h-11 pl-4 pr-4`;
 
 /** The open panel's chrome — identical whether it holds menu items or choices. */
 const PANEL_BASE =
@@ -114,7 +121,7 @@ export function DropdownMenu({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-label={ariaLabel}
-        className={dropdownTriggerClassName(open)}
+        className={dropdownTriggerClassName}
       >
         {icon}
         {label}
