@@ -39,8 +39,14 @@ const TRIGGER_BASE =
  */
 export const dropdownTriggerClassName = `${TRIGGER_BASE} h-11 pl-4 pr-4`;
 
-/** The open panel's chrome — identical whether it holds menu items or choices. */
-const PANEL_BASE =
+/**
+ * The open panel's chrome — identical whether it holds menu items or choices.
+ * Exported so a panel that can't be built from `DropdownMenu`/`Select` (e.g.
+ * the search box's suggestions list, which needs richer row content than a
+ * plain option) still shares the exact same border/background/shadow/radius/
+ * animation rather than a hand-copied approximation.
+ */
+export const PANEL_BASE =
   "rounded-2xl border border-taupe bg-mist p-2 shadow-xl shadow-charcoal-900/5 animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none";
 
 /**
