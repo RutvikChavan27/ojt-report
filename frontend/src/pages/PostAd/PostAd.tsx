@@ -10,6 +10,7 @@ import {
 } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { useConfirm } from "../../store/ConfirmContext";
+import { usePageGate } from "../../store/RouteGate";
 import BackLink from "../../components/common/BackLink";
 
 /** Matches the server's own cap, so the form refuses before uploading. */
@@ -66,6 +67,22 @@ function PostAd() {
   const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  /* A second, ref-backed lock alongside `submitting` — a ref updates
+     instantly, with no render in between, where `submitting` (state) only
+     takes effect on the next render. Two clicks close enough together could
+     otherwise both read the *same* stale `submitting = false` and both slip
+     past the guard below, uploading the same photos and creating the listing
+     twice. The ref closes that window completely; `submitting` itself still
+     drives everything the user actually sees (the button, the page loader). */
+  const submittingRef = useRef(false);
+
+  /* Takes over the whole viewport with the app's existing page loader for
+     the ~1-2s upload+create round trip, instead of only silently disabling
+     the button — same mechanism ListingDetails/SearchResults already use
+     for their own first-load wait, so this reads as one consistent kind of
+     "the app is doing something" rather than a new, one-off spinner. */
+  usePageGate(submitting);
+
   /* Object URLs hold a reference to the file until revoked, so release them
      when the component goes away or the photos change. */
   useEffect(
@@ -116,26 +133,30 @@ function PostAd() {
    */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (submitting) return;
+    // Checked and set together, synchronously, before anything `await`s —
+    // see the comment on `submittingRef` above for why this (not `submitting`
+    // state alone) is what actually closes the double-submit race.
+    if (submittingRef.current) return;
 
     if (photos.length === 0) {
       setError("Add at least one photo — listings without photos rarely sell.");
       return;
     }
 
-    /* Asked after validation, not before: there is no point confirming a form
-       that is about to be rejected for a missing photo. */
-    const ok = await confirm({
-      title: "Post this listing?",
-      message: "It will appear in search results straight away. You can edit or delete it afterwards from My listings.",
-      confirmLabel: "Post listing",
-    });
-    if (!ok) return;
-
-    setError(null);
-    setSubmitting(true);
-
+    submittingRef.current = true;
     try {
+      /* Asked after validation, not before: there is no point confirming a
+         form that is about to be rejected for a missing photo. */
+      const ok = await confirm({
+        title: "Post this listing?",
+        message: "It will appear in search results straight away. You can edit or delete it afterwards from My listings.",
+        confirmLabel: "Post listing",
+      });
+      if (!ok) return;
+
+      setError(null);
+      setSubmitting(true);
+
       const uploaded = await uploadListingImages(photos.map((photo) => photo.file));
 
       const listing = await createListing({
@@ -149,6 +170,9 @@ function PostAd() {
         images: uploaded.map((image) => image.path),
       });
 
+      // Set the moment the listing exists — the success screen below is
+      // what "immediately after" means here, not a further delay for its
+      // own sake once the server has actually confirmed the listing exists.
       setPostedId(listing.id);
     } catch (err) {
       // The server's wording is written to be read, so show it as-is. A 401
@@ -156,6 +180,7 @@ function PostAd() {
       setError(err instanceof Error ? err.message : "Could not post the listing.");
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
@@ -435,10 +460,11 @@ function PostAd() {
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
+          disabled={submitting}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <FiPlus size={16} />
-          Post listing
+          {submitting ? "Posting…" : "Post listing"}
         </button>
       </form>
     </Container>
