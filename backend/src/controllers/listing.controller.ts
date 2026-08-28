@@ -23,6 +23,7 @@ import {
   renewListing,
   updateListing,
 } from "../repositories/listingWrite.repository";
+import { setUserPhone } from "../repositories/user.repository";
 import { getListing } from "../services/marketplace.service";
 import {
   checkCategory,
@@ -94,9 +95,16 @@ export async function postListing(
       return;
     }
 
+    // The contact number belongs to the seller's account, not this one
+    // listing (see setUserPhone) — always the session's own id, so this can
+    // never touch anyone else's number. Not a `listings` column, so it is
+    // stripped out of what goes to createListing below.
+    const { phone, ...listingFields } = parsed.value;
+    await setUserPhone(req.session.userId!, phone);
+
     // seller_id comes from the session and is never read from the body.
     const id = await createListing({
-      ...parsed.value,
+      ...listingFields,
       sellerId: req.session.userId!,
     });
 
@@ -131,8 +139,18 @@ export async function patchListing(
       }
     }
 
+    // Same account-level number as postListing above — requireListingOwner
+    // (routes/index.ts) has already confirmed the session owns this listing
+    // before this handler runs, so the session's id is also this listing's
+    // actual seller, never someone else's.
+    const { phone, ...listingPatch } = parsed.value;
+    if (phone !== undefined) {
+      await setUserPhone(req.session.userId!, phone);
+    }
+
     const id = req.params.id as string;
-    if (!(await updateListing(id, parsed.value))) {
+    const listingChanged = await updateListing(id, listingPatch);
+    if (!listingChanged && phone === undefined) {
       sendError(res, 400, "Nothing to update.");
       return;
     }

@@ -181,7 +181,12 @@ export async function getMe(
       return;
     }
 
-    sendSuccess(res, { id: user.id, email: user.email, name: user.display_name });
+    sendSuccess(res, {
+      id: user.id,
+      email: user.email,
+      name: user.display_name,
+      phone: user.phone,
+    });
   } catch (err) {
     next(err);
   }

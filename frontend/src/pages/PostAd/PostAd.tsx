@@ -34,6 +34,20 @@ const CITY_NAMES = [
 ];
 
 /**
+ * Mirrors the backend's own normalizeIndianMobile (listing.validator.ts) —
+ * duplicated rather than shared, since the frontend and backend are separate
+ * TS projects with no shared package between them. Kept in sync by hand; the
+ * backend's copy is the one that actually decides what gets stored, this one
+ * only gives the seller an inline error before a round trip would.
+ */
+function normalizeIndianMobile(raw: string): string | null {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) digits = digits.slice(2);
+  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  return /^[6-9]\d{9}$/.test(digits) ? digits : null;
+}
+
+/**
  * One photo in the form, from either of two sources:
  *   - `existing` — already on the listing, loaded from the server when
  *     editing. `path` is what gets sent back if it survives to submit.
@@ -97,6 +111,7 @@ function PostAd() {
   const [condition, setCondition] = useState<Condition | "">("");
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [postedId, setPostedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -115,6 +130,7 @@ function PostAd() {
     setPrice(String(existingListing.price));
     setCity(existingListing.city);
     setArea(existingListing.location ?? "");
+    setPhone(existingListing.seller.phone ?? "");
     setPhotos(
       existingListing.images.map((url) => ({
         kind: "existing" as const,
@@ -124,6 +140,16 @@ function PostAd() {
       })),
     );
   }, [existingListing]);
+
+  // A fresh listing (not editing one) starts from whatever contact number
+  // this seller already has on file, from an earlier listing — so posting a
+  // second (or fifth) time never asks for it again unless they choose to
+  // change it. `user` loads asynchronously, hence its own effect rather than
+  // folding this into useState's initial value; the functional update never
+  // clobbers something already typed if this re-fires.
+  useEffect(() => {
+    if (!isEdit && user?.phone) setPhone((current) => current || user.phone!);
+  }, [isEdit, user]);
 
   // Presentation only — see the comment on the component above. The real
   // enforcement is the server refusing the PATCH itself.
@@ -233,6 +259,11 @@ function PostAd() {
       setError("Choose a city.");
       return;
     }
+    const normalizedPhone = normalizeIndianMobile(phone);
+    if (!normalizedPhone) {
+      setError("Enter a valid 10-digit Indian mobile number.");
+      return;
+    }
 
     submittingRef.current = true;
     try {
@@ -280,6 +311,7 @@ function PostAd() {
         city,
         location: area || undefined,
         images,
+        phone: normalizedPhone,
       };
 
       const listing =
@@ -344,6 +376,9 @@ function PostAd() {
                   setCondition("");
                   setCity("");
                   setArea("");
+                  // Not reset: it's the seller's account-level number (just
+                  // confirmed by this very submit), so it stays correct and
+                  // prefilled for whatever they post next.
                 }}
               >
                 Post another
@@ -595,6 +630,33 @@ function PostAd() {
               />
             </label>
           </div>
+        </fieldset>
+
+        {/* Contact */}
+        <fieldset className="rounded-2xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 p-5">
+          <legend className="px-1 text-sm font-bold text-charcoal-900">
+            Contact
+          </legend>
+          <p className="text-xs text-charcoal-500">
+            Only shown to a buyer who taps "Contact Seller" on the listing —
+            never on cards, search results, or the homepage.
+          </p>
+
+          <label className="mt-4 block sm:w-1/2">
+            <span className={label}>
+              Contact number <span className="text-cyan-600">*</span>
+            </span>
+            <input
+              type="tel"
+              inputMode="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              required
+              maxLength={15}
+              placeholder="e.g. 98765 43210"
+              className={field}
+            />
+          </label>
         </fieldset>
 
         {error && (

@@ -14,6 +14,22 @@ export const MAX_PHOTOS = 8;
 
 const CONDITIONS = ["New with tags", "Like new", "Good", "Fair"];
 
+/** A bare 10-digit Indian mobile number: trunk codes/landlines are not this. */
+const INDIAN_MOBILE_RE = /^[6-9]\d{9}$/;
+
+/**
+ * Strips everything but digits, then a leading `+91`/`91`/`0` trunk prefix if
+ * present, down to the bare 10 digits stored and displayed everywhere else.
+ * Returns null for anything that still isn't a valid Indian mobile number
+ * once stripped, so the same function both validates and normalises.
+ */
+export function normalizeIndianMobile(raw: string): string | null {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) digits = digits.slice(2);
+  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  return INDIAN_MOBILE_RE.test(digits) ? digits : null;
+}
+
 export type Parsed<T> = { value: T } | { error: string };
 
 const asString = (value: unknown): string =>
@@ -29,6 +45,13 @@ export type NewListingInput = {
   city: string;
   location: string | null;
   images: string[];
+  /**
+   * The seller's own contact number, normalised to 10 bare digits. Not a
+   * `listings` column — see setUserPhone in user.repository.ts, which is
+   * where a caller actually writes this; it rides on the same request only
+   * because that's where a seller enters it.
+   */
+  phone: string;
 };
 
 /**
@@ -101,6 +124,14 @@ function parseCore(
   if (input.location !== undefined) {
     const location = asString(input.location).trim();
     out.location = location === "" ? null : location;
+  }
+
+  if (!partial || input.phone !== undefined) {
+    const raw = asString(input.phone).trim();
+    if (!raw) return { error: "Add a contact number so buyers can reach you." };
+    const phone = normalizeIndianMobile(raw);
+    if (!phone) return { error: "Enter a valid 10-digit Indian mobile number." };
+    out.phone = phone;
   }
 
   if (input.images !== undefined) {

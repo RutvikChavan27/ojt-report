@@ -32,6 +32,8 @@ export type AuthUser = {
   id: number;
   email: string;
   name: string;
+  /** This seller's own contact number, or null until they've posted a listing. */
+  phone: string | null;
 };
 
 /**
@@ -504,6 +506,12 @@ export type NewListingBody = {
   location?: string;
   /** Paths returned by uploadListingImages, not arbitrary URLs. */
   images: string[];
+  /**
+   * The seller's own contact number. Lives on the account, not this one
+   * listing — see the backend's setUserPhone — so submitting it here updates
+   * what every listing of this seller's shows, not just this one.
+   */
+  phone: string;
 };
 
 /**
