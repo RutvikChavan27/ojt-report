@@ -110,6 +110,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   /**
+   * Re-checks who's signed in whenever this tab regains focus.
+   *
+   * The session cookie is shared across every tab in the browser — signing
+   * into a different account in one tab silently changes which account the
+   * *other* tabs' requests actually run as too, since cookies aren't scoped
+   * per tab. Without this, a tab left open from before that switch keeps
+   * showing (and, worse, keeps acting as) the account it loaded with,
+   * indefinitely: the navbar still names the old account, "own listing"
+   * checks compare against the wrong id, and so on — right up until
+   * something reloads the page. The server was never fooled (every write
+   * still checks the *actual* session), so nothing could be corrupted this
+   * way, but the screen could tell a confusing, wrong story about whose
+   * account it was even looking at. Refreshing on focus/visibility closes
+   * that gap without needing every page to poll or reload.
+   */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    // Both listeners, not just one: a background tab regaining focus fires
+    // `focus` on `window` reliably, while `visibilitychange` is what catches
+    // switching back via the OS/tab strip in browsers that don't also fire
+    // `focus` for that. Between the two, whichever the browser actually
+    // sends still triggers the check.
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [refresh]);
+
+  /**
    * Clears the `?auth=` marker the Google callback appends, after re-checking
    * the session. Without this the flag stays in the address bar and would be
    * re-read on every later navigation.
