@@ -20,7 +20,11 @@
  * As with listingSearch.sql, nothing user-supplied is ever concatenated: only
  * fragments this module authored itself.
  */
-import { fuzzyRelevanceClause, PRICE_BAND_SQL } from "./listingSearch.sql";
+import {
+  exactRelevanceClause,
+  fuzzyRelevanceClause,
+  PRICE_BAND_SQL,
+} from "./listingSearch.sql";
 import type { ListingFilters, SqlFragment } from "./listingSearch.sql";
 
 /** The filters rendered as checkbox lists, so the ones that need counts. */
@@ -83,7 +87,7 @@ export function buildFacetCountsQuery(
     always.push(
       options.fuzzy
         ? `${q} <% l.title AND ${fuzzyRelevanceClause(q)}`
-        : `l.search_vector @@ websearch_to_tsquery('english', ${q})`,
+        : `l.search_vector @@ websearch_to_tsquery('english', ${q}) AND ${exactRelevanceClause(q)}`,
     );
   }
   if (filters.postedWithinDays !== undefined) {

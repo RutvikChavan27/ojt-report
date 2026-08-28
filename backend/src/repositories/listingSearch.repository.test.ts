@@ -219,7 +219,7 @@ describe("combined filters, including a search term", () => {
   });
 });
 
-describe("relevance ordering", () => {
+describe("relevance filtering", () => {
   const MARKER = "ZZZVITESTRANK";
 
   beforeAll(async () => {
@@ -239,7 +239,18 @@ describe("relevance ordering", () => {
     ]);
   });
 
-  it("ranks a title match above a description-only match for the same word", async () => {
+  /**
+   * A description-only match for "camera" used to still appear (ranked
+   * below the title match, never dropped) — reasonable for two rows, but
+   * at 100,000+ rows the same handful of description phrases recur across
+   * hundreds of otherwise-unrelated listings each, and a description-only
+   * hit is no longer one extra, lower-priority result: it's thousands of
+   * them, indistinguishable from noise once anything but "relevance" is the
+   * sort (see `exactRelevanceClause`). This fixture keeps that same 2-row
+   * shape, but now expects the weaker match excluded outright, not merely
+   * ranked second.
+   */
+  it("excludes a description-only match for the same word once a title match exists", async () => {
     const rows = await searchListingsExact({
       q: `${MARKER} camera`,
       sort: "relevance",
@@ -247,9 +258,31 @@ describe("relevance ordering", () => {
       offset: 0,
     });
 
-    expect(rows.length).toBe(2);
+    expect(rows.length).toBe(1);
     expect(rows[0].title).toContain("Vintage Camera Bag");
-    expect(rows[1].title).toContain("Leather Wallet Organizer");
+  });
+
+  /**
+   * The floor side of the same clause: when nothing better exists for this
+   * query, a description-only match must still surface rather than being
+   * excluded against a ceiling of its own making — a query that only ever
+   * matches via description doesn't retroactively become "irrelevant" for
+   * having no title match to be worse than.
+   */
+  it("still returns a description-only match when it is the only kind of match for this query", async () => {
+    // "memory" appears only in Leather Wallet Organizer's description
+    // ("camera memory card") — neither fixture row has it in the title, so
+    // this is the only candidate the marker-scoped query has at all, not one
+    // ranked below a better match that happens to exist alongside it.
+    const rows = await searchListingsExact({
+      q: `${MARKER} memory`,
+      sort: "relevance",
+      limit: 10,
+      offset: 0,
+    });
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].title).toContain("Leather Wallet Organizer");
   });
 });
 

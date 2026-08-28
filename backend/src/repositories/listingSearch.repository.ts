@@ -27,6 +27,7 @@ import {
   buildListingWhere,
   buildKeysetClause,
   buildOrderBy,
+  exactRelevanceClause,
   fuzzyRelevanceClause,
   keysetOrderBy,
   LISTING_COLUMNS,
@@ -88,7 +89,8 @@ export async function searchListingsExact(
   values.push(...where.values);
 
   const textClause = hasQuery
-    ? `AND l.search_vector @@ websearch_to_tsquery('english', $1)`
+    ? `AND l.search_vector @@ websearch_to_tsquery('english', $1)
+       AND ${exactRelevanceClause("$1")}`
     : "";
 
   const seekClause =
@@ -244,7 +246,8 @@ export async function countSearchMatches(
     ? ""
     : options.fuzzy
       ? `AND $1 <% l.title AND ${fuzzyRelevanceClause("$1")}`
-      : "AND l.search_vector @@ websearch_to_tsquery('english', $1)";
+      : `AND l.search_vector @@ websearch_to_tsquery('english', $1)
+         AND ${exactRelevanceClause("$1")}`;
 
   const { rows } = await query<{ total: string }>(
     `SELECT count(*)::text AS total

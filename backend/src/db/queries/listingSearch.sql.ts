@@ -92,6 +92,49 @@ export function fuzzyRelevanceClause(queryPlaceholder: string): string {
   )`;
 }
 
+/**
+ * The same "must be close to the best match, not merely above some fixed
+ * bar" idea as `fuzzyRelevanceClause`, applied to the *exact* (tsquery) path.
+ *
+ * `search_vector` weights title 'A' (1.0) and description 'B' (0.4), so in
+ * principle a title hit already outranks a description-only one. In practice
+ * that gap was never enforced as a cutoff — every row `@@`-matching the
+ * query was returned regardless of how it matched, and at 100,000+ rows an
+ * ordinary word ("top", "well", "— Good Condition") recurs across enough
+ * unrelated *descriptions* that they can outnumber the genuine title matches
+ * many times over. Measured against this catalogue: searching "top" returns
+ * 473 listings with "top" in the title and 1,869 that only mention it in the
+ * description — undifferentiated by the plain `@@` check, and with `rank`
+ * clustering into exactly two values (title hits ≈0.61-0.67, description-only
+ * hits ≈0.24 — see the constants above's fuzzy analogue), so a ratio against
+ * the best match for this query cleanly separates them the same way it does
+ * for fuzzy, without needing a fixed cutoff tuned per query shape.
+ *
+ * Same scoping rule as the fuzzy clause: only `status = 'active'` and the
+ * query itself, so the rows query, the count query and the facets query all
+ * agree on what counts as relevant regardless of which other filters each of
+ * them has active.
+ */
+export const EXACT_RELEVANCE_RATIO = 0.8;
+
+/**
+ * Floor under the ratio above, for a query with no title hits at all (every
+ * match is description-only, all clustered at the same, lower rank) — without
+ * it, the ratio would be computed against that lower ceiling and could still
+ * exclude the very matches it's meant to admit as "the best available".
+ */
+export const EXACT_RELEVANCE_FLOOR = 0.05;
+
+export function exactRelevanceClause(queryPlaceholder: string): string {
+  return `ts_rank(l.search_vector, websearch_to_tsquery('english', ${queryPlaceholder})) >= GREATEST(
+    (SELECT MAX(ts_rank(l2.search_vector, websearch_to_tsquery('english', ${queryPlaceholder})))
+       FROM listings l2
+      WHERE l2.status = 'active' AND l2.search_vector @@ websearch_to_tsquery('english', ${queryPlaceholder})
+    ) * ${EXACT_RELEVANCE_RATIO},
+    ${EXACT_RELEVANCE_FLOOR}
+  )`;
+}
+
 export type ListingFilters = {
   q?: string;
   /** Empty means "any category". Narrowed with ANY(...), same as conditions. */
