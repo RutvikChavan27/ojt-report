@@ -256,11 +256,14 @@ export function Select({
                 onChange(option.value);
                 setOpen(false);
               }}
-              className={
-                option.value === value
-                  ? "block w-full rounded-xl bg-cyan-500 px-3 py-2 text-left text-sm font-semibold text-charcoal-900"
-                  : dropdownItemClassName
-              }
+              // Same row look as every other dropdown's items, selected or
+              // not — a solid cyan-500 fill here used to make an open Select
+              // look like a different, darker-hovering dropdown from
+              // Categories/DropdownMenu, which have no such highlighted
+              // state at all. The trigger itself already shows the current
+              // choice; the open panel does not need to repeat it with a
+              // fill.
+              className={dropdownItemClassName}
             >
               {option.label}
             </button>
