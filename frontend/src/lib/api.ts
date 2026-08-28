@@ -7,10 +7,23 @@
  * shows up here as a type error rather than as undefined at runtime.
  */
 
-/** Base URL of the backend API. Override with VITE_API_URL in a .env file. */
+/**
+ * Base URL of the backend API. Override with VITE_API_URL in a .env file.
+ *
+ * Empty by default in a production build, not the backend's own origin: the
+ * deployed frontend reaches the API through its own domain's `/api/...` and
+ * `/images/...` (see vercel.json), which Vercel then proxies straight
+ * through to the backend. That is what makes the session cookie same-site
+ * from the browser's point of view — calling the backend's origin directly
+ * would make it a cross-site cookie instead, which some browsers' privacy
+ * settings (Safari's cross-site tracking prevention, Firefox strict mode,
+ * "block third-party cookies") refuse to keep, silently signing someone out
+ * on the very next reload. Dev keeps the old default: there is no Vercel
+ * proxy on `vite dev`, so it has to name the backend directly.
+ */
 const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ??
-  "http://localhost:5000";
+  (import.meta.env.DEV ? "http://localhost:5000" : "");
 
 type ApiEnvelope<T> = { success: boolean; data: T; message?: string };
 
@@ -65,7 +78,9 @@ async function apiRequest<T>(
        withholds the detail), so this names the likely one and points at
        something checkable. */
     throw new Error(
-      `Cannot reach the server at ${API_BASE}. Check that the backend is running, then try again.`
+      API_BASE
+        ? `Cannot reach the server at ${API_BASE}. Check that the backend is running, then try again.`
+        : "Cannot reach the server. Check your connection, then try again.",
     );
   }
 
@@ -672,7 +687,9 @@ export async function uploadListingImages(
     });
   } catch {
     throw new Error(
-      `Cannot reach the server at ${API_BASE}. Check that the backend is running, then try again.`
+      API_BASE
+        ? `Cannot reach the server at ${API_BASE}. Check that the backend is running, then try again.`
+        : "Cannot reach the server. Check your connection, then try again.",
     );
   }
 
