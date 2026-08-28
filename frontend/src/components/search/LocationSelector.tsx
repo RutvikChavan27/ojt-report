@@ -1,5 +1,6 @@
 import { FiMapPin } from "react-icons/fi";
 import { CITY_NAMES } from "../../data/marketplace";
+import { Select } from "../common/Dropdown";
 
 type LocationSelectorProps = {
   value: string | null;
@@ -18,24 +19,20 @@ function LocationSelector({
   className = "",
 }: LocationSelectorProps) {
   return (
-    <label
-      className={`flex h-11 items-center gap-2 rounded-full border border-taupe bg-mist px-4 transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/20 ${className}`}
+    <Select
+      icon={<FiMapPin size={16} className="flex-shrink-0 text-charcoal-400" />}
+      aria-label="Location"
+      value={value ?? ""}
+      onChange={(event) => onChange(event.target.value || null)}
+      wrapperClassName={className}
     >
-      <FiMapPin size={16} className="flex-shrink-0 text-charcoal-400" />
-      <span className="sr-only">Location</span>
-      <select
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value || null)}
-        className="min-w-0 flex-1 bg-transparent text-sm text-charcoal-900 outline-none"
-      >
-        <option value="">All India</option>
-        {CITY_NAMES.map((city) => (
-          <option key={city} value={city}>
-            {city}
-          </option>
-        ))}
-      </select>
-    </label>
+      <option value="">All India</option>
+      {CITY_NAMES.map((city) => (
+        <option key={city} value={city}>
+          {city}
+        </option>
+      ))}
+    </Select>
   );
 }
 

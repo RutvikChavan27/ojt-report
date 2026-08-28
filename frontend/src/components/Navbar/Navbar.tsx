@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiBookmark,
-  FiChevronDown,
   FiGrid,
   FiHeart,
   FiLogOut,
@@ -13,6 +12,8 @@ import {
 } from "react-icons/fi";
 import Container from "../layout/Container";
 import Logo from "../common/Logo";
+import Button from "../common/Button";
+import { DropdownMenu, dropdownItemClassName } from "../common/Dropdown";
 import SearchBar from "../search/SearchBar";
 import LocationSelector from "../search/LocationSelector";
 import { CATEGORIES } from "../../data/marketplace";
@@ -48,27 +49,6 @@ function Navbar() {
   const activeQuery = searchParams.get("q") ?? "";
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const categoriesRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  /** Close either dropdown on an outside click, as a menu is expected to. */
-  useEffect(() => {
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (!categoriesRef.current?.contains(target)) setCategoriesOpen(false);
-      if (!profileRef.current?.contains(target)) setProfileOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, []);
-
-  const closeAll = () => {
-    setMobileOpen(false);
-    setCategoriesOpen(false);
-    setProfileOpen(false);
-  };
 
   const iconLink =
     "relative flex h-11 w-11 items-center justify-center rounded-full text-charcoal-600 transition-all duration-150 hover:bg-sand hover:text-charcoal-900 hover:scale-105 active:scale-95 motion-reduce:transform-none";
@@ -79,11 +59,6 @@ function Navbar() {
         {count > 99 ? "99+" : count}
       </span>
     ) : null;
-
-  const menuPanel =
-    "absolute right-0 top-full mt-2 rounded-2xl border border-taupe bg-mist p-2 shadow-xl shadow-charcoal-900/5 animate-[dropdown-in_160ms_ease-out] motion-reduce:animate-none";
-  const menuItem =
-    "block rounded-xl px-3 py-2 text-sm text-charcoal-700 transition hover:bg-sand hover:text-charcoal-900";
 
   return (
     /* Transparent rather than a solid bar: no border and no shadow, so it reads
@@ -123,42 +98,30 @@ function Navbar() {
                 1024–1279px — unusable, not merely tight. The mobile menu
                 (below) stays available through that same range so
                 categories are never actually unreachable. */}
-            <div ref={categoriesRef} className="relative hidden xl:block">
-              {/* Mist fill at rest, cyan border for definition — the "active
-                  navigation" control — rather than only turning solid once
-                  opened, so it reads as deliberate from the first paint. */}
-              <button
-                type="button"
-                onClick={() => setCategoriesOpen((open) => !open)}
-                aria-expanded={categoriesOpen}
-                className={`group flex h-11 items-center gap-2.5 rounded-full border border-cyan-500 bg-mist pl-2 pr-4 text-sm font-semibold text-charcoal-900 shadow-md shadow-cyan-500/20 transition-all duration-200 ease-out hover:-translate-y-px hover:border-cyan-600 hover:bg-mist-dark hover:shadow-lg motion-reduce:transform-none ${
-                  categoriesOpen ? "border-cyan-600 bg-mist-dark" : ""
-                }`}
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal-900/10 text-charcoal-900">
-                  <FiGrid size={14} />
-                </span>
-                Categories
-                <FiChevronDown
-                  size={16}
-                  className={`transition-transform duration-200 ${categoriesOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {categoriesOpen && (
-                <div className={`${menuPanel} grid w-64 gap-0.5`}>
-                  {CATEGORIES.map((category) => (
-                    <Link
-                      key={category.slug}
-                      to={`/category/${category.slug}`}
-                      onClick={closeAll}
-                      className={menuItem}
-                    >
-                      {category.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
+            <div className="hidden xl:block">
+              <DropdownMenu
+                label="Categories"
+                icon={
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal-900/10 text-charcoal-900">
+                    <FiGrid size={14} />
+                  </span>
+                }
+                panelClassName="grid w-64 gap-0.5"
+                panel={({ close }) => (
+                  <>
+                    {CATEGORIES.map((category) => (
+                      <Link
+                        key={category.slug}
+                        to={`/category/${category.slug}`}
+                        onClick={close}
+                        className={dropdownItemClassName}
+                      >
+                        {category.label}
+                      </Link>
+                    ))}
+                  </>
+                )}
+              />
             </div>
 
             {/* Icon shortcuts from tablet up; on a phone they live in the menu,
@@ -184,58 +147,49 @@ function Navbar() {
             <span aria-hidden className="mx-1 hidden h-6 w-px bg-taupe sm:block" />
 
             {user ? (
-              <div ref={profileRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setProfileOpen((open) => !open)}
-                  aria-expanded={profileOpen}
-                  className={`flex h-11 items-center gap-2 rounded-full pl-2 pr-4 text-sm font-semibold transition-all duration-150 hover:bg-sand ${
-                    profileOpen ? "bg-sand text-charcoal-900" : "text-charcoal-700"
-                  }`}
-                >
+              <DropdownMenu
+                icon={
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-charcoal-900 text-sm font-bold text-white">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
+                }
+                label={
                   <span className="hidden sm:inline">
                     {user.name.split(" ")[0]}
                   </span>
-                  <FiChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                {profileOpen && (
-                  <div className={`${menuPanel} w-52`}>
+                }
+                panelClassName="w-52"
+                panel={({ close }) => (
+                  <>
                     <div className="px-3 py-2">
                       <p className="truncate text-xs text-charcoal-400">
                         {user.email}
                       </p>
                     </div>
-                    <Link to="/profile" onClick={closeAll} className={menuItem}>
+                    <Link to="/profile" onClick={close} className={dropdownItemClassName}>
                       My profile
                     </Link>
-                    <Link to="/my-listings" onClick={closeAll} className={menuItem}>
+                    <Link to="/my-listings" onClick={close} className={dropdownItemClassName}>
                       My listings
                     </Link>
-                    <Link to="/my-offers" onClick={closeAll} className={menuItem}>
+                    <Link to="/my-offers" onClick={close} className={dropdownItemClassName}>
                       My offers
                     </Link>
                     <button
                       type="button"
                       onClick={async () => {
-                        closeAll();
+                        close();
                         await signOut();
                         navigate("/home");
                       }}
-                      className={`${menuItem} flex w-full items-center gap-2 text-left`}
+                      className={`${dropdownItemClassName} flex w-full items-center gap-2 text-left`}
                     >
                       <FiLogOut size={14} />
                       Log out
                     </button>
-                  </div>
+                  </>
                 )}
-              </div>
+              />
             ) : (
               // Account entry point as a user icon rather than the word
               // "Login" — labelled for assistive tech and with a tooltip.
@@ -253,10 +207,7 @@ function Navbar() {
                 on the page itself (RequireAuth), so a signed-out visitor lands
                 on a log-in prompt that returns them here afterwards rather than
                 on a button that was hidden from them. */}
-            <Link
-              to="/post-ad"
-              className="flex h-11 items-center gap-2 rounded-full bg-mist px-4 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none sm:px-6"
-            >
+            <Button to="/post-ad" className="sm:px-6">
               <FiPlus size={17} />
               {/* Full label held back to lg: from sm to lg the search box is
                   already fighting the icon row and this button for space
@@ -264,7 +215,7 @@ function Navbar() {
                   says the same thing in a third of the width. */}
               <span className="hidden lg:inline">Sell Something</span>
               <span className="lg:hidden">Sell</span>
-            </Link>
+            </Button>
 
             <button
               type="button"
@@ -296,23 +247,23 @@ function Navbar() {
             {!user && (
               <Link
                 to="/login"
-                onClick={closeAll}
+                onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-charcoal-900 transition hover:bg-sand"
               >
                 <FiUser size={15} />
                 Login / Sign Up
               </Link>
             )}
-            <Link to="/my-listings" onClick={closeAll} className={menuItem}>
+            <Link to="/my-listings" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
               My listings
             </Link>
-            <Link to="/my-offers" onClick={closeAll} className={menuItem}>
+            <Link to="/my-offers" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
               My offers
             </Link>
-            <Link to="/saved" onClick={closeAll} className={menuItem}>
+            <Link to="/saved" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
               Saved listings
             </Link>
-            <Link to="/saved-searches" onClick={closeAll} className={menuItem}>
+            <Link to="/saved-searches" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
               Saved searches
             </Link>
 
@@ -323,8 +274,8 @@ function Navbar() {
               <Link
                 key={category.slug}
                 to={`/category/${category.slug}`}
-                onClick={closeAll}
-                className={menuItem}
+                onClick={() => setMobileOpen(false)}
+                className={dropdownItemClassName}
               >
                 {category.label}
               </Link>

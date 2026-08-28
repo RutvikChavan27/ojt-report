@@ -5,6 +5,7 @@ import { createOffer } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 import { useAuth } from "../../store/AuthContext";
 import { currentReturnPath } from "../../lib/returnTo";
+import Button from "../common/Button";
 
 type MakeOfferCardProps = {
   listingId: string;
@@ -75,15 +76,10 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
         </div>
       ) : !user ? (
         <>
-          <button
-            type="button"
-            disabled
-            title="Log in to make an offer"
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 opacity-50"
-          >
+          <Button disabled title="Log in to make an offer" fullWidth className="mt-3">
             <FiTag size={15} />
             Make an Offer
-          </button>
+          </Button>
           <p className="mt-2 text-xs text-charcoal-400">
             <Link
               to="/login"
@@ -96,14 +92,10 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
           </p>
         </>
       ) : !open ? (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-        >
+        <Button onClick={() => setOpen(true)} fullWidth className="mt-3">
           <FiTag size={15} />
           Make an Offer
-        </button>
+        </Button>
       ) : (
         <div className="mt-3">
           <p className="text-sm text-charcoal-700">
@@ -131,26 +123,21 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
           {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
 
           <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              disabled={sending}
-              onClick={submit}
-              className="flex-1 rounded-full bg-mist py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button size="sm" disabled={sending} onClick={submit} className="flex-1">
               {sending ? "Sending…" : "Send Offer"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               disabled={sending}
               onClick={() => {
                 setOpen(false);
                 setAmount("");
                 setError(null);
               }}
-              className="rounded-full border border-taupe px-4 py-2.5 text-sm font-bold text-charcoal-600 transition hover:border-charcoal-400 hover:text-charcoal-900"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}

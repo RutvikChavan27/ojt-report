@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import EmptyState from "../../components/common/EmptyState";
+import Button from "../../components/common/Button";
 import ListingGrid from "../../components/listings/ListingGrid";
 import { fetchListing, type ApiListingDetail } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
@@ -59,12 +59,7 @@ function SavedListings() {
             title="Nothing saved yet"
             description="Tap the heart on any listing to keep it here while you decide."
           >
-            <Link
-              to="/search"
-              className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-            >
-              Browse listings
-            </Link>
+            <Button to="/search">Browse listings</Button>
           </EmptyState>
         ) : (
           <ListingGrid listings={saved} />

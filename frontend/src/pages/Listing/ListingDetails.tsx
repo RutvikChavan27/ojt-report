@@ -20,6 +20,7 @@ import { fetchListing, searchListings } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { usePageGate } from "../../store/RouteGate";
 import BackLink from "../../components/common/BackLink";
+import Button from "../../components/common/Button";
 import { useSavedListings } from "../../store/SavedListingsContext";
 
 /** How many other listings from the same category to show underneath. */
@@ -86,12 +87,7 @@ function ListingDetails() {
           title="Listing not found"
           description="It may have been sold, expired, or the link is wrong."
         >
-          <Link
-            to="/search"
-            className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-          >
-            Browse all listings
-          </Link>
+          <Button to="/search">Browse all listings</Button>
         </EmptyState>
       </Container>
     );
@@ -230,14 +226,19 @@ function ListingDetails() {
             available={listing.status === "active"}
           />
 
+          {/* A toggle, not a one-shot action — "saved" is a state that
+              persists, not a moment of being pressed — so this keeps its own
+              two-state look rather than Button's `outline` variant (whose
+              filled look is only ever transient, for the instant of a click).
+              The border stays the same blue either way; only the fill
+              reflects whether it's actually saved, and nothing recolours on
+              hover, same rule as every other button. */}
           <button
             type="button"
             onClick={() => toggle(listing.id)}
             aria-pressed={saved}
-            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full border py-3 text-sm font-bold transition ${
-              saved
-                ? "border-cyan-500 bg-mist text-charcoal-900"
-                : "border-taupe text-charcoal-900 hover:border-cyan-400 hover:text-cyan-700"
+            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-3 text-sm font-bold text-charcoal-900 transition ${
+              saved ? "bg-mist" : ""
             }`}
           >
             <FiHeart size={15} fill={saved ? "currentColor" : "none"} />

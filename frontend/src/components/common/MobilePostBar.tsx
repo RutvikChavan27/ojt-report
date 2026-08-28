@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { FiPlus } from "react-icons/fi";
+import Button from "./Button";
 
 /** Pages where a floating action would sit on top of the real one. */
 const HIDDEN_ON = ["/post-ad", "/login", "/register"];
@@ -17,13 +18,10 @@ function MobilePostBar() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:hidden">
-      <Link
-        to="/post-ad"
-        className="pointer-events-auto flex items-center justify-center gap-2 rounded-full bg-mist py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 shadow-lg shadow-cyan-500/30 transition hover:shadow-cyan-500/40 hover:brightness-105"
-      >
+      <Button to="/post-ad" fullWidth className="pointer-events-auto">
         <FiPlus size={17} />
         Sell Something
-      </Link>
+      </Button>
     </div>
   );
 }

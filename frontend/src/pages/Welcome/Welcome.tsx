@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 import Container from "../../components/layout/Container";
 import ImageWithLoader from "../../components/common/ImageWithLoader";
+import Button from "../../components/common/Button";
 import { fetchDashboard, fetchListings, type ApiListing } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 import { useApi } from "../../hooks/useApi";
@@ -207,16 +208,17 @@ function Welcome() {
           </p>
 
           <div className="mt-10 flex animate-[pop-in_0.5s_ease-out_both] justify-center [animation-delay:680ms] motion-reduce:animate-none">
-            <Link
+            <Button
               to="/home"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-mist px-10 py-4 text-base font-bold text-charcoal-900 shadow-lg shadow-cyan-500/30 transition-all duration-200 hover:scale-105 hover:shadow-cyan-500/40 hover:brightness-105 motion-reduce:hover:scale-100"
+              size="lg"
+              className="group shadow-lg hover:scale-105 motion-reduce:hover:scale-100"
             >
               Browse marketplace
               <FiArrowRight
                 size={18}
                 className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transform-none"
               />
-            </Link>
+            </Button>
           </div>
 
           {!user && (

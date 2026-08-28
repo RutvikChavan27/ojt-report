@@ -11,6 +11,7 @@ import LoadingOverlay from "../../components/common/LoadingOverlay";
 import FilterDrawer from "../../components/filters/FilterDrawer";
 import FilterSidebar from "../../components/filters/FilterSidebar";
 import ListingGrid from "../../components/listings/ListingGrid";
+import Button from "../../components/common/Button";
 import Pagination from "../../components/search/Pagination";
 import SortDropdown from "../../components/search/SortDropdown";
 import {
@@ -296,14 +297,15 @@ function SearchResults() {
           </p>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setDrawerOpen(true)}
-              className="flex items-center gap-2 rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-4 py-2 text-sm font-semibold text-charcoal-900 lg:hidden"
+              className="lg:hidden"
             >
               <FiSliders size={14} />
               Filters{chips.length > 0 && ` (${chips.length})`}
-            </button>
+            </Button>
 
             <SortDropdown
               value={params.sort}
@@ -370,14 +372,10 @@ function SearchResults() {
                 Saved. See it under Saved searches.
               </p>
             ) : (
-              <button
-                type="button"
-                onClick={handleSaveSearch}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-2.5 text-sm font-bold text-cyan-700 transition hover:border-transparent hover:bg-gradient-to-r hover:from-[#00c9ff] hover:to-[#92fe9d] hover:text-charcoal-900"
-              >
+              <Button variant="outline" onClick={handleSaveSearch} fullWidth>
                 <FiBookmark size={14} />
                 Save this search
-              </button>
+              </Button>
             )}
             {!user && (
               <p className="mt-2 text-xs text-charcoal-400">

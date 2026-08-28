@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiCheck, FiRepeat, FiX } from "react-icons/fi";
 import type { ApiOffer, ApiOfferStatus } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
+import Button from "../common/Button";
 
 const STATUS_LABEL: Record<ApiOfferStatus, string> = {
   pending: "Pending",
@@ -116,38 +117,28 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter 
 
       {canRespond && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onAccept}
-            className="flex items-center gap-1.5 rounded-full bg-mist px-4 py-2 text-xs font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button size="sm" disabled={busy} onClick={onAccept}>
             <FiCheck size={13} />
             Accept
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onReject}
-            className="flex items-center gap-1.5 rounded-full border border-taupe px-4 py-2 text-xs font-bold text-charcoal-500 transition hover:border-rose-300 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={onReject}>
             <FiX size={13} />
             Reject
-          </button>
+          </Button>
 
           {/* Countering a counter is not offered — only the original, still-pending
               offer can be countered (see the table comment in marketplace.sql) — so
               this button only appears for the seller answering a fresh offer. */}
           {awaitingSeller && (
-            <button
-              type="button"
+            <Button
+              size="sm"
+              variant="outline"
               disabled={busy}
               onClick={() => setCounterOpen((open) => !open)}
-              className="flex items-center gap-1.5 rounded-full border border-cyan-500 px-4 py-2 text-xs font-bold text-cyan-700 transition hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <FiRepeat size={13} />
               Counter Offer
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -173,14 +164,9 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter 
               <p className="mt-1 text-xs text-rose-600">{counterError}</p>
             )}
           </div>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={submitCounter}
-            className="rounded-full bg-mist px-4 py-2 text-xs font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button size="sm" disabled={busy} onClick={submitCounter}>
             Send Counter
-          </button>
+          </Button>
         </div>
       )}
     </li>

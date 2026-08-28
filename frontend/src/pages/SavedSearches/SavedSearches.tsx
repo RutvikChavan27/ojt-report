@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import { FiBookmark, FiTrash2 } from "react-icons/fi";
 import EmptyState from "../../components/common/EmptyState";
+import Button from "../../components/common/Button";
 import { describeFilters, paramsFromSearch } from "../../lib/search";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
 import BackLink from "../../components/common/BackLink";
@@ -26,12 +27,7 @@ function SavedSearches() {
           title="No saved searches yet"
           description="Run a search, then save it to track new listings that match — useful for something you are waiting to come up."
         >
-          <Link
-            to="/search"
-            className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-          >
-            Start searching
-          </Link>
+          <Button to="/search">Start searching</Button>
         </EmptyState>
       </Container>
     );
@@ -104,25 +100,20 @@ function SavedSearches() {
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
+                <Button
+                  size="sm"
                   onClick={() => {
                     markChecked(entry.id);
                     navigate(`/search?${entry.query}`);
                   }}
-                  className="rounded-full bg-mist px-5 py-2 text-xs font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
                 >
                   View results
-                </button>
+                </Button>
 
-                <button
-                  type="button"
-                  onClick={() => remove(entry.id)}
-                  className="flex items-center gap-1.5 rounded-full border border-taupe px-4 py-2 text-xs font-bold text-charcoal-500 transition hover:border-rose-300 hover:text-rose-600"
-                >
+                <Button size="sm" variant="outline" onClick={() => remove(entry.id)}>
                   <FiTrash2 size={12} />
                   Delete
-                </button>
+                </Button>
               </div>
             </li>
           );

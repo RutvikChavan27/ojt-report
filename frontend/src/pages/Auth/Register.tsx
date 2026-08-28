@@ -7,6 +7,7 @@ import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
 import { isSafeReturnPath } from "../../lib/returnTo";
 import PasswordInput from "../../components/common/PasswordInput";
+import Button from "../../components/common/Button";
 
 /** Matches the server's minimum, so a rejection never comes as a surprise. */
 const MIN_PASSWORD_LENGTH = 8;
@@ -136,14 +137,10 @@ function Register() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button type="submit" fullWidth disabled={submitting} className="mt-5">
             {submitting ? "Please wait…" : "Create account"}
             {!submitting && <FiArrowRight size={16} />}
-          </button>
+          </Button>
         </form>
 
         {googleEnabled && (
@@ -156,13 +153,10 @@ function Register() {
               <span className="h-px flex-1 bg-taupe" />
             </div>
 
-            <a
-              href={googleSignInUrl(from)}
-              className="flex w-full items-center justify-center gap-2.5 rounded-full border border-taupe py-3 text-sm font-semibold text-charcoal-900 transition hover:bg-sand"
-            >
+            <Button href={googleSignInUrl(from)} variant="outline" fullWidth>
               <FcGoogle size={18} />
               Sign up with Google
-            </a>
+            </Button>
           </>
         )}
 

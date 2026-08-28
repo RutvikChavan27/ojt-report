@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FiStar } from "react-icons/fi";
 import Container from "../layout/Container";
+import Button from "../common/Button";
 import type { ApiListing } from "../../lib/api";
 
 type HeroSearchProps = {
@@ -190,13 +191,14 @@ function HeroSearch({ totalListings, recent = [] }: HeroSearchProps) {
         >
           <span className="text-sm text-charcoal-400">Popular:</span>
           {POPULAR.map((term) => (
-            <Link
+            <Button
               key={term}
               to={`/search?q=${encodeURIComponent(term)}`}
-              className="rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3 py-1 text-[13px] text-charcoal-700 transition hover:-translate-y-0.5 hover:border-charcoal-400 hover:text-charcoal-900 motion-reduce:hover:translate-y-0"
+              variant="outline"
+              size="sm"
             >
               {term}
-            </Link>
+            </Button>
           ))}
         </div>
 

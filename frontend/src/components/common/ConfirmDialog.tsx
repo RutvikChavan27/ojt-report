@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Button from "./Button";
 
 /** What a caller can say about the decision it is asking for. */
 export type ConfirmOptions = {
@@ -132,11 +133,6 @@ function ConfirmDialog({
     return () => window.clearTimeout(timer);
   }, [closing]);
 
-  const confirmClasses =
-    tone === "danger"
-      ? "bg-red-600 text-white hover:bg-red-700"
-      : "bg-mist text-charcoal-900 hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105";
-
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div
@@ -177,22 +173,20 @@ function ConfirmDialog({
         {/* Cancel first in the DOM so it is the first tab stop, and on a phone
             the buttons stack full width rather than being squeezed side by side. */}
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
+          <Button
             ref={cancelRef}
-            type="button"
+            variant="outline"
             onClick={() => setClosing("cancel")}
-            className="rounded-full border border-taupe px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-taupe-dark"
           >
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             ref={confirmRef}
-            type="button"
+            variant={tone === "danger" ? "danger" : "primary"}
             onClick={() => setClosing("confirm")}
-            className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${confirmClasses}`}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

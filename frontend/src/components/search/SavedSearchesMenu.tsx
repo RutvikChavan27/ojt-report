@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiBookmark, FiChevronDown, FiClock, FiTrash2, FiX } from "react-icons/fi";
+import { FiBookmark, FiClock, FiTrash2, FiX } from "react-icons/fi";
 import { describeFilters, paramsFromSearch } from "../../lib/search";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
 import { useRecentSearches } from "../../store/RecentSearchesContext";
 import { useAuth } from "../../store/AuthContext";
+import { DropdownMenu } from "../common/Dropdown";
 
 /**
  * Searches, reachable from beside the category strip: what was searched
@@ -34,39 +34,16 @@ function SavedSearchesMenu() {
   const { searches, save, remove, newCount, markChecked } = useSavedSearches();
   const { recent, remove: removeRecent } = useRecentSearches();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  /* Close on an outside click or Escape. Without the first, the panel stays open
-     behind whatever is clicked next; without the second there is no way out for
-     a keyboard. */
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  const openSearch = (id: string, query: string) => {
+  const openSearch = (id: string, query: string, close: () => void) => {
     void markChecked(id);
-    setOpen(false);
+    close();
     navigate(`/search?${query}`);
   };
 
   /** Runs a bare keyword again, the same shape the search box produces. */
-  const runRecent = (query: string) => {
-    setOpen(false);
+  const runRecent = (query: string, close: () => void) => {
+    close();
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
 
@@ -80,35 +57,18 @@ function SavedSearchesMenu() {
   const total = recent.length + searches.length;
 
   return (
-    <div ref={wrapperRef} className="relative flex-shrink-0">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
-        aria-haspopup="true"
-        className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition ${
-          open
-            ? "bg-mist font-bold text-charcoal-900"
-            : "text-charcoal-600 hover:bg-cyan-50 hover:text-cyan-700"
-        }`}
-      >
-        <FiBookmark size={14} />
-        Searches
-        {total > 0 && (
-          <span
-            className={`text-xs font-bold ${open ? "text-charcoal-900/60" : "text-charcoal-400"}`}
-          >
-            {total}
-          </span>
-        )}
-        <FiChevronDown
-          size={14}
-          className={`transition ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 max-h-[26rem] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-taupe bg-mist shadow-xl">
+    <DropdownMenu
+      className="flex-shrink-0"
+      icon={<FiBookmark size={14} className="flex-shrink-0" />}
+      label={
+        <>
+          Searches
+          {total > 0 && <span className="text-xs font-bold text-charcoal-900/60">{total}</span>}
+        </>
+      }
+      panelClassName="max-h-[26rem] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto"
+      panel={({ close }) => (
+        <>
           {total === 0 && (
             <p className="px-4 py-5 text-sm text-charcoal-500">
               Nothing yet. Search for something and it will appear here.
@@ -126,7 +86,7 @@ function SavedSearchesMenu() {
                   <li key={entry.query} className="flex items-center gap-1 px-2">
                     <button
                       type="button"
-                      onClick={() => runRecent(entry.query)}
+                      onClick={() => runRecent(entry.query, close)}
                       className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 py-2.5 text-left transition hover:bg-sand"
                     >
                       <FiClock size={13} className="flex-shrink-0 text-charcoal-400" />
@@ -184,7 +144,7 @@ function SavedSearchesMenu() {
                     <div className="flex items-start justify-between gap-2">
                       <button
                         type="button"
-                        onClick={() => openSearch(entry.id, entry.query)}
+                        onClick={() => openSearch(entry.id, entry.query, close)}
                         className="min-w-0 flex-1 text-left"
                       >
                         <span className="block truncate text-sm font-bold text-charcoal-900">
@@ -237,9 +197,9 @@ function SavedSearchesMenu() {
               })}
             </ul>
           )}
-        </div>
+        </>
       )}
-    </div>
+    />
   );
 }
 

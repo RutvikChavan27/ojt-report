@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import FilterSidebar from "./FilterSidebar";
+import Button from "../common/Button";
 import type { Facets, SearchParams } from "../../lib/search";
 
 type FilterDrawerProps = {
@@ -91,14 +92,10 @@ function FilterDrawer({
         </div>
 
         <div className="border-t border-taupe px-5 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-          >
+          <Button onClick={onClose} fullWidth>
             Show {total.toLocaleString("en-IN")}{" "}
             {total === 1 ? "result" : "results"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

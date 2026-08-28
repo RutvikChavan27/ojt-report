@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FiLogIn, FiUserPlus } from "react-icons/fi";
 import { useAuth } from "../../store/AuthContext";
 import { currentReturnPath } from "../../lib/returnTo";
+import Button from "./Button";
 
 type RequireAuthProps = {
   /** What the account is needed for, e.g. "sell something". */
@@ -60,23 +61,15 @@ function RequireAuth({ action, children }: RequireAuthProps) {
 
           {/* The intended destination rides along, so signing in returns here
               rather than dumping the visitor on the homepage. */}
-          <Link
-            to="/login"
-            state={{ from }}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-          >
+          <Button to="/login" state={{ from }} fullWidth className="mt-6">
             <FiLogIn size={15} />
             Log in
-          </Link>
+          </Button>
 
-          <Link
-            to="/register"
-            state={{ from }}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-taupe py-3 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
-          >
+          <Button to="/register" state={{ from }} variant="outline" fullWidth className="mt-3">
             <FiUserPlus size={15} />
             Create an account
-          </Link>
+          </Button>
 
           <Link
             to="/search"

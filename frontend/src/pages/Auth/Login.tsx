@@ -3,6 +3,7 @@ import Container from "../../components/layout/Container";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiArrowRight, FiMail } from "react-icons/fi";
 import PasswordInput from "../../components/common/PasswordInput";
+import Button from "../../components/common/Button";
 import { FcGoogle } from "react-icons/fc";
 import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
@@ -147,14 +148,10 @@ function Login() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button type="submit" fullWidth disabled={submitting} className="mt-5">
             {submitting ? "Please wait…" : "Log in"}
             {!submitting && <FiArrowRight size={16} />}
-          </button>
+          </Button>
         </form>
 
         {googleEnabled && (
@@ -168,13 +165,10 @@ function Login() {
             </div>
 
             {/* A link, not a fetch: the browser itself must visit Google. */}
-            <a
-              href={googleSignInUrl(from)}
-              className="flex w-full items-center justify-center gap-2.5 rounded-full border border-taupe py-3 text-sm font-semibold text-charcoal-900 transition hover:bg-sand"
-            >
+            <Button href={googleSignInUrl(from)} variant="outline" fullWidth>
               <FcGoogle size={18} />
               Continue with Google
-            </a>
+            </Button>
           </>
         )}
 

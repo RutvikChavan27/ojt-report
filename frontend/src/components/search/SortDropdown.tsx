@@ -1,4 +1,5 @@
 import { SORT_OPTIONS, type SortKey } from "../../lib/search";
+import { Select } from "../common/Dropdown";
 
 type SortDropdownProps = {
   value: SortKey;
@@ -15,13 +16,13 @@ type SortDropdownProps = {
  */
 function SortDropdown({ value, onChange, hasQuery }: SortDropdownProps) {
   return (
-    <label className="flex items-center gap-2 text-sm text-charcoal-500">
+    <div className="flex items-center gap-2 text-sm text-charcoal-500">
       <span className="hidden sm:inline">Sort</span>
-      <select
+      <Select
+        size="sm"
         value={value}
         onChange={(event) => onChange(event.target.value as SortKey)}
         aria-label="Sort results"
-        className="rounded-full border border-taupe bg-mist px-4 py-2 text-sm font-semibold text-charcoal-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
       >
         {SORT_OPTIONS.map((option) => (
           <option
@@ -32,8 +33,8 @@ function SortDropdown({ value, onChange, hasQuery }: SortDropdownProps) {
             {option.label}
           </option>
         ))}
-      </select>
-    </label>
+      </Select>
+    </div>
   );
 }
 

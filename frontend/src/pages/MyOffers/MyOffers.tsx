@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import EmptyState from "../../components/common/EmptyState";
 import BackLink from "../../components/common/BackLink";
+import Button from "../../components/common/Button";
 import OfferCard from "../../components/offers/OfferCard";
 import { acceptOffer, fetchMyOffers, rejectOffer } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
@@ -46,12 +46,7 @@ function MyOffers() {
           title="No offers yet"
           description="Open a listing and use Make an Offer to start a negotiation."
         >
-          <Link
-            to="/search"
-            className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-          >
-            Browse listings
-          </Link>
+          <Button to="/search">Browse listings</Button>
         </EmptyState>
       </Container>
     );
@@ -79,15 +74,11 @@ function MyOffers() {
 
       {error ? (
         <div className="mt-8">
-          <EmptyState title="Could not load your offers" description={error}>
-            <button
-              type="button"
-              onClick={reload}
-              className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-            >
-              Try again
-            </button>
-          </EmptyState>
+          <EmptyState
+            title="Could not load your offers"
+            description={error}
+            onRetry={reload}
+          />
         </div>
       ) : (
         <ul className="mt-6 space-y-4">

@@ -9,6 +9,7 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import EmptyState from "../../components/common/EmptyState";
+import Button from "../../components/common/Button";
 import ListingTableSkeleton from "../../components/common/ListingTableSkeleton";
 import ImageWithLoader from "../../components/common/ImageWithLoader";
 import OfferCard from "../../components/offers/OfferCard";
@@ -176,13 +177,10 @@ function MyListings() {
           </p>
         </div>
 
-        <Link
-          to="/post-ad"
-          className="flex items-center gap-1.5 rounded-full bg-mist px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-        >
+        <Button to="/post-ad" size="sm">
           <FiPlus size={15} />
           Sell Something
-        </Link>
+        </Button>
       </div>
 
       {/* Status tabs */}
@@ -236,15 +234,11 @@ function MyListings() {
           <ListingTableSkeleton />
         ) : offersError ? (
           <div className="mt-8">
-            <EmptyState title="Could not load your offers" description={offersError}>
-              <button
-                type="button"
-                onClick={reloadOffers}
-                className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-              >
-                Try again
-              </button>
-            </EmptyState>
+            <EmptyState
+              title="Could not load your offers"
+              description={offersError}
+              onRetry={reloadOffers}
+            />
           </div>
         ) : offers.length === 0 ? (
           <div className="mt-8">
@@ -274,15 +268,11 @@ function MyListings() {
         <ListingTableSkeleton />
       ) : error ? (
         <div className="mt-8">
-          <EmptyState title="Could not load your listings" description={error}>
-            <button
-              type="button"
-              onClick={reload}
-              className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-            >
-              Try again
-            </button>
-          </EmptyState>
+          <EmptyState
+            title="Could not load your listings"
+            description={error}
+            onRetry={reload}
+          />
         </div>
       ) : visible.length === 0 ? (
         <div className="mt-8">
@@ -294,14 +284,7 @@ function MyListings() {
                 : `Nothing here yet.`
             }
           >
-            {tab === "active" && (
-              <Link
-                to="/post-ad"
-                className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-              >
-                Sell Something
-              </Link>
-            )}
+            {tab === "active" && <Button to="/post-ad">Sell Something</Button>}
           </EmptyState>
         </div>
       ) : (

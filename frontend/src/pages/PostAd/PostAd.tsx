@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import Container from "../../components/layout/Container";
-import { Link } from "react-router-dom";
 import { FiCheck, FiImage, FiPlus, FiX } from "react-icons/fi";
 import {
   createListing,
@@ -12,6 +11,8 @@ import { useApi } from "../../hooks/useApi";
 import { useConfirm } from "../../store/ConfirmContext";
 import { usePageGate } from "../../store/RouteGate";
 import BackLink from "../../components/common/BackLink";
+import Button from "../../components/common/Button";
+import { Select } from "../../components/common/Dropdown";
 
 /** Matches the server's own cap, so the form refuses before uploading. */
 const MAX_PHOTOS = MAX_LISTING_PHOTOS;
@@ -203,20 +204,12 @@ function PostAd() {
             listings. You can edit or remove it at any time.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link
-              to={`/listing/${postedId}`}
-              className="rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-            >
-              View listing
-            </Link>
-            <Link
-              to="/my-listings"
-              className="rounded-full border border-taupe px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
-            >
+            <Button to={`/listing/${postedId}`}>View listing</Button>
+            <Button to="/my-listings" variant="outline">
               Go to my listings
-            </Link>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => {
                 setPostedId(null);
                 setPhotos([]);
@@ -228,10 +221,9 @@ function PostAd() {
                 setCity("");
                 setArea("");
               }}
-              className="rounded-full border border-taupe px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
             >
               Post another
-            </button>
+            </Button>
           </div>
         </div>
       </Container>
@@ -350,15 +342,16 @@ function PostAd() {
               />
             </label>
 
-            <label className="block">
-              <span className={label}>
+            <div className="block">
+              <label htmlFor="post-ad-category" className={label}>
                 Category <span className="text-cyan-600">*</span>
-              </span>
-              <select
+              </label>
+              <Select
+                id="post-ad-category"
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
                 required
-                className={field}
+                wrapperClassName="mt-1.5 w-full"
               >
                 <option value="">Choose a category</option>
                 {(categories ?? []).map((entry) => (
@@ -366,20 +359,21 @@ function PostAd() {
                     {entry.label}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </div>
 
-            <label className="block">
-              <span className={label}>
+            <div className="block">
+              <label htmlFor="post-ad-condition" className={label}>
                 Condition <span className="text-cyan-600">*</span>
-              </span>
-              <select
+              </label>
+              <Select
+                id="post-ad-condition"
                 value={condition}
                 onChange={(event) =>
                   setCondition(event.target.value as Condition)
                 }
                 required
-                className={field}
+                wrapperClassName="mt-1.5 w-full"
               >
                 <option value="">Choose a condition</option>
                 {CONDITIONS.map((entry) => (
@@ -387,8 +381,8 @@ function PostAd() {
                     {entry}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </div>
 
             <label className="block">
               <span className={label}>
@@ -414,15 +408,16 @@ function PostAd() {
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className={label}>
+            <div className="block">
+              <label htmlFor="post-ad-city" className={label}>
                 City <span className="text-cyan-600">*</span>
-              </span>
-              <select
+              </label>
+              <Select
+                id="post-ad-city"
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
                 required
-                className={field}
+                wrapperClassName="mt-1.5 w-full"
               >
                 <option value="">Choose a city</option>
                 {CITY_NAMES.map((entry) => (
@@ -430,8 +425,8 @@ function PostAd() {
                     {entry}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </div>
 
             <label className="block">
               <span className={label}>
@@ -458,14 +453,10 @@ function PostAd() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-mist py-3.5 text-sm font-black uppercase tracking-wide text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <Button type="submit" size="lg" fullWidth disabled={submitting}>
           <FiPlus size={16} />
           {submitting ? "Posting…" : "Post listing"}
-        </button>
+        </Button>
       </form>
     </Container>
   );

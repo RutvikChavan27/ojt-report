@@ -5,6 +5,7 @@ import CategoryTiles from "../../components/categories/CategoryTiles";
 import HeroSearch from "../../components/home/HeroSearch";
 import ListingGrid from "../../components/listings/ListingGrid";
 import EmptyState from "../../components/common/EmptyState";
+import Button from "../../components/common/Button";
 import { fetchDashboard } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { usePageGate } from "../../store/RouteGate";
@@ -101,15 +102,8 @@ function Home() {
             <EmptyState
               title="Could not load listings"
               description={error}
-            >
-              <button
-                type="button"
-                onClick={reload}
-                className="inline-flex rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-              >
-                Try again
-              </button>
-            </EmptyState>
+              onRetry={reload}
+            />
           ) : (
             <ListingGrid listings={recent} loading={loading} />
           )}
@@ -147,14 +141,15 @@ function Home() {
 
         <div className="mt-5 flex flex-wrap gap-2.5">
           {busiest.map((category) => (
-            <Link
+            <Button
               key={category.slug}
               to={`/search?category=${category.slug}`}
-              className="rounded-full border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-4 py-2 text-sm font-semibold text-charcoal-900 transition hover:-translate-y-0.5 hover:border-charcoal-400 hover:text-charcoal-900 motion-reduce:hover:translate-y-0"
+              variant="outline"
+              size="sm"
             >
               {category.label}
-              <span className="ml-1.5 text-charcoal-400">{category.total}</span>
-            </Link>
+              <span className="text-charcoal-400">{category.total}</span>
+            </Button>
           ))}
         </div>
       </Section>

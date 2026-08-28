@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { FiAlertCircle, FiInbox, FiRefreshCw } from "react-icons/fi";
+import Button from "./Button";
 
 type EmptyStateProps = {
   title: string;
@@ -55,14 +56,10 @@ function EmptyState({
       {children && <div className="mt-5">{children}</div>}
 
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-mist px-6 py-2.5 text-sm font-bold text-charcoal-900 transition hover:shadow-md hover:shadow-cyan-500/30 hover:brightness-105"
-        >
+        <Button onClick={onRetry} className="mt-6">
           <FiRefreshCw size={14} />
           Try again
-        </button>
+        </Button>
       )}
     </div>
   );

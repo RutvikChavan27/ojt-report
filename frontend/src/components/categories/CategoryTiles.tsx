@@ -19,6 +19,7 @@ import {
   LuWatch,
 } from "react-icons/lu";
 import Container from "../layout/Container";
+import Button from "../common/Button";
 import type { ApiCategory } from "../../lib/api";
 
 type CategoryTilesProps = {
@@ -176,13 +177,10 @@ function CategoryTiles({ categories }: CategoryTilesProps) {
             List it in minutes — it shows up in search right away.
           </p>
         </div>
-        <Link
-          to="/post-ad"
-          className="flex flex-shrink-0 items-center gap-2 rounded-full bg-mist px-6 py-3 text-sm font-bold text-charcoal-900 shadow-sm shadow-cyan-500/30 transition-all duration-150 ease-out hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 hover:-translate-y-px active:translate-y-0 active:scale-95 motion-reduce:transform-none"
-        >
+        <Button to="/post-ad" className="flex-shrink-0">
           <FiPlus size={17} />
           Sell Something
-        </Link>
+        </Button>
       </div>
     </Container>
   );

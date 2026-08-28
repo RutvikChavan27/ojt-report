@@ -7,6 +7,7 @@ import { useAuth } from "../../store/AuthContext";
 import { useSavedListings } from "../../store/SavedListingsContext";
 import { useSavedSearches } from "../../store/SavedSearchesContext";
 import BackLink from "../../components/common/BackLink";
+import Button from "../../components/common/Button";
 
 /**
  * The signed-in user's own page: who they are, and the counts that lead into
@@ -71,17 +72,18 @@ function Profile() {
           </div>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-5"
           onClick={async () => {
             await signOut();
             navigate("/home");
           }}
-          className="mt-5 flex items-center gap-2 rounded-full border border-taupe px-5 py-2.5 text-sm font-bold text-charcoal-900 transition hover:border-charcoal-400 hover:text-charcoal-900"
         >
           <FiLogOut size={14} />
           Log out
-        </button>
+        </Button>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
