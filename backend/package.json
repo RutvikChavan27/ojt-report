@@ -17,6 +17,7 @@
     "images:upload": "tsx src/scripts/uploadImagesToStorage.ts",
     "images:repoint": "tsx src/scripts/rewritePhotoPaths.ts",
     "backfill:seller-contact": "tsx src/scripts/backfillSellerContact.ts",
+    "listings:reactivate-expired": "tsx src/scripts/reactivateExpiredListings.ts",
     "test": "vitest run"
   },
   "keywords": [],
