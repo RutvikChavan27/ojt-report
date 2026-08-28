@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { FiPlus } from "react-icons/fi";
 import {
   LuBike,
   LuBookOpen,
@@ -19,7 +18,6 @@ import {
   LuWatch,
 } from "react-icons/lu";
 import Container from "../layout/Container";
-import Button from "../common/Button";
 import type { ApiCategory } from "../../lib/api";
 
 type CategoryTilesProps = {
@@ -163,24 +161,6 @@ function CategoryTiles({ categories }: CategoryTilesProps) {
             </span>
           </Link>
         ))}
-      </div>
-
-      {/* Same rounded card treatment as every other panel on the site, same
-          "Sell Something" every button carries — the one thing here that is
-          not a browsing shortcut. */}
-      <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-6 py-7 shadow-sm shadow-charcoal-900/5 sm:flex-row sm:text-left">
-        <div className="text-center sm:text-left">
-          <p className="text-base font-bold text-charcoal-900">
-            Have something to sell?
-          </p>
-          <p className="mt-1 text-sm text-charcoal-600">
-            List it in minutes — it shows up in search right away.
-          </p>
-        </div>
-        <Button to="/post-ad" className="flex-shrink-0">
-          <FiPlus size={17} />
-          Sell Something
-        </Button>
       </div>
     </Container>
   );
