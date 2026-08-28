@@ -15,6 +15,7 @@ import {
   getOffersForBuyer,
   getOffersForSeller,
   respondToOfferAsUser,
+  updateOfferAsBuyer,
   type OfferFailureReason,
 } from "../services/listingOffers.service";
 import { isValidListingId, parseOfferPrice } from "../validators/offer.validator";
@@ -148,6 +149,31 @@ export async function postOfferReject(
       return;
     }
     reply(res, await respondToOfferAsUser(id, userIdOf(req), "reject"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/offers/:id/update { offeredPrice } — buyer only, and only while pending. */
+export async function postOfferUpdate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = offerIdParam(req);
+    if (!id) {
+      sendError(res, 404, "Offer not found.");
+      return;
+    }
+
+    const offeredPrice = parseOfferPrice((req.body ?? {}).offeredPrice);
+    if (offeredPrice === null) {
+      sendError(res, 400, "Enter a valid offer amount greater than ₹0.");
+      return;
+    }
+
+    reply(res, await updateOfferAsBuyer(id, userIdOf(req), offeredPrice));
   } catch (err) {
     next(err);
   }

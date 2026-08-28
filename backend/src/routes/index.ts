@@ -49,6 +49,7 @@ import {
   postOfferAccept,
   postOfferCounter,
   postOfferReject,
+  postOfferUpdate,
 } from "../controllers/offer.controller";
 import { requireAuth, requireListingOwner } from "../middleware/auth.middleware";
 
@@ -133,5 +134,6 @@ router.get("/offers/received", requireAuth, getReceivedOffers);
 router.post("/offers/:id/accept", requireAuth, postOfferAccept);
 router.post("/offers/:id/reject", requireAuth, postOfferReject);
 router.post("/offers/:id/counter", requireAuth, postOfferCounter);
+router.post("/offers/:id/update", requireAuth, postOfferUpdate);
 
 export default router;

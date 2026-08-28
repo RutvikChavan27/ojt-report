@@ -4,16 +4,17 @@ import EmptyState from "../../components/common/EmptyState";
 import BackLink from "../../components/common/BackLink";
 import Button from "../../components/common/Button";
 import OfferCard from "../../components/offers/OfferCard";
-import { acceptOffer, fetchMyOffers, rejectOffer } from "../../lib/api";
+import { acceptOffer, fetchMyOffers, rejectOffer, updateOffer } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { usePageGate } from "../../store/RouteGate";
 
 /**
  * The buyer side of "Make an Offer": every offer this account has sent,
- * newest activity first, with its current status. A `countered` offer is the
- * one place this page has its own actions — accepting or rejecting the
- * seller's counter — since responding to the seller is exactly this page's
- * job, the mirror of "Offers Received" on the seller dashboard.
+ * newest activity first, with its current status. A `countered` offer gets
+ * this page's main actions — accepting or rejecting the seller's counter,
+ * the mirror of "Offers Received" on the seller dashboard — while a still
+ * `pending` one (awaiting the seller) offers the one thing left to do with
+ * it: revise the price before the seller has responded.
  */
 function MyOffers() {
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -90,6 +91,7 @@ function MyOffers() {
               busy={busyId === offer.id}
               onAccept={() => run(offer.id, () => acceptOffer(offer.id))}
               onReject={() => run(offer.id, () => rejectOffer(offer.id))}
+              onUpdate={(offeredPrice) => run(offer.id, () => updateOffer(offer.id, offeredPrice))}
             />
           ))}
         </ul>

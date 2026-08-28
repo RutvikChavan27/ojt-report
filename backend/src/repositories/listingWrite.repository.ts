@@ -125,6 +125,8 @@ export type ListingPatch = {
   price?: number;
   city?: string;
   location?: string | null;
+  /** Replaces every existing photo, in this order (first = cover) — see below. */
+  images?: string[];
 };
 
 /**
@@ -132,6 +134,16 @@ export type ListingPatch = {
  *
  * Built from only the fields actually supplied, so omitting one leaves it
  * alone rather than nulling it. Returns false when the patch was empty.
+ *
+ * `images`, when present, replaces the whole set rather than patching
+ * individual photos: the editor sends back the complete list it wants —
+ * kept existing paths and newly-uploaded ones interleaved in display order —
+ * so "replace everything" is the only version of "update the photos" that
+ * needs expressing here, the same way `createListing` only ever inserts a
+ * complete set once. Delete-then-reinsert inside one transaction-scoped
+ * `query` pair rather than diffing old vs. new rows: with at most
+ * `MAX_PHOTOS` (8) rows, there is nothing an ordinality-preserving diff would
+ * save that is worth the extra logic.
  */
 export async function updateListing(
   id: string,
@@ -158,15 +170,33 @@ export async function updateListing(
   for (const [key, column, cast] of columns) {
     if (patch[key] !== undefined) sets.push(`${column} = ${bind(patch[key])}${cast}`);
   }
-  if (sets.length === 0) return false;
 
-  sets.push("updated_at = now()");
-  values.push(id);
+  if (sets.length === 0 && patch.images === undefined) return false;
 
-  await query(
-    `UPDATE listings SET ${sets.join(", ")} WHERE id = $${values.length}::bigint`,
-    values,
-  );
+  if (sets.length > 0) {
+    sets.push("updated_at = now()");
+    values.push(id);
+    await query(
+      `UPDATE listings SET ${sets.join(", ")} WHERE id = $${values.length}::bigint`,
+      values,
+    );
+  }
+
+  if (patch.images !== undefined) {
+    await query(`DELETE FROM listing_photos WHERE listing_id = $1::bigint`, [id]);
+
+    if (patch.images.length > 0) {
+      // Same thumbnail-path derivation as createListing — see its comment.
+      const thumbPaths = patch.images.map(thumbPathFor);
+      await query(
+        `INSERT INTO listing_photos (listing_id, path, thumb_path, is_primary, position)
+         SELECT $1::bigint, path, thumb_path, ordinality = 1, ordinality - 1
+           FROM unnest($2::text[], $3::text[]) WITH ORDINALITY AS t(path, thumb_path, ordinality)`,
+        [id, patch.images, thumbPaths],
+      );
+    }
+  }
+
   return true;
 }
 

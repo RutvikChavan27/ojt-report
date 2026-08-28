@@ -145,6 +145,14 @@ function App() {
             }
           />
           <Route
+            path="/edit-listing/:id"
+            element={
+              <RequireAuth action="edit a listing">
+                <PostAd />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/my-listings"
             element={
               <RequireAuth action="see your listings">

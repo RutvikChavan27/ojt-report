@@ -3,6 +3,7 @@ import Container from "../../components/layout/Container";
 import { Link } from "react-router-dom";
 import {
   FiCheckCircle,
+  FiEdit2,
   FiEye,
   FiPlus,
   FiRefreshCw,
@@ -383,6 +384,15 @@ function MyListings() {
                         className={iconAction}
                       >
                         <FiEye size={13} />
+                      </Link>
+
+                      <Link
+                        to={`/edit-listing/${listing.id}`}
+                        title="Edit listing"
+                        aria-label={`Edit ${listing.title}`}
+                        className={iconAction}
+                      >
+                        <FiEdit2 size={13} />
                       </Link>
 
                       {listing.status === "active" && (

@@ -18,6 +18,7 @@ import {
   findOffersForSeller,
   hasPendingOffer,
   respondToOffer,
+  updateOfferPrice,
   type OfferRow,
 } from "../repositories/listingOffers.repository";
 import { resolveImagePath } from "../utils/images";
@@ -119,6 +120,31 @@ export async function respondToOfferAsUser(
   }
 
   return await explainRespondFailure(offerId, userId);
+}
+
+/**
+ * The buyer revises their own still-pending offer — e.g. raising ₹500 to
+ * ₹700 before the seller has responded. Same shape as `respondToOfferAsUser`:
+ * try the single authorizing UPDATE first, and only pay for a read-only
+ * lookup to explain *why* on the failure path.
+ */
+export async function updateOfferAsBuyer(
+  offerId: string,
+  buyerId: number,
+  offeredPrice: number,
+): Promise<OfferResult> {
+  const updated = await updateOfferPrice(offerId, buyerId, offeredPrice);
+
+  if (updated) {
+    const offer = await findOfferById(offerId);
+    if (!offer) return { ok: false, reason: "not_found" };
+    return { ok: true, offer: toDTO(offer) };
+  }
+
+  const offer = await findOfferById(offerId);
+  if (!offer) return { ok: false, reason: "not_found" };
+  if (offer.buyer_id !== buyerId) return { ok: false, reason: "forbidden" };
+  return { ok: false, reason: "conflict" };
 }
 
 /** The seller counters a still-pending offer with a different price. */

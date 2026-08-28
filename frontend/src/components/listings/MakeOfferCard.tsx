@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiCheck, FiTag } from "react-icons/fi";
-import { createOffer } from "../../lib/api";
+import { createOffer, fetchMyOffers, updateOffer, type ApiOffer } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 import { useAuth } from "../../store/AuthContext";
 import { currentReturnPath } from "../../lib/returnTo";
@@ -35,8 +35,43 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  // Which the just-finished submit was — captured at the moment it ran, not
+  // read back off `isEditing` afterwards: submitting sets `existingOffer` to
+  // the (possibly brand-new) offer that came back, which would otherwise make
+  // a fresh "Make an Offer" submission misreport itself as an edit once it
+  // succeeds, purely because a pending offer now exists.
+  const [justEdited, setJustEdited] = useState(false);
+
+  // The buyer's own still-pending offer on this listing, if any — loaded once
+  // per signed-in visit so this card can offer "update" rather than letting a
+  // second offer attempt fail with "you already have a pending offer".
+  const [existingOffer, setExistingOffer] = useState<ApiOffer | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setExistingOffer(null);
+      return;
+    }
+    let current = true;
+    fetchMyOffers()
+      .then((offers) => {
+        if (!current) return;
+        const mine = offers.find((o) => o.listingId === listingId && o.status === "pending");
+        setExistingOffer(mine ?? null);
+      })
+      .catch(() => {
+        // Nothing to show for this failing is worth surfacing here — the
+        // card just falls back to "Make an Offer", and a real duplicate is
+        // still caught (and explained) when the submit itself is attempted.
+      });
+    return () => {
+      current = false;
+    };
+  }, [user, listingId]);
 
   if (!available || (user && user.id === sellerId)) return null;
+
+  const isEditing = existingOffer !== null;
 
   const submit = async () => {
     const price = Number(amount);
@@ -48,7 +83,11 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
     setSending(true);
     setError(null);
     try {
-      await createOffer(listingId, price);
+      const offer = isEditing
+        ? await updateOffer(existingOffer.id, price)
+        : await createOffer(listingId, price);
+      setJustEdited(isEditing);
+      setExistingOffer(offer);
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send that offer.");
@@ -67,7 +106,7 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
         <div className="mt-3 flex items-start gap-2 text-sm text-emerald-700">
           <FiCheck size={16} className="mt-0.5 flex-shrink-0" />
           <p>
-            Offer sent. Track its status under{" "}
+            {justEdited ? "Offer updated." : "Offer sent."} Track its status under{" "}
             <Link to="/my-offers" className="font-bold underline decoration-emerald-400 underline-offset-2">
               My Offers
             </Link>
@@ -92,10 +131,34 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
           </p>
         </>
       ) : !open ? (
-        <Button onClick={() => setOpen(true)} fullWidth className="mt-3">
-          <FiTag size={15} />
-          Make an Offer
-        </Button>
+        isEditing ? (
+          <>
+            <p className="mt-3 text-sm text-charcoal-700">
+              Your offer:{" "}
+              <span className="font-bold text-charcoal-900">
+                {formatPrice(existingOffer.offeredPrice)}
+              </span>{" "}
+              — awaiting the seller.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAmount(String(existingOffer.offeredPrice));
+                setOpen(true);
+              }}
+              fullWidth
+              className="mt-3"
+            >
+              <FiTag size={15} />
+              Update Offer
+            </Button>
+          </>
+        ) : (
+          <Button onClick={() => setOpen(true)} fullWidth className="mt-3">
+            <FiTag size={15} />
+            Make an Offer
+          </Button>
+        )
       ) : (
         <div className="mt-3">
           <p className="text-sm text-charcoal-700">
@@ -124,7 +187,7 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
 
           <div className="mt-3 flex gap-2">
             <Button size="sm" disabled={sending} onClick={submit} className="flex-1">
-              {sending ? "Sending…" : "Send Offer"}
+              {sending ? "Sending…" : isEditing ? "Update Offer" : "Send Offer"}
             </Button>
             <Button
               size="sm"

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiCheck, FiRepeat, FiX } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiRepeat, FiX } from "react-icons/fi";
 import type { ApiOffer, ApiOfferStatus } from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 import Button from "../common/Button";
@@ -28,6 +28,8 @@ type OfferCardProps = {
   onAccept?: () => void;
   onReject?: () => void;
   onCounter?: (counterPrice: number) => void;
+  /** Buyer revises their own still-pending offer, e.g. ₹500 → ₹700. */
+  onUpdate?: (offeredPrice: number) => void;
 };
 
 /**
@@ -36,6 +38,8 @@ type OfferCardProps = {
  * actions differing:
  *
  *   - A `pending` offer awaits the seller: Accept / Reject / Counter Offer.
+ *     The buyer, looking at that same still-pending offer, instead sees
+ *     Edit Offer — nothing to answer yet, but still theirs to revise.
  *   - A `countered` offer awaits the buyer: Accept / Reject the counter.
  *   - `accepted` and `rejected` are terminal — just a status to read.
  *
@@ -43,14 +47,19 @@ type OfferCardProps = {
  * separate "Mark as sold" action on the existing dashboard; an accepted offer
  * is an agreement to sell, not the sale itself.
  */
-function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter }: OfferCardProps) {
+function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter, onUpdate }: OfferCardProps) {
   const [counterOpen, setCounterOpen] = useState(false);
   const [counterValue, setCounterValue] = useState("");
   const [counterError, setCounterError] = useState<string | null>(null);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+
   const awaitingSeller = offer.status === "pending" && viewer === "seller";
   const awaitingBuyer = offer.status === "countered" && viewer === "buyer";
   const canRespond = awaitingSeller || awaitingBuyer;
+  const canEdit = offer.status === "pending" && viewer === "buyer";
 
   const submitCounter = () => {
     const price = Number(counterValue);
@@ -60,6 +69,22 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter 
     }
     setCounterError(null);
     onCounter?.(price);
+  };
+
+  const submitEdit = () => {
+    const price = Number(editValue);
+    if (!editValue.trim() || !Number.isFinite(price) || price <= 0) {
+      setEditError("Enter a valid amount greater than ₹0.");
+      return;
+    }
+    setEditError(null);
+    // Closed here rather than left for the reload to hide: unlike the counter
+    // box (which disappears once the status flips away from `pending`),
+    // editing keeps the offer `pending`, so nothing else would ever close
+    // this box on success. A failure surfaces through the page's own error
+    // banner, same as Accept/Reject/Counter already do.
+    setEditOpen(false);
+    onUpdate?.(price);
   };
 
   return (
@@ -140,6 +165,51 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter 
               Counter Offer
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Nothing to accept/reject yet — this is the buyer's own proposal,
+          still waiting on the seller, so the only action is revising it. */}
+      {canEdit && (
+        <div className="mt-4">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              setEditValue(String(offer.offeredPrice));
+              setEditError(null);
+              setEditOpen((open) => !open);
+            }}
+          >
+            <FiEdit2 size={13} />
+            Edit Offer
+          </Button>
+        </div>
+      )}
+
+      {canEdit && editOpen && (
+        <div className="mt-3 flex flex-wrap items-start gap-2">
+          <div>
+            <input
+              type="number"
+              min={1}
+              step="1"
+              inputMode="decimal"
+              placeholder="Your offer"
+              value={editValue}
+              onChange={(event) => {
+                setEditValue(event.target.value);
+                setEditError(null);
+              }}
+              aria-label="Updated offer price"
+              className="w-40 rounded-lg border border-taupe bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+            />
+            {editError && <p className="mt-1 text-xs text-rose-600">{editError}</p>}
+          </div>
+          <Button size="sm" disabled={busy} onClick={submitEdit}>
+            Update Offer
+          </Button>
         </div>
       )}
 

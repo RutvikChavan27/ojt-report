@@ -286,6 +286,16 @@ export type ApiListingPage = {
 export const imageUrl = (path: string): string =>
   /^https?:\/\//.test(path) ? path : `${API_BASE}${path}`;
 
+/**
+ * Inverse of `imageUrl` — recovers the server-relative `/images/...` path a
+ * listing write actually stores, from the absolute URL a fetched listing's
+ * `images` array carries. Needed only when re-submitting an existing photo
+ * unchanged (editing a listing): the server's own path validator refuses
+ * anything that is not already one of its own `/images/...` paths.
+ */
+export const imagePath = (url: string): string =>
+  url.startsWith(API_BASE) ? url.slice(API_BASE.length) : url;
+
 const withImage = <T extends { image: string }>(listing: T): T => ({
   ...listing,
   image: imageUrl(listing.image),
@@ -623,6 +633,13 @@ export const counterOffer = (id: string, counterPrice: number) =>
   apiRequest<ApiOffer>(`/api/offers/${encodeURIComponent(id)}/counter`, {
     method: "POST",
     body: { counterPrice },
+  }).then((offer) => withOfferImage(offer));
+
+/** The buyer revises their own still-pending offer to a different price. */
+export const updateOffer = (id: string, offeredPrice: number) =>
+  apiRequest<ApiOffer>(`/api/offers/${encodeURIComponent(id)}/update`, {
+    method: "POST",
+    body: { offeredPrice },
   }).then((offer) => withOfferImage(offer));
 
 /* -------------------------------------------------------------------- upload */

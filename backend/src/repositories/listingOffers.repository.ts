@@ -155,6 +155,32 @@ export async function respondToOffer(
 }
 
 /**
+ * The buyer revises their own still-pending offer to a different price —
+ * raising it to be more competitive, or lowering it, before the seller has
+ * responded. Only valid from `pending` and only for the offer's own buyer,
+ * the same "encode the rule in the WHERE clause" pattern as every other
+ * write here: once the seller has responded (accepted/rejected/countered),
+ * there is nothing left to revise — the buyer's reply to a counter goes
+ * through `respondToOffer` instead, not this.
+ *
+ * @returns true if a row was updated.
+ */
+export async function updateOfferPrice(
+  offerId: string,
+  buyerId: number,
+  offeredPrice: number,
+): Promise<boolean> {
+  const { rows } = await query<{ id: string }>(
+    `UPDATE listing_offers
+        SET offered_price = $3, updated_at = now()
+      WHERE id = $1::bigint AND buyer_id = $2 AND status = 'pending'
+      RETURNING id::text`,
+    [offerId, buyerId, offeredPrice],
+  );
+  return rows.length > 0;
+}
+
+/**
  * The seller counters a still-pending offer with a different price.
  *
  * Only valid from `pending` — a counter is the seller's one reply to the
