@@ -17,13 +17,15 @@ import { Link, type LinkProps } from "react-router-dom";
  *     "Contact Seller" — mirroring the Navbar's own long-standing rule that
  *     a filled button marks *the* action, not merely *an* action.
  *   - `outline` — a blue (`cyan-500`) border, visible at rest, with the same
- *     light `bg-mist` wash the Categories dropdown already uses. Hover does
- *     not change its color at all — every other button on the site used to
- *     shift to a different border/text colour on hover, which is exactly
- *     the inconsistency this button exists to remove. It only turns solid
- *     blue for the moment it's actually pressed (`:active`), which is what
- *     "looks pressed" without permanently competing with a real `primary`
- *     button for attention.
+ *     light `bg-mist` wash the Categories dropdown already uses. Neither
+ *     hover nor `:active` changes the border or fill colour at all — every
+ *     other button on the site used to shift to a different border/text
+ *     colour on hover (or fill solid on press), which is exactly the
+ *     inconsistency this button exists to remove. A press only dims the
+ *     whole button slightly (`brightness`), the same momentary "pressed"
+ *     cue without permanently competing with a real `primary` button for
+ *     attention, then returns to the plain border-only look the instant
+ *     it's released.
  *
  * `danger` is kept as a third, narrow variant for the one place the app
  * asks "are you sure you want to destroy this" (ConfirmDialog's destructive
@@ -50,7 +52,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-mist text-charcoal-900 shadow-sm shadow-cyan-500/30 hover:shadow-md hover:shadow-cyan-500/40 hover:brightness-105 active:brightness-95",
   outline:
-    "border border-cyan-500 bg-mist text-charcoal-900 hover:border-cyan-500 hover:bg-mist hover:text-charcoal-900 active:border-cyan-500 active:bg-cyan-500 active:text-charcoal-900",
+    "border border-cyan-500 bg-mist text-charcoal-900 hover:border-cyan-500 hover:bg-mist hover:text-charcoal-900 active:brightness-90",
   danger: "bg-red-600 text-white hover:bg-red-700 active:bg-red-700",
 };
 
