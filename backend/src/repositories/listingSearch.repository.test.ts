@@ -20,6 +20,7 @@ import {
   countSearchMatches,
   fetchFacetCounts,
   searchListingsExact,
+  type SearchRow,
 } from "./listingSearch.repository";
 
 let sellerId: number;
@@ -372,6 +373,92 @@ describe("pagination stability", () => {
     // insert had shifted anything, one of these would be missing or a page 1
     // row would reappear here instead.
     expect(page2Ids).toEqual(seededIds.slice(4, 8));
+  });
+});
+
+describe("relevance cursor pagination across a tied-rank cluster", () => {
+  const MARKER = "ZZZVITESTRANKTIE";
+  const TOTAL = 10;
+  const PAGE_SIZE = 4;
+  let seededIds: string[];
+
+  beforeAll(async () => {
+    // Every row's title is the identical marker text, so ts_rank ties
+    // exactly across all of them for this query -- the same kind of large
+    // tied-rank cluster a real one-word query produces (see
+    // RANK_EXPRESSION's own comment), which is where a `prev` keyset seek
+    // used to strand on a float-precision boundary and come back empty
+    // despite a correct, nonzero total.
+    seededIds = await seedListings(
+      sellerId,
+      Array.from({ length: TOTAL }, (_, index) => ({
+        title: MARKER,
+        categorySlug: categories[0],
+        postedAt: new Date(Date.now() - index * 1000),
+      })),
+    );
+  });
+
+  it("walks forward through the tied cluster, then all the way back, with no empty page", async () => {
+    const seenForward: string[] = [];
+    let cursor: { rank?: number; postedAt?: string; id: string } | undefined;
+    let lastRows: SearchRow[] = [];
+
+    while (seenForward.length < TOTAL) {
+      const rows: SearchRow[] = await searchListingsExact({
+        q: MARKER,
+        sort: "relevance",
+        limit: PAGE_SIZE,
+        offset: 0,
+        seek: cursor ? { cursor, direction: "next" } : null,
+      });
+      // The bug this guards against: an empty page here despite rows still
+      // left to walk, exactly the failure a `prev` seek hit in production.
+      expect(rows.length).toBeGreaterThan(0);
+      lastRows = rows;
+      seenForward.push(...rows.map((row) => row.id));
+      const last = rows[rows.length - 1];
+      cursor = {
+        rank: Number(last.rank),
+        postedAt: last.posted_at.toISOString(),
+        id: last.id,
+      };
+    }
+    expect(seenForward.length).toBe(TOTAL);
+    expect(new Set(seenForward).size).toBe(TOTAL);
+
+    // Now walk all the way back from wherever the forward walk ended, via
+    // `prev` — the exact direction/sort combination that was stranding on
+    // the tied boundary. Seeded with the last forward page's own rows: a
+    // `prev` seek is exclusive of the row it resumes from, so those rows
+    // are never handed back by the backward walk itself.
+    const seenBack: string[] = [...lastRows.map((row) => row.id)];
+    let first = lastRows[0];
+    let backCursor = {
+      rank: Number(first.rank),
+      postedAt: first.posted_at.toISOString(),
+      id: first.id,
+    };
+    while (seenBack.length < TOTAL) {
+      const rows: SearchRow[] = await searchListingsExact({
+        q: MARKER,
+        sort: "relevance",
+        limit: PAGE_SIZE,
+        offset: 0,
+        seek: { cursor: backCursor, direction: "prev" },
+      });
+      if (rows.length === 0) break;
+      seenBack.push(...rows.map((row) => row.id));
+      first = rows[0];
+      backCursor = {
+        rank: Number(first.rank),
+        postedAt: first.posted_at.toISOString(),
+        id: first.id,
+      };
+    }
+    expect(seenBack.length).toBe(TOTAL);
+    expect(new Set(seenBack).size).toBe(TOTAL);
+    expect(new Set(seededIds).size).toBe(TOTAL);
   });
 });
 

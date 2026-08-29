@@ -287,8 +287,22 @@ export function buildOrderBy(sort: SortKey, hasQuery: boolean): string {
  * and description 'B', so a title hit outranks the same word in a description.
  * Selected as a constant 0 when there is no query, keeping one column list for
  * both paths.
+ *
+ * Rounded to a `numeric` rather than left as `ts_rank`'s native `real`: a
+ * one-word query ties enormous numbers of rows on essentially the same
+ * `real` value (see the relevance-clause comment further up this file), and
+ * a keyset cursor's rank travels through a text/JSON round trip before
+ * coming back as a query parameter. Comparing that reconstructed value
+ * against a freshly-recomputed `real` at the tied boundary — which is what
+ * `prev` pagination lands on — could disagree at the level of float
+ * precision, stranding the whole tied cluster and returning zero rows even
+ * though hundreds of matching listings sit right at that boundary. Rounding
+ * to 6 decimal places on both sides (here, and in the cursor's `::numeric`
+ * cast below) collapses that ambiguity: `numeric` compares as exact decimal,
+ * not binary float, so the same rounded value always reproduces itself
+ * exactly through the cursor round trip.
  */
-export const RANK_EXPRESSION = `ts_rank(l.search_vector, websearch_to_tsquery('english', $1))`;
+export const RANK_EXPRESSION = `round(ts_rank(l.search_vector, websearch_to_tsquery('english', $1))::numeric, 6)`;
 
 /**
  * PAGINATION, explained: a simple way to paginate is `LIMIT 24 OFFSET 480`
@@ -400,8 +414,11 @@ export function buildKeysetClause(
   if (sort === "relevance" && hasQuery) {
     if (cursor.rank === undefined || cursor.postedAt === undefined) return null;
     const op = forward ? "<" : ">";
+    // `::numeric`, matching RANK_EXPRESSION's own rounding — see its comment
+    // for why comparing as exact decimal rather than binary float is what
+    // keeps a tied-rank boundary from stranding a `prev` seek.
     return {
-      text: `(${RANK_EXPRESSION}, l.posted_at, l.id) ${op} ($${startIndex + 1}::double precision, $${startIndex + 2}::timestamptz, $${startIndex + 3}::bigint)`,
+      text: `(${RANK_EXPRESSION}, l.posted_at, l.id) ${op} ($${startIndex + 1}::numeric, $${startIndex + 2}::timestamptz, $${startIndex + 3}::bigint)`,
       values: [cursor.rank, cursor.postedAt, cursor.id],
     };
   }

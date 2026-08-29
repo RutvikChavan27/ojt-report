@@ -353,11 +353,18 @@ export async function searchListings(
   // truth says is last — rather than assume the original `total` was ever
   // wrong, or that the requested page was necessarily invalid.
   //
-  // Only meaningful for an `offset` request: a cursor seek coming back empty
-  // means "nothing more in that direction", which is what an already-disabled
-  // Next/Previous button prevents the client from ever asking for on purpose.
+  // Also covers a cursor (`seek`) request coming back empty. The comment
+  // above once assumed that could only mean "nothing more in that
+  // direction" — a button the client should have already disabled — but a
+  // cursor can legitimately fail to find any rows despite `total` being
+  // correct (e.g. a relevance-sort tie-break landing on a boundary a
+  // recomputed value doesn't exactly reproduce), so an empty seek result
+  // gets the same fresh-reality check as an empty offset page, falling back
+  // to a plain offset fetch of whatever page is actually last rather than
+  // handing the client a confident-looking `total`/`hasMore` alongside zero
+  // rows.
   let page = categoryFallback ? 1 : requestedPage;
-  if (!seek && rows.length === 0 && total > 0) {
+  if (rows.length === 0 && total > 0) {
     const freshTotal = await countSearchMatches({ ...request, fuzzy });
     total = freshTotal;
     if (freshTotal > 0) {
@@ -365,8 +372,14 @@ export async function searchListings(
       // Must match whichever path produced `total` — an exact-tsquery
       // re-fetch here for a fuzzy search would just repeat the exact-match
       // miss that reached the fuzzy path in the first place, landing back on
-      // an empty page despite a correct, nonzero `total`.
-      const healedOptions = { ...options, offset: (page - 1) * perPage };
+      // an empty page despite a correct, nonzero `total`. Dropping `seek`
+      // (not just adding `offset`) is what forces this back onto the
+      // offset path even when the original request was a cursor seek.
+      const healedOptions = {
+        ...options,
+        seek: null,
+        offset: (page - 1) * perPage,
+      };
       rows = fuzzy
         ? await searchListingsFuzzy(healedOptions)
         : await searchListingsExact(healedOptions);
