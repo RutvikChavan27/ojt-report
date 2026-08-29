@@ -119,6 +119,18 @@ function PostAd() {
   const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // The success screen below replaces the form in place, at whatever scroll
+  // position filling out a long form (plus this page's own usePageGate
+  // loader) left the window at — nothing else on the page changes route or
+  // otherwise triggers the app-wide ScrollToTop (App.tsx, keyed on pathname
+  // only, which posting a listing never changes). Instant rather than
+  // smooth, same as ScrollToTop itself, so the confirmation is the first
+  // thing on screen rather than something scrolling into view a moment
+  // later.
+  useEffect(() => {
+    if (postedId) window.scrollTo({ top: 0, behavior: "auto" });
+  }, [postedId]);
+
   // Prefills the form once the listing to edit has loaded. Runs only when
   // `existingListing` itself changes (one successful load), not on every
   // render, so it never fights with the seller's own edits afterwards.
@@ -448,7 +460,7 @@ function PostAd() {
             {photos.map((photo, index) => (
               <div
                 key={photo.id}
-                className="relative aspect-square overflow-hidden rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50"
+                className="relative aspect-square overflow-hidden rounded-xl border border-cyan-500 bg-gradient-to-br from-cyan-50 to-mint-50"
               >
                 <img
                   src={photo.url}
@@ -464,7 +476,7 @@ function PostAd() {
                   type="button"
                   onClick={() => removePhoto(photo.id)}
                   aria-label={photo.kind === "local" ? `Remove ${photo.name}` : "Remove photo"}
-                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-cyan-50/95 to-mint-50/95 text-charcoal-700 transition hover:scale-105"
+                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-cyan-50/95 to-mint-50/95 text-charcoal-700 outline-none transition hover:scale-105 focus:ring-2 focus:ring-cyan-500/20"
                 >
                   <FiX size={12} />
                 </button>
@@ -475,7 +487,12 @@ function PostAd() {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-taupe text-charcoal-500 transition hover:border-charcoal-400 hover:text-charcoal-900"
+                // Same border-cyan-500/focus-ring treatment as every text
+                // field (Input.tsx's textFieldClassName) — dashed rather
+                // than solid stays as the one difference, since that's what
+                // marks this tile as an add slot rather than a filled photo,
+                // not a different colour scheme from the rest of the form.
+                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-cyan-500 text-charcoal-500 outline-none transition hover:text-charcoal-900 focus:ring-2 focus:ring-cyan-500/20"
               >
                 <FiImage size={20} />
                 <span className="text-[11px] font-semibold">Add photo</span>
