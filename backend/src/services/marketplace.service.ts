@@ -50,12 +50,12 @@ const imageOrPlaceholder = (path: string | null): string =>
  * Hides all but the last two digits of a phone number, for the teaser shown
  * before "Contact Seller" is pressed.
  *
- * The full number travels in the same response too (see `ListingSellerDTO.phone`)
- * — SellerCard.tsx is what gates it behind a click, not the server withholding
- * it. Nothing yet lets a real account set its own phone (only the seeded
- * dummy sellers have one), so this is currently a UI reveal gesture rather
- * than an access-control boundary; a real "keep it server-side until asked
- * for" version would need its own endpoint.
+ * The full number travels in the same response too (see `ListingSellerDTO.phone`,
+ * sourced from this listing's own `contact_phone` — see listing.controller.ts
+ * and its column comment in marketplace.sql) — SellerCard.tsx is what gates
+ * it behind a click, not the server withholding it. This is a UI reveal
+ * gesture, not an access-control boundary; a real "keep it server-side until
+ * asked for" version would need its own endpoint.
  */
 function maskPhone(phone: string | null): string | null {
   if (!phone) return null;

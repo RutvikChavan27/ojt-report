@@ -186,7 +186,7 @@ export async function findListingById(
        l.seller_id,
        u.display_name AS seller_name,
        u.created_at AS seller_created_at,
-       u.phone AS seller_phone,
+       l.contact_phone AS seller_phone,
        u.contact_email AS seller_contact_email,
        COALESCE(
          (

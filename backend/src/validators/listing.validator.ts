@@ -46,10 +46,9 @@ export type NewListingInput = {
   location: string | null;
   images: string[];
   /**
-   * The seller's own contact number, normalised to 10 bare digits. Not a
-   * `listings` column — see setUserPhone in user.repository.ts, which is
-   * where a caller actually writes this; it rides on the same request only
-   * because that's where a seller enters it.
+   * This listing's own contact number, normalised to 10 bare digits — see
+   * the `contact_phone` column's comment in marketplace.sql for why it
+   * lives on the listing rather than the seller's account.
    */
   phone: string;
 };

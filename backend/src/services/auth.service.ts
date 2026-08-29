@@ -57,7 +57,6 @@ const toDTO = (row: UserRow): AuthUserDTO => ({
   id: row.id,
   email: row.email,
   name: row.display_name,
-  phone: row.phone,
 });
 
 export async function register(input: {

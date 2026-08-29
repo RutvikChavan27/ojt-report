@@ -120,8 +120,6 @@ export type AuthUserDTO = {
   id: number;
   email: string;
   name: string;
-  /** The seller's own contact number, or null until they've posted a listing. */
-  phone: string | null;
 };
 
 /** One selectable value in a filter list, with how many listings it would match. */

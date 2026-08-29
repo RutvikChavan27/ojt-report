@@ -32,8 +32,6 @@ export type AuthUser = {
   id: number;
   email: string;
   name: string;
-  /** This seller's own contact number, or null until they've posted a listing. */
-  phone: string | null;
 };
 
 /**

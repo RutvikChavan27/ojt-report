@@ -13,16 +13,14 @@ export type UserRow = {
   email: string;
   password_hash: string | null;
   display_name: string;
-  /** The seller's own contact number — see setUserPhone below for how it's set. */
-  phone: string | null;
 };
 
 /** Every SELECT returns the same shape, so UserRow cannot drift from the query. */
-const USER_COLUMNS = "id, email, password_hash, display_name, phone";
+const USER_COLUMNS = "id, email, password_hash, display_name";
 
 /** The same list qualified for the join in findUserByProviderIdentity. */
 const USER_COLUMNS_QUALIFIED =
-  "u.id, u.email, u.password_hash, u.display_name, u.phone";
+  "u.id, u.email, u.password_hash, u.display_name";
 
 /** Postgres error code for a unique-constraint violation. */
 export const UNIQUE_VIOLATION = "23505";
@@ -62,23 +60,6 @@ export async function createUser(input: {
     [input.email, input.displayName, input.passwordHash],
   );
   return rows[0];
-}
-
-/**
- * Sets a seller's own contact number.
- *
- * Always the session's own id, never one read off a request body naming
- * someone else — every caller passes `req.session.userId`, so this can only
- * ever change the number of the account making the request. One number per
- * account rather than one per listing: it lives here, not on `listings`, so
- * every listing a seller has (past and future) shows whatever number is
- * current on their account, the same way their display name already does.
- */
-export async function setUserPhone(userId: number, phone: string): Promise<void> {
-  await query(`UPDATE users SET phone = $2, updated_at = now() WHERE id = $1`, [
-    userId,
-    phone,
-  ]);
 }
 
 /** The user behind a provider identity, if that identity has been linked. */

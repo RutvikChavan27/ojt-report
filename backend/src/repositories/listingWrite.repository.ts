@@ -72,6 +72,8 @@ export type NewListing = {
   city: string;
   location: string | null;
   images: string[];
+  /** This listing's own contact number — see the column's comment in marketplace.sql. */
+  phone: string;
 };
 
 /**
@@ -84,14 +86,15 @@ export async function createListing(input: NewListing): Promise<string> {
   const { rows } = await query<{ id: string }>(
     `INSERT INTO listings
        (seller_id, title, description, category_slug, subcategory_slug,
-        audience, condition, price, city, location, status, expires_at)
-     VALUES ($1,$2,$3,$4,$5,'Unisex',$6::listing_condition,$7,$8,$9,'active',
-             now() + ($10 || ' days')::interval)
+        audience, condition, price, city, location, contact_phone, status,
+        expires_at)
+     VALUES ($1,$2,$3,$4,$5,'Unisex',$6::listing_condition,$7,$8,$9,$10,'active',
+             now() + ($11 || ' days')::interval)
      RETURNING id::text`,
     [
       input.sellerId, input.title, input.description, input.categorySlug,
       input.subcategorySlug, input.condition, input.price, input.city,
-      input.location, LISTING_LIFETIME_DAYS,
+      input.location, input.phone, LISTING_LIFETIME_DAYS,
     ],
   );
 
@@ -125,6 +128,8 @@ export type ListingPatch = {
   price?: number;
   city?: string;
   location?: string | null;
+  /** This listing's own contact number — see the column's comment in marketplace.sql. */
+  phone?: string;
   /** Replaces every existing photo, in this order (first = cover) — see below. */
   images?: string[];
 };
@@ -165,6 +170,7 @@ export async function updateListing(
     ["price", "price", ""],
     ["city", "city", ""],
     ["location", "location", ""],
+    ["phone", "contact_phone", ""],
   ];
 
   for (const [key, column, cast] of columns) {

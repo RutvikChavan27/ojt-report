@@ -363,6 +363,16 @@ ALTER TABLE listings
 CREATE INDEX IF NOT EXISTS listings_subcategory_idx
   ON listings (subcategory_slug) WHERE status = 'active';
 
+-- The seller's contact number for THIS listing specifically, not the
+-- account as a whole (there is no per-account phone column at all — this
+-- replaced an earlier users.phone-based design that prefilled every new
+-- listing from whatever number the seller last used, which a later brief
+-- explicitly asked to stop: each listing keeps its own number, and a new
+-- listing's form starts blank). Nullable because 145,000+ seed/pre-existing
+-- rows have nothing here; the app requires it at write time for a new
+-- listing (listing.validator.ts) but never invents one for an old row.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS contact_phone TEXT;
+
 -- === Row Level Security ====================================================
 --
 -- Every Supabase project exposes its database over a public REST API

@@ -185,7 +185,6 @@ export async function getMe(
       id: user.id,
       email: user.email,
       name: user.display_name,
-      phone: user.phone,
     });
   } catch (err) {
     next(err);

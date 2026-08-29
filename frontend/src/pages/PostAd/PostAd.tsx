@@ -154,16 +154,6 @@ function PostAd() {
     );
   }, [existingListing]);
 
-  // A fresh listing (not editing one) starts from whatever contact number
-  // this seller already has on file, from an earlier listing — so posting a
-  // second (or fifth) time never asks for it again unless they choose to
-  // change it. `user` loads asynchronously, hence its own effect rather than
-  // folding this into useState's initial value; the functional update never
-  // clobbers something already typed if this re-fires.
-  useEffect(() => {
-    if (!isEdit && user?.phone) setPhone((current) => current || user.phone!);
-  }, [isEdit, user]);
-
   // Presentation only — see the comment on the component above. The real
   // enforcement is the server refusing the PATCH itself.
   const forbidden =
@@ -390,9 +380,9 @@ function PostAd() {
                   setCondition("");
                   setCity("");
                   setArea("");
-                  // Not reset: it's the seller's account-level number (just
-                  // confirmed by this very submit), so it stays correct and
-                  // prefilled for whatever they post next.
+                  // Each listing keeps its own contact number, so a fresh
+                  // post starts blank rather than reusing the last one.
+                  setPhone("");
                 }}
               >
                 Post another
@@ -412,7 +402,7 @@ function PostAd() {
           title="You can't edit this listing"
           description="Only the seller who posted a listing can make changes to it."
         >
-          <Button to="/my-listings">Go to my listings</Button>
+          <Button to="/my-listings" variant="outline">Go to my listings</Button>
         </EmptyState>
       </Container>
     );
@@ -427,7 +417,7 @@ function PostAd() {
           title="Could not load this listing"
           description={loadError}
         >
-          <Button to="/my-listings">Go to my listings</Button>
+          <Button to="/my-listings" variant="outline">Go to my listings</Button>
         </EmptyState>
       </Container>
     );
@@ -687,7 +677,7 @@ function PostAd() {
           </p>
         )}
 
-        <Button type="submit" size="lg" fullWidth disabled={submitting}>
+        <Button type="submit" variant="outline" size="lg" fullWidth disabled={submitting}>
           <FiPlus size={16} />
           {submitting
             ? isEdit
