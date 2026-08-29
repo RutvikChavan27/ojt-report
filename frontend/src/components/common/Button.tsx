@@ -13,9 +13,10 @@ import { Link, type LinkProps } from "react-router-dom";
  * page (that scatter is what this component replaces):
  *
  *   - `primary` — permanently filled (`bg-mist`). Reserved for the one main
- *     action of whatever it's on — "Sell Something", a form's submit button,
- *     "Contact Seller" — mirroring the Navbar's own long-standing rule that
- *     a filled button marks *the* action, not merely *an* action.
+ *     action of whatever it's on — a form's submit button, "Contact
+ *     Seller" — mirroring the Navbar's own long-standing rule that a filled
+ *     button marks *the* action, not merely *an* action. "Sell Something"
+ *     itself is `outline`, not this — see Navbar.tsx.
  *   - `outline` — a blue (`cyan-500`) border, visible at rest, with the same
  *     light `bg-mist` wash the Categories dropdown already uses. Neither
  *     hover nor `:active` changes the border or fill colour at all — every

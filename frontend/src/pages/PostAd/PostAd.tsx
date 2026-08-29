@@ -18,6 +18,7 @@ import { usePageGate } from "../../store/RouteGate";
 import BackLink from "../../components/common/BackLink";
 import Button from "../../components/common/Button";
 import EmptyState from "../../components/common/EmptyState";
+import { textFieldClassName } from "../../components/common/Input";
 import { Select } from "../../components/common/Dropdown";
 
 /** Matches the server's own cap, so the form refuses before uploading. */
@@ -337,8 +338,7 @@ function PostAd() {
     }
   };
 
-  const field =
-    "mt-1.5 w-full rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 px-3.5 py-2.5 text-sm text-charcoal-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20";
+  const field = `mt-1.5 w-full ${textFieldClassName} px-3.5 py-2.5 text-sm text-charcoal-900`;
   const label = "text-xs font-semibold text-charcoal-500";
 
   if (postedId) {

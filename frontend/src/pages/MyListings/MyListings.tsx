@@ -184,7 +184,7 @@ function MyListings() {
           </p>
         </div>
 
-        <Button to="/post-ad" size="sm">
+        <Button to="/post-ad" variant="outline" size="sm">
           <FiPlus size={15} />
           Sell Something
         </Button>
@@ -291,7 +291,11 @@ function MyListings() {
                 : `Nothing here yet.`
             }
           >
-            {tab === "active" && <Button to="/post-ad">Sell Something</Button>}
+            {tab === "active" && (
+              <Button to="/post-ad" variant="outline">
+                Sell Something
+              </Button>
+            )}
           </EmptyState>
         </div>
       ) : (

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiArrowRight, FiMail } from "react-icons/fi";
 import PasswordInput from "../../components/common/PasswordInput";
 import Button from "../../components/common/Button";
+import { textFieldClassName } from "../../components/common/Input";
 import { FcGoogle } from "react-icons/fc";
 import { googleSignInUrl } from "../../lib/api";
 import { useAuth } from "../../store/AuthContext";
@@ -87,8 +88,7 @@ function Login() {
     }
   };
 
-  const field =
-    "w-full rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20";
+  const field = `w-full ${textFieldClassName} py-3 pl-11 pr-4 text-sm`;
   const icon =
     "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400";
 

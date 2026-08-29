@@ -8,6 +8,7 @@ import { useAuth } from "../../store/AuthContext";
 import { isSafeReturnPath } from "../../lib/returnTo";
 import PasswordInput from "../../components/common/PasswordInput";
 import Button from "../../components/common/Button";
+import { textFieldClassName } from "../../components/common/Input";
 
 /** Matches the server's minimum, so a rejection never comes as a surprise. */
 const MIN_PASSWORD_LENGTH = 8;
@@ -60,8 +61,7 @@ function Register() {
     }
   };
 
-  const field =
-    "w-full rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20";
+  const field = `w-full ${textFieldClassName} py-3 pl-11 pr-4 text-sm`;
   const icon =
     "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400";
 

@@ -18,7 +18,7 @@ function MobilePostBar() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:hidden">
-      <Button to="/post-ad" fullWidth className="pointer-events-auto">
+      <Button to="/post-ad" variant="outline" fullWidth className="pointer-events-auto">
         <FiPlus size={17} />
         Sell Something
       </Button>

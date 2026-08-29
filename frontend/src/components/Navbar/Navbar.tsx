@@ -25,8 +25,10 @@ import { useSavedSearches } from "../../store/SavedSearchesContext";
  * The marketplace header: brand, search, categories, and the actions a
  * classifieds site needs — save, saved searches, and posting an ad.
  *
- * "Sell Something" is the only filled button, because it is the one action the
- * marketplace depends on and everything else is navigation.
+ * "Sell Something" is `outline`, the same bordered chrome as every other
+ * button/dropdown trigger in the header — a permanently-filled, border-less
+ * `primary` button here was the one thing standing out as differently
+ * styled next to Categories/Location beside it.
  */
 function Navbar() {
   const navigate = useNavigate();
@@ -207,7 +209,7 @@ function Navbar() {
                 on the page itself (RequireAuth), so a signed-out visitor lands
                 on a log-in prompt that returns them here afterwards rather than
                 on a button that was hidden from them. */}
-            <Button to="/post-ad" className="sm:px-6">
+            <Button to="/post-ad" variant="outline" className="sm:px-6">
               <FiPlus size={17} />
               {/* Full label held back to lg: from sm to lg the search box is
                   already fighting the icon row and this button for space

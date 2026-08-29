@@ -1,5 +1,6 @@
 import { useState, type InputHTMLAttributes } from "react";
 import { FiEye, FiEyeOff, FiLock } from "react-icons/fi";
+import { textFieldClassName } from "./Input";
 
 /**
  * A password field with a show/hide toggle, styled to match every other
@@ -30,7 +31,7 @@ function PasswordInput(props: PasswordInputProps) {
       />
       <input
         type={visible ? "text" : "password"}
-        className="w-full rounded-xl border border-taupe bg-gradient-to-br from-cyan-50 to-mint-50 py-3 pl-11 pr-11 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+        className={`w-full ${textFieldClassName} py-3 pl-11 pr-11 text-sm`}
         {...props}
       />
       <button
