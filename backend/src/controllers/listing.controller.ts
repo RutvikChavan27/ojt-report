@@ -24,7 +24,7 @@ import {
   updateListing,
 } from "../repositories/listingWrite.repository";
 import { setUserPhone } from "../repositories/user.repository";
-import { getListing } from "../services/marketplace.service";
+import { getListing, getListingViewers } from "../services/marketplace.service";
 import {
   checkCategory,
   parseListingPatch,
@@ -68,6 +68,26 @@ export async function getMyListings(
         image: resolveImagePath(row.image ?? PLACEHOLDER),
       })),
     );
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/listings/:id/viewers — owner only.
+ *
+ * requireListingOwner (routes/index.ts) has already confirmed the session
+ * owns this listing before this runs, so there's nothing further to check
+ * here — the id in the URL is enough.
+ */
+export async function getListingViewersHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const id = req.params.id as string;
+    sendSuccess(res, await getListingViewers(id));
   } catch (err) {
     next(err);
   }

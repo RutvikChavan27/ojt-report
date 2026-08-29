@@ -239,6 +239,28 @@ CREATE TABLE IF NOT EXISTS saved_listings (
 CREATE INDEX IF NOT EXISTS saved_listings_user_idx
   ON saved_listings (user_id, created_at DESC);
 
+-- One row per (listing, viewer) who opened it while signed in — a seller's
+-- "who viewed my listing" list. Deliberately separate from
+-- listings.view_count, which stays a plain unconditional counter (every
+-- request, signed in or not, including the seller's own): this table is
+-- opt-in to "signed in" and deduplicated per viewer, so repeat visits update
+-- last_viewed_at instead of growing an unbounded log. The seller viewing
+-- their own listing is never inserted here (enforced in the application
+-- layer, since a viewer row means "someone other than the owner looked at
+-- this"), and the primary key on (listing_id, viewer_id) is what makes the
+-- same viewer's repeat visits an update rather than a new row.
+CREATE TABLE IF NOT EXISTS listing_views (
+  listing_id BIGINT NOT NULL REFERENCES listings (id) ON DELETE CASCADE,
+  viewer_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  first_viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (listing_id, viewer_id)
+);
+
+-- The seller's viewer list for one listing, most recently viewed first.
+CREATE INDEX IF NOT EXISTS listing_views_listing_idx
+  ON listing_views (listing_id, last_viewed_at DESC);
+
 -- === Indexes ===============================================================
 
 -- Full-text search itself. GIN is the right structure for tsvector @@ tsquery.

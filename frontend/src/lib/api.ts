@@ -525,6 +525,23 @@ export const fetchMyListings = async (): Promise<ApiMyListing[]> => {
   return data.map(withImage);
 };
 
+/** Mirrors ListingViewerDTO — one signed-in visitor of the seller's own listing. */
+export type ApiListingViewer = {
+  viewerId: number;
+  name: string;
+  viewedAt: string;
+};
+
+/**
+ * Who has viewed one of the signed-in seller's own listings.
+ *
+ * No listing id sent alongside an owner check on the client: the server's
+ * requireListingOwner refuses this for any listing that isn't the caller's
+ * own, same as edit/delete.
+ */
+export const fetchListingViewers = (id: string) =>
+  apiRequest<ApiListingViewer[]>(`/api/listings/${encodeURIComponent(id)}/viewers`);
+
 export const createListing = (body: NewListingBody) =>
   apiRequest<ApiListingDetail>("/api/listings", { method: "POST", body });
 

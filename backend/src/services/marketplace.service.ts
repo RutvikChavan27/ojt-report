@@ -11,6 +11,7 @@ import {
   findListingById,
   findListings,
 } from "../repositories/marketplace.repository";
+import { findListingViewers } from "../repositories/listingViews.repository";
 import { resolveImagePath } from "../utils/images";
 import type {
   DashboardDTO,
@@ -18,6 +19,7 @@ import type {
   ListingDetailDTO,
   ListingDTO,
   ListingPageDTO,
+  ListingViewerDTO,
 } from "../types/dto";
 
 /** How many recent listings the homepage grid shows. */
@@ -152,6 +154,20 @@ export async function getListing(id: string): Promise<ListingDetailDTO | null> {
     viewCount: row.view_count,
     status: row.status,
   };
+}
+
+/**
+ * Who has viewed one listing — owner-only; the controller reaches this only
+ * after requireListingOwner has already confirmed the caller is that
+ * listing's seller (routes/index.ts).
+ */
+export async function getListingViewers(id: string): Promise<ListingViewerDTO[]> {
+  const rows = await findListingViewers(id);
+  return rows.map((row) => ({
+    viewerId: row.viewer_id,
+    name: row.display_name,
+    viewedAt: row.last_viewed_at.toISOString(),
+  }));
 }
 
 /**

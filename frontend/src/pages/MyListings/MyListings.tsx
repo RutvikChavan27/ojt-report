@@ -14,6 +14,7 @@ import Button from "../../components/common/Button";
 import ListingTableSkeleton from "../../components/common/ListingTableSkeleton";
 import ImageWithLoader from "../../components/common/ImageWithLoader";
 import OfferCard from "../../components/offers/OfferCard";
+import ListingViewersModal from "../../components/listings/ListingViewersModal";
 import { formatPrice } from "../../lib/format";
 import {
   acceptOffer,
@@ -75,6 +76,11 @@ function MyListings() {
   const [tab, setTab] = useState<DashboardTab>("active");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  /** The listing whose "who viewed this" modal is open, or null when closed. */
+  const [viewingListing, setViewingListing] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const confirm = useConfirm();
 
   const { data, loading, error, reload } = useApi(fetchMyListings, []);
@@ -358,7 +364,16 @@ function MyListings() {
                   </td>
 
                   <td className="px-4 py-3 text-right tabular-nums text-charcoal-700">
-                    {listing.viewCount.toLocaleString("en-IN")}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setViewingListing({ id: listing.id, title: listing.title })
+                      }
+                      className="rounded-lg px-1.5 py-0.5 underline decoration-taupe decoration-dotted underline-offset-4 transition hover:text-charcoal-900 hover:decoration-charcoal-400"
+                      title="See who viewed this listing"
+                    >
+                      {listing.viewCount.toLocaleString("en-IN")}
+                    </button>
                   </td>
 
                   <td className="px-4 py-3 text-right text-charcoal-700">
@@ -442,6 +457,12 @@ function MyListings() {
           </table>
         </div>
       )}
+
+      <ListingViewersModal
+        listingId={viewingListing?.id ?? null}
+        listingTitle={viewingListing?.title ?? ""}
+        onClose={() => setViewingListing(null)}
+      />
     </Container>
   );
 }

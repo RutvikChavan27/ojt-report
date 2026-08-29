@@ -26,6 +26,7 @@ import {
   listListings,
 } from "../services/marketplace.service";
 import { incrementListingViewCount } from "../repositories/marketplace.repository";
+import { recordListingView } from "../repositories/listingViews.repository";
 import {
   searchListings,
   suggestSearches,
@@ -176,6 +177,19 @@ export async function getListingById(
       await incrementListingViewCount(rawId);
     } catch (err) {
       console.error("[listing] failed to record a view", err);
+    }
+
+    // The seller's own "who viewed my listing" list — only a signed-in
+    // visitor who isn't the listing's own seller counts as a viewer here;
+    // an anonymous visit already has no account to attribute to, and the
+    // seller opening their own listing is not someone viewing it.
+    const viewerId = req.session.userId;
+    if (viewerId && viewerId !== listing.seller.sellerId) {
+      try {
+        await recordListingView(rawId, viewerId);
+      } catch (err) {
+        console.error("[listing] failed to record a viewer", err);
+      }
     }
 
     sendSuccess(res, listing);

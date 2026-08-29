@@ -26,6 +26,7 @@ import {
   postListingImages,
 } from "../controllers/marketplace.controller";
 import {
+  getListingViewersHandler,
   getMyListings,
   patchListing,
   postListing,
@@ -107,6 +108,7 @@ router.patch("/listings/:id", requireAuth, requireListingOwner, patchListing);
 router.delete("/listings/:id", requireAuth, requireListingOwner, removeListing);
 router.post("/listings/:id/sold", requireAuth, requireListingOwner, postListingSold);
 router.post("/listings/:id/renew", requireAuth, requireListingOwner, postListingRenew);
+router.get("/listings/:id/viewers", requireAuth, requireListingOwner, getListingViewersHandler);
 
 /* Saved listings and saved searches. Every one is behind requireAuth: these are
    per-user records, so there is no anonymous version of any of them. The handlers

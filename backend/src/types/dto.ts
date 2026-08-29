@@ -220,3 +220,19 @@ export type OfferDTO = {
   createdAt: string;
   updatedAt: string;
 };
+
+/**
+ * One signed-in visitor of a listing, as its owner sees them.
+ *
+ * Deliberately no email address — nothing else in the app exposes one
+ * user's contact details to another just for having looked at something
+ * (see OfferDTO above, which drops the buyer's identity entirely); a
+ * display name plus when they looked is the seller-facing equivalent of
+ * that same boundary, not full contact details.
+ */
+export type ListingViewerDTO = {
+  viewerId: number;
+  name: string;
+  /** Most recent visit, ISO timestamp. */
+  viewedAt: string;
+};
