@@ -18,16 +18,16 @@ type ListingViewersModalProps = {
  * Only ever requested for a listing the signed-in seller owns: the server's
  * GET /api/listings/:id/viewers is behind requireListingOwner, the same
  * gate edit/delete use, so a listing id belonging to a different seller
- * comes back as a 403 rather than someone else's viewer list — the empty
- * state below doubles as what that failure shows, since neither case has
- * anything useful to add beyond "nothing to show here."
+ * comes back as a 403 — shown as a genuine error below, not folded into
+ * "no views yet", so a real failure (an old deploy missing this route, a
+ * dropped request) is never indistinguishable from an honestly empty list.
  */
 function ListingViewersModal({
   listingId,
   listingTitle,
   onClose,
 }: ListingViewersModalProps) {
-  const { data, loading, error } = useApi(
+  const { data, loading, error, reload } = useApi(
     () => (listingId ? fetchListingViewers(listingId) : Promise.resolve([])),
     [listingId],
   );
@@ -48,14 +48,23 @@ function ListingViewersModal({
               />
             ))}
           </ul>
-        ) : error || viewers.length === 0 ? (
+        ) : error ? (
+          // Distinct from "no viewers": a fetch failure must never present
+          // as a genuine empty list, or a real problem (an old deploy
+          // missing this endpoint, a dropped connection, ...) reads as
+          // "nobody has viewed this" instead of "something is wrong" —
+          // exactly the failure mode that let a stale backend hide behind
+          // this modal instead of surfacing as an error.
+          <EmptyState
+            variant="error"
+            title="Could not load viewers"
+            description={error}
+            onRetry={reload}
+          />
+        ) : viewers.length === 0 ? (
           <EmptyState
             title="No views yet"
-            description={
-              error
-                ? undefined
-                : "Once a signed-in buyer opens this listing, they'll show up here."
-            }
+            description="Once a signed-in buyer opens this listing, they'll show up here."
           />
         ) : (
           <ul className="space-y-1">
