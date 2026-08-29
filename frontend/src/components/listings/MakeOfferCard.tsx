@@ -115,7 +115,13 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
         </div>
       ) : !user ? (
         <>
-          <Button disabled title="Log in to make an offer" fullWidth className="mt-3">
+          <Button
+            variant="outline"
+            disabled
+            title="Log in to make an offer"
+            fullWidth
+            className="mt-3"
+          >
             <FiTag size={15} />
             Make an Offer
           </Button>
@@ -154,7 +160,7 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
             </Button>
           </>
         ) : (
-          <Button onClick={() => setOpen(true)} fullWidth className="mt-3">
+          <Button variant="outline" onClick={() => setOpen(true)} fullWidth className="mt-3">
             <FiTag size={15} />
             Make an Offer
           </Button>
@@ -186,7 +192,13 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
           {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
 
           <div className="mt-3 flex gap-2">
-            <Button size="sm" disabled={sending} onClick={submit} className="flex-1">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending}
+              onClick={submit}
+              className="flex-1"
+            >
               {sending ? "Sending…" : isEditing ? "Update Offer" : "Send Offer"}
             </Button>
             <Button

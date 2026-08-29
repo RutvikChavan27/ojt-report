@@ -137,7 +137,13 @@ function Register() {
             </p>
           )}
 
-          <Button type="submit" fullWidth disabled={submitting} className="mt-5">
+          <Button
+            type="submit"
+            variant="outline"
+            fullWidth
+            disabled={submitting}
+            className="mt-5"
+          >
             {submitting ? "Please wait…" : "Create account"}
             {!submitting && <FiArrowRight size={16} />}
           </Button>

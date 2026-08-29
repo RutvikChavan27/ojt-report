@@ -210,6 +210,7 @@ function Welcome() {
           <div className="mt-10 flex animate-[pop-in_0.5s_ease-out_both] justify-center [animation-delay:680ms] motion-reduce:animate-none">
             <Button
               to="/home"
+              variant="outline"
               size="lg"
               className="group shadow-lg hover:scale-105 motion-reduce:hover:scale-100"
             >

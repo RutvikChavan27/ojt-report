@@ -59,7 +59,7 @@ function SavedListings() {
             title="Nothing saved yet"
             description="Tap the heart on any listing to keep it here while you decide."
           >
-            <Button to="/search">Browse listings</Button>
+            <Button to="/search" variant="outline">Browse listings</Button>
           </EmptyState>
         ) : (
           <ListingGrid listings={saved} />

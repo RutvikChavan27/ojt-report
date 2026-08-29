@@ -148,7 +148,13 @@ function Login() {
             </p>
           )}
 
-          <Button type="submit" fullWidth disabled={submitting} className="mt-5">
+          <Button
+            type="submit"
+            variant="outline"
+            fullWidth
+            disabled={submitting}
+            className="mt-5"
+          >
             {submitting ? "Please wait…" : "Log in"}
             {!submitting && <FiArrowRight size={16} />}
           </Button>

@@ -27,7 +27,7 @@ function SavedSearches() {
           title="No saved searches yet"
           description="Run a search, then save it to track new listings that match — useful for something you are waiting to come up."
         >
-          <Button to="/search">Start searching</Button>
+          <Button to="/search" variant="outline">Start searching</Button>
         </EmptyState>
       </Container>
     );
@@ -102,6 +102,7 @@ function SavedSearches() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
                   size="sm"
+                  variant="outline"
                   onClick={() => {
                     markChecked(entry.id);
                     navigate(`/search?${entry.query}`);

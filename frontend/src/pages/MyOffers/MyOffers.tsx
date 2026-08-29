@@ -47,7 +47,7 @@ function MyOffers() {
           title="No offers yet"
           description="Open a listing and use Make an Offer to start a negotiation."
         >
-          <Button to="/search">Browse listings</Button>
+          <Button to="/search" variant="outline">Browse listings</Button>
         </EmptyState>
       </Container>
     );

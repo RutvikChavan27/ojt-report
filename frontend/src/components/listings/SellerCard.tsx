@@ -87,6 +87,7 @@ function SellerCard({ seller, available }: SellerCardProps) {
             {seller.phone && (
               <Button
                 href={`tel:${seller.phone.replace(/\s+/g, "")}`}
+                variant="outline"
                 className="flex-1"
               >
                 <FiPhone size={14} />
@@ -106,7 +107,7 @@ function SellerCard({ seller, available }: SellerCardProps) {
           </div>
         </div>
       ) : (
-        <Button onClick={() => setRevealed(true)} fullWidth className="mt-4">
+        <Button variant="outline" onClick={() => setRevealed(true)} fullWidth className="mt-4">
           <FiPhone size={15} />
           Contact Seller
         </Button>

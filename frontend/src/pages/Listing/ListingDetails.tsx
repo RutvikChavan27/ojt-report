@@ -63,7 +63,7 @@ function ListingDetails() {
           title="Listing not found"
           description="It may have been sold, expired, or the link is wrong."
         >
-          <Button to="/search">Browse all listings</Button>
+          <Button to="/search" variant="outline">Browse all listings</Button>
         </EmptyState>
       </Container>
     );

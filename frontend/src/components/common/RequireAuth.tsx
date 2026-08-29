@@ -61,7 +61,7 @@ function RequireAuth({ action, children }: RequireAuthProps) {
 
           {/* The intended destination rides along, so signing in returns here
               rather than dumping the visitor on the homepage. */}
-          <Button to="/login" state={{ from }} fullWidth className="mt-6">
+          <Button to="/login" state={{ from }} variant="outline" fullWidth className="mt-6">
             <FiLogIn size={15} />
             Log in
           </Button>

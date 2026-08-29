@@ -56,7 +56,7 @@ function EmptyState({
       {children && <div className="mt-5">{children}</div>}
 
       {onRetry && (
-        <Button onClick={onRetry} className="mt-6">
+        <Button variant="outline" onClick={onRetry} className="mt-6">
           <FiRefreshCw size={14} />
           Try again
         </Button>

@@ -92,7 +92,7 @@ function FilterDrawer({
         </div>
 
         <div className="border-t border-taupe px-5 py-4">
-          <Button onClick={onClose} fullWidth>
+          <Button variant="outline" onClick={onClose} fullWidth>
             Show {total.toLocaleString("en-IN")}{" "}
             {total === 1 ? "result" : "results"}
           </Button>

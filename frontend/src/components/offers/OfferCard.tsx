@@ -142,7 +142,7 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter,
 
       {canRespond && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" disabled={busy} onClick={onAccept}>
+          <Button size="sm" variant="outline" disabled={busy} onClick={onAccept}>
             <FiCheck size={13} />
             Accept
           </Button>
@@ -207,7 +207,7 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter,
             />
             {editError && <p className="mt-1 text-xs text-rose-600">{editError}</p>}
           </div>
-          <Button size="sm" disabled={busy} onClick={submitEdit}>
+          <Button size="sm" variant="outline" disabled={busy} onClick={submitEdit}>
             Update Offer
           </Button>
         </div>
@@ -234,7 +234,7 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter,
               <p className="mt-1 text-xs text-rose-600">{counterError}</p>
             )}
           </div>
-          <Button size="sm" disabled={busy} onClick={submitCounter}>
+          <Button size="sm" variant="outline" disabled={busy} onClick={submitCounter}>
             Send Counter
           </Button>
         </div>
