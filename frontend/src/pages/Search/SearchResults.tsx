@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "../../components/layout/Container";
 import { useSearchParams } from "react-router-dom";
 import { FiBookmark, FiSliders, FiX } from "react-icons/fi";
@@ -66,6 +66,18 @@ function SearchResults() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  /* True only for the round trip `save()` itself makes (checking the current
+     total, then creating the row) — not the login-prompt path inside it,
+     which resolves immediately and needs no loading state of its own. */
+  const [savingSearch, setSavingSearch] = useState(false);
+  /* A second, ref-backed lock alongside `savingSearch` — same reasoning as
+     PostAd's own `submittingRef`: a ref updates instantly, with no render in
+     between, where `savingSearch` (state) only takes effect on the next
+     render. Two clicks close enough together could otherwise both read the
+     same stale `savingSearch = false` and both slip past the guard below,
+     firing two save requests (confirmed live: three rapid clicks created
+     three saved-search rows before this ref was added). */
+  const savingSearchRef = useRef(false);
   /* Set once, right after a response arrives with `categoryFallback` — the
      redirect below immediately drops `q` from the URL, so this is the only
      record left that the category now showing came from a dead-end query
@@ -292,15 +304,31 @@ function SearchResults() {
     });
 
   const handleSaveSearch = async () => {
+    // Checked and set together, synchronously, before anything `await`s —
+    // see the comment on `savingSearchRef` above for why this (not
+    // `savingSearch` state alone) is what actually closes the double-click
+    // race.
+    if (savingSearchRef.current) return;
+    savingSearchRef.current = true;
+
     const name =
       [params.q || "All listings", params.cities.join(", ")].filter(Boolean).join(" in ") ||
       "All listings";
-    // `save` itself opens the login prompt when signed out (and returns
-    // false without saving anything) — so this button stays clickable either
-    // way, same as the Like heart elsewhere, rather than being disabled and
-    // silently unable to ever reach that prompt.
-    const saved = await save(name, searchToParams(params).toString());
-    if (saved) setSavedNotice(true);
+    setSavingSearch(true);
+    try {
+      // `save` itself opens the login prompt when signed out (and returns
+      // false without saving anything) — so this button stays clickable
+      // either way, same as the Like heart elsewhere, rather than being
+      // disabled and silently unable to ever reach that prompt.
+      const saved = await save(name, searchToParams(params).toString());
+      if (saved) setSavedNotice(true);
+    } finally {
+      // In `finally`, not just after the `try` body: a failed save must
+      // still release the button, or a network error would leave "Saving…"
+      // on screen forever with no way to try again.
+      setSavingSearch(false);
+      savingSearchRef.current = false;
+    }
   };
 
   return (
@@ -418,9 +446,14 @@ function SearchResults() {
                 Saved. See it under Saved searches.
               </p>
             ) : (
-              <Button variant="outline" onClick={handleSaveSearch} fullWidth>
+              <Button
+                variant="outline"
+                onClick={handleSaveSearch}
+                disabled={savingSearch}
+                fullWidth
+              >
                 <FiBookmark size={14} />
-                Save this search
+                {savingSearch ? "Saving…" : "Save this search"}
               </Button>
             )}
             {!user && (
