@@ -12,19 +12,15 @@ import Breadcrumbs from "../../components/common/Breadcrumbs";
 import EmptyState from "../../components/common/EmptyState";
 import ListingDetailsSkeleton from "../../components/common/ListingDetailsSkeleton";
 import ListingGallery from "../../components/listings/ListingGallery";
-import ListingGrid from "../../components/listings/ListingGrid";
 import MakeOfferCard from "../../components/listings/MakeOfferCard";
 import SellerCard from "../../components/listings/SellerCard";
 import { formatPrice, placeLabel, relativeTime } from "../../lib/format";
-import { fetchListing, searchListings } from "../../lib/api";
+import { fetchListing } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
 import { usePageGate } from "../../store/RouteGate";
 import BackLink from "../../components/common/BackLink";
 import Button from "../../components/common/Button";
 import { useSavedListings } from "../../store/SavedListingsContext";
-
-/** How many other listings from the same category to show underneath. */
-const RELATED_COUNT = 4;
 
 /**
  * One listing in full: photos, the facts, and how to reach the seller.
@@ -48,28 +44,8 @@ function ListingDetails() {
   } = useApi(() => fetchListing(id ?? ""), [id]);
 
   /* Opening a listing is a fresh page, so the branded loader holds until the
-     listing itself is in. Only the listing gates it, not the related row below:
-     that is secondary content and its own grid skeleton covers it, so waiting on
-     a second request here would keep the page hidden longer than it needs to be. */
+     listing itself is in. */
   usePageGate(loading && !listing);
-
-  /* Same category, excluding this one — plain category navigation, not a
-     recommendation engine (which the brief puts out of scope). Asks for one
-     extra so removing this listing still leaves a full row. */
-  const { data: relatedResult } = useApi(
-    () =>
-      listing
-        ? searchListings({
-            category: listing.category,
-            perPage: RELATED_COUNT + 1,
-          })
-        : Promise.resolve(null),
-    [listing?.category],
-  );
-
-  const related = (relatedResult?.items ?? [])
-    .filter((entry) => entry.id !== id)
-    .slice(0, RELATED_COUNT);
 
   if (loading) {
     return (
@@ -246,25 +222,6 @@ function ListingDetails() {
           </button>
         </aside>
       </div>
-
-      {related.length > 0 && (
-        <section className="mt-16">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="text-lg font-black tracking-tight text-charcoal-900">
-              More in {listing.categoryLabel}
-            </h2>
-            <Link
-              to={`/category/${listing.category}`}
-              className="text-sm font-bold text-charcoal-900 transition hover:underline"
-            >
-              See all
-            </Link>
-          </div>
-          <div className="mt-5">
-            <ListingGrid listings={related} />
-          </div>
-        </section>
-      )}
     </Container>
   );
 }
