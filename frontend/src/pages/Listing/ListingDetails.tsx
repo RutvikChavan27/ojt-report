@@ -14,6 +14,7 @@ import ListingDetailsSkeleton from "../../components/common/ListingDetailsSkelet
 import ListingGallery from "../../components/listings/ListingGallery";
 import MakeOfferCard from "../../components/listings/MakeOfferCard";
 import SellerCard from "../../components/listings/SellerCard";
+import ShareButton from "../../components/listings/ShareButton";
 import { formatPrice, placeLabel, relativeTime } from "../../lib/format";
 import { fetchListing } from "../../lib/api";
 import { useApi } from "../../hooks/useApi";
@@ -202,24 +203,31 @@ function ListingDetails() {
             available={listing.status === "active"}
           />
 
-          {/* A toggle, not a one-shot action — "saved" is a state that
-              persists, not a moment of being pressed — so this keeps its own
-              two-state look rather than Button's `outline` variant (whose
-              filled look is only ever transient, for the instant of a click).
-              The border stays the same blue either way; only the fill
-              reflects whether it's actually saved, and nothing recolours on
-              hover, same rule as every other button. */}
-          <button
-            type="button"
-            onClick={() => toggle(listing.id)}
-            aria-pressed={saved}
-            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-3 text-sm font-bold text-charcoal-900 transition ${
-              saved ? "bg-mist" : ""
-            }`}
-          >
-            <FiHeart size={15} fill={saved ? "currentColor" : "none"} />
-            {saved ? "Saved" : "Save listing"}
-          </button>
+          <div className="mt-4 flex gap-2">
+            {/* A toggle, not a one-shot action — "saved" is a state that
+                persists, not a moment of being pressed — so this keeps its
+                own two-state look rather than Button's `outline` variant
+                (whose filled look is only ever transient, for the instant of
+                a click). The border stays the same blue either way; only the
+                fill reflects whether it's actually saved, and nothing
+                recolours on hover, same rule as every other button. */}
+            <button
+              type="button"
+              onClick={() => toggle(listing.id)}
+              aria-pressed={saved}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full border border-cyan-500 py-3 text-sm font-bold text-charcoal-900 transition ${
+                saved ? "bg-mist" : ""
+              }`}
+            >
+              <FiHeart size={15} fill={saved ? "currentColor" : "none"} />
+              {saved ? "Saved" : "Save listing"}
+            </button>
+
+            <ShareButton
+              title={listing.title}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-500 py-3 text-sm font-bold text-charcoal-900 transition"
+            />
+          </div>
         </aside>
       </div>
     </Container>

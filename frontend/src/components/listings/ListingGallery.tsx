@@ -31,7 +31,15 @@ function ListingGallery({ images, alt }: ListingGalleryProps) {
 
   return (
     <div>
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-taupe bg-sand">
+      {/* Capped height on wider screens — at `aspect-[4/3]` alone, the wide
+          left column of the desktop layout stretched this well past
+          400-500px tall and made the whole page feel unnecessarily long.
+          The cap only kicks in once the column is wide enough for that to
+          matter; a phone-width column stays governed by the aspect ratio
+          alone, same as before. `object-cover` on the image is what lets
+          the box be shorter than its own aspect ratio would imply without
+          distorting the photo. */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-taupe bg-sand sm:max-h-[360px] lg:max-h-[400px]">
         <ImageWithLoader
           src={images[active]}
           alt={alt}
