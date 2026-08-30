@@ -108,7 +108,7 @@ function MakeOfferCard({ listingId, listingPrice, sellerId, available }: MakeOff
           <p>
             {justEdited ? "Offer updated." : "Offer sent."} Track its status under{" "}
             <Link to="/my-offers" className="font-bold underline decoration-emerald-400 underline-offset-2">
-              My Offers
+              Offers I Made
             </Link>
             .
           </p>

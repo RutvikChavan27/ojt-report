@@ -288,7 +288,7 @@ function PostAd() {
             }
           : {
               title: "Post this listing?",
-              message: "It will appear in search results straight away. You can edit or delete it afterwards from My listings.",
+              message: "It will appear in search results straight away. You can edit or delete it afterwards from My Ads.",
               confirmLabel: "Post listing",
             },
       );
@@ -364,14 +364,14 @@ function PostAd() {
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-charcoal-500">
             {isEdit
               ? "Your changes are saved and now show wherever this listing appears — search, its category, and its own page."
-              : "It is saved and now appears in search, its category, and your listings. You can edit or remove it at any time."}
+              : "It is saved and now appears in search, its category, and your ads. You can edit or remove it at any time."}
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Button to={`/listing/${postedId}`} variant="outline">
               View listing
             </Button>
             <Button to="/my-listings" variant="outline">
-              Go to my listings
+              Go to my ads
             </Button>
             {/* Editing is a one-off revision to something that already exists —
                 there is no "edit another" in the way posting has "post another". */}
@@ -411,7 +411,7 @@ function PostAd() {
           title="You can't edit this listing"
           description="Only the seller who posted a listing can make changes to it."
         >
-          <Button to="/my-listings" variant="outline">Go to my listings</Button>
+          <Button to="/my-listings" variant="outline">Go to my ads</Button>
         </EmptyState>
       </Container>
     );
@@ -426,7 +426,7 @@ function PostAd() {
           title="Could not load this listing"
           description={loadError}
         >
-          <Button to="/my-listings" variant="outline">Go to my listings</Button>
+          <Button to="/my-listings" variant="outline">Go to my ads</Button>
         </EmptyState>
       </Container>
     );

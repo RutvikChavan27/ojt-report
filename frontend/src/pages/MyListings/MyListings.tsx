@@ -185,7 +185,7 @@ function MyListings() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
-            My listings
+            My Ads
           </h1>
           <p className="mt-1 text-sm text-charcoal-500">
             Manage what you have posted.
@@ -259,7 +259,7 @@ function MyListings() {
           <div className="mt-8">
             <EmptyState
               title="No offers yet"
-              description="When a buyer makes an offer on one of your listings, it shows up here."
+              description="When a buyer makes an offer on one of your ads, it shows up here."
             />
           </div>
         ) : (
@@ -284,7 +284,7 @@ function MyListings() {
       ) : error ? (
         <div className="mt-8">
           <EmptyState
-            title="Could not load your listings"
+            title="Could not load your ads"
             description={error}
             onRetry={reload}
           />
@@ -292,7 +292,7 @@ function MyListings() {
       ) : visible.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title={`No ${STATUS_LABEL[tab].toLowerCase()} listings`}
+            title={`No ${STATUS_LABEL[tab].toLowerCase()} ads`}
             description={
               tab === "active"
                 ? "Sell something and it will show up here."

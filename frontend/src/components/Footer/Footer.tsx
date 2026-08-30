@@ -60,7 +60,7 @@ function Footer() {
               </li>
               <li>
                 <Link to="/my-listings" className={linkClass}>
-                  My listings
+                  My Ads
                 </Link>
               </li>
               <li>

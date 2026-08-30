@@ -185,10 +185,10 @@ function Navbar() {
                       My profile
                     </Link>
                     <Link to="/my-listings" onClick={close} className={dropdownItemClassName}>
-                      My listings
+                      My Ads
                     </Link>
                     <Link to="/my-offers" onClick={close} className={dropdownItemClassName}>
-                      My offers
+                      Offers I Made
                     </Link>
                     <button
                       type="button"
@@ -267,10 +267,10 @@ function Navbar() {
               </Link>
             )}
             <Link to="/my-listings" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
-              My listings
+              My Ads
             </Link>
             <Link to="/my-offers" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
-              My offers
+              Offers I Made
             </Link>
             <Link to="/saved" onClick={() => setMobileOpen(false)} className={dropdownItemClassName}>
               Saved listings

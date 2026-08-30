@@ -28,14 +28,14 @@ function Profile() {
     {
       to: "/my-listings",
       icon: <FiList size={18} />,
-      label: "My listings",
+      label: "My Ads",
       value: (myListings ?? []).filter((listing) => listing.status === "active").length,
       caption: "active",
     },
     {
       to: "/my-offers",
       icon: <FiTag size={18} />,
-      label: "My offers",
+      label: "Offers I Made",
       value: (myOffers ?? []).length,
       caption: "sent",
     },

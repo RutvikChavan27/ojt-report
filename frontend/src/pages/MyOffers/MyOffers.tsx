@@ -58,7 +58,7 @@ function MyOffers() {
       <BackLink className="mb-4" />
 
       <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
-        My offers
+        Offers I Made
       </h1>
       <p className="mt-1 text-sm text-charcoal-500">
         Offers you have sent, and the seller&apos;s response.
