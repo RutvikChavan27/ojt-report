@@ -373,6 +373,16 @@ CREATE INDEX IF NOT EXISTS listings_subcategory_idx
 -- listing (listing.validator.ts) but never invents one for an old row.
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS contact_phone TEXT;
 
+-- How many units this listing represents. Defaults to 1 (a single item), so
+-- every pre-existing row behaves exactly as before: one "Mark as sold"
+-- ends it immediately. A seller with several identical units (5 of the same
+-- bag) sets this higher at posting time; each unit sold decrements it by
+-- one, and the listing only flips to 'sold' once none remain — see
+-- markListingSold in listingWrite.repository.ts, which does the decrement
+-- and the status flip in one atomic UPDATE so two overlapping "mark as
+-- sold" requests can never both decrement, or push it negative.
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 0);
+
 -- === Row Level Security ====================================================
 --
 -- Every Supabase project exposes its database over a public REST API

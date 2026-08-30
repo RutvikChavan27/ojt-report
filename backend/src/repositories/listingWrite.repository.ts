@@ -25,6 +25,8 @@ export type SellerListingRow = ListingRow & {
   description: string;
   status: string;
   view_count: number;
+  /** How many units remain — see the column's comment in marketplace.sql. */
+  quantity: number;
   /**
    * Distinct signed-in, non-owner viewers — what "who viewed this listing"
    * (listingViews.repository.ts) can actually list by name. Deliberately not
@@ -56,7 +58,7 @@ export async function findListingsBySeller(
        l.id::text, l.title, l.description, l.category_slug, l.subcategory_slug,
        c.label AS category_label, l.audience, l.brand, l.size, l.colour,
        l.condition::text, l.price, l.city, l.location, l.posted_at,
-       l.status::text, l.view_count, l.expires_at,
+       l.status::text, l.view_count, l.quantity, l.expires_at,
        COALESCE(photo.thumb_path, photo.path) AS image,
        COALESCE(viewers.count, 0) AS viewer_count
      FROM listings l
@@ -85,6 +87,8 @@ export type NewListing = {
   subcategorySlug: string | null;
   condition: string;
   price: number;
+  /** How many units this listing represents — see the column's comment in marketplace.sql. */
+  quantity: number;
   city: string;
   location: string | null;
   images: string[];
@@ -102,15 +106,15 @@ export async function createListing(input: NewListing): Promise<string> {
   const { rows } = await query<{ id: string }>(
     `INSERT INTO listings
        (seller_id, title, description, category_slug, subcategory_slug,
-        audience, condition, price, city, location, contact_phone, status,
-        expires_at)
-     VALUES ($1,$2,$3,$4,$5,'Unisex',$6::listing_condition,$7,$8,$9,$10,'active',
-             now() + ($11 || ' days')::interval)
+        audience, condition, price, quantity, city, location, contact_phone,
+        status, expires_at)
+     VALUES ($1,$2,$3,$4,$5,'Unisex',$6::listing_condition,$7,$8,$9,$10,$11,'active',
+             now() + ($12 || ' days')::interval)
      RETURNING id::text`,
     [
       input.sellerId, input.title, input.description, input.categorySlug,
-      input.subcategorySlug, input.condition, input.price, input.city,
-      input.location, input.phone, LISTING_LIFETIME_DAYS,
+      input.subcategorySlug, input.condition, input.price, input.quantity,
+      input.city, input.location, input.phone, LISTING_LIFETIME_DAYS,
     ],
   );
 
@@ -142,6 +146,8 @@ export type ListingPatch = {
   subcategorySlug?: string | null;
   condition?: string;
   price?: number;
+  /** How many units this listing represents — see the column's comment in marketplace.sql. */
+  quantity?: number;
   city?: string;
   location?: string | null;
   /** This listing's own contact number — see the column's comment in marketplace.sql. */
@@ -184,6 +190,7 @@ export async function updateListing(
     ["subcategorySlug", "subcategory_slug", ""],
     ["condition", "condition", "::listing_condition"],
     ["price", "price", ""],
+    ["quantity", "quantity", ""],
     ["city", "city", ""],
     ["location", "location", ""],
     ["phone", "contact_phone", ""],
@@ -227,14 +234,40 @@ export async function deleteListing(id: string): Promise<void> {
   await query(`DELETE FROM listings WHERE id = $1::bigint`, [id]);
 }
 
-/** Marks sold and stamps the time. Idempotent — selling twice is not an error. */
-export async function markListingSold(id: string): Promise<void> {
-  await query(
+/**
+ * Sells one unit: decrements `quantity` by one, and only flips `status` to
+ * 'sold' once none remain — a listing with several identical units stays
+ * `active` (with a lower `quantity`) after one sells, exactly the seller
+ * dashboard's own "Mark as sold" button either way.
+ *
+ * `WHERE status = 'active' AND quantity > 0` is what makes this safe against
+ * a double click or two overlapping requests: Postgres locks the row for the
+ * whole UPDATE, so two concurrent calls serialise rather than race, and the
+ * second one's WHERE clause re-evaluates against whatever the first left
+ * behind — once quantity reaches 0 and status flips to 'sold', every further
+ * call matches zero rows and is a no-op, never a negative quantity or a
+ * second decrement. Returns null for that no-op case; the caller (see
+ * postListingSold) treats it the same as a successful sell and just
+ * re-reads the listing's current state either way, which is what keeps
+ * "selling twice" from being an error.
+ */
+export async function markListingSold(
+  id: string,
+): Promise<{ quantity: number; status: string } | null> {
+  const { rows } = await query<{ quantity: number; status: string }>(
     `UPDATE listings
-        SET status = 'sold', sold_at = COALESCE(sold_at, now()), updated_at = now()
-      WHERE id = $1::bigint`,
+        SET quantity = quantity - 1,
+            status = CASE WHEN quantity - 1 <= 0 THEN 'sold' ELSE status END,
+            sold_at = CASE
+                        WHEN quantity - 1 <= 0 THEN COALESCE(sold_at, now())
+                        ELSE sold_at
+                      END,
+            updated_at = now()
+      WHERE id = $1::bigint AND status = 'active' AND quantity > 0
+      RETURNING quantity, status::text`,
     [id],
   );
+  return rows[0] ?? null;
 }
 
 /**

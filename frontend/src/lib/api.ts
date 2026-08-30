@@ -230,6 +230,8 @@ export type ApiListingDetail = ApiListing & {
   seller: ApiSeller;
   viewCount: number;
   status: string;
+  /** How many units remain — 0 once the listing has sold out. */
+  quantity: number;
 };
 
 export type ApiCategory = {
@@ -498,6 +500,8 @@ export type ApiMyListing = ApiListing & {
    * from, so what's clicked always matches what the modal can back up.
    */
   viewerCount: number;
+  /** How many units remain — 0 once the listing has sold out. */
+  quantity: number;
 };
 
 export type NewListingBody = {
@@ -508,6 +512,8 @@ export type NewListingBody = {
   subcategory?: string;
   condition: string;
   price: number;
+  /** How many units this listing represents. */
+  quantity: number;
   city: string;
   location?: string;
   /** Paths returned by uploadListingImages, not arbitrary URLs. */

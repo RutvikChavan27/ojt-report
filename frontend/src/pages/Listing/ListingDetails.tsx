@@ -144,6 +144,11 @@ function ListingDetails() {
             <p className="mt-2 text-2xl font-black tracking-tight text-charcoal-900">
               {formatPrice(listing.price)}
             </p>
+            {listing.status === "active" && (
+              <p className="mt-1 text-sm font-bold text-emerald-700">
+                {listing.quantity.toLocaleString("en-IN")} available
+              </p>
+            )}
 
             <Link
               to={`/category/${listing.category}`}

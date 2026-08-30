@@ -46,6 +46,8 @@ export type ListingDetailRow = ListingRow & {
   seller_contact_email: string | null;
   view_count: number;
   status: string;
+  /** How many units remain — see the column's comment in marketplace.sql. */
+  quantity: number;
 };
 
 export type FindListingsOptions = {
@@ -183,6 +185,7 @@ export async function findListingById(
        l.posted_at,
        l.view_count,
        l.status::text,
+       l.quantity,
        l.seller_id,
        u.display_name AS seller_name,
        u.created_at AS seller_created_at,

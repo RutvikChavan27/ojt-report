@@ -58,6 +58,7 @@ export async function getMyListings(
         colour: row.colour,
         condition: row.condition,
         price: Number(row.price),
+        quantity: row.quantity,
         city: row.city,
         location: row.location,
         postedAt: row.posted_at.toISOString(),

@@ -7,7 +7,11 @@ import {
   seedListings,
   wipeFixtures,
 } from "../test/fixtures";
-import { findListingsBySeller, sweepExpiredListings } from "./listingWrite.repository";
+import {
+  findListingsBySeller,
+  markListingSold,
+  sweepExpiredListings,
+} from "./listingWrite.repository";
 import { recordListingView } from "./listingViews.repository";
 import { query } from "../config/database";
 
@@ -66,6 +70,43 @@ describe("findListingsBySeller's viewer_count", () => {
     const row = rows.find((entry) => entry.id === listingId);
     expect(row?.view_count).toBe(5);
     expect(row?.viewer_count).toBe(1);
+  });
+});
+
+describe("markListingSold", () => {
+  it("decrements quantity by one and keeps the listing active while units remain", async () => {
+    const sellerId = await seedFixtureUser();
+    const [categorySlug] = await pickCategorySlugs(1);
+    const [listingId] = await seedListings(sellerId, [
+      { title: "ZZZVITESTQTY multi-unit", categorySlug, quantity: 5 },
+    ]);
+
+    const first = await markListingSold(listingId);
+    expect(first).toEqual({ quantity: 4, status: "active" });
+
+    const second = await markListingSold(listingId);
+    expect(second).toEqual({ quantity: 3, status: "active" });
+  });
+
+  it("flips to sold once the last unit sells, and further calls are a no-op", async () => {
+    const sellerId = await seedFixtureUser();
+    const [categorySlug] = await pickCategorySlugs(1);
+    const [listingId] = await seedListings(sellerId, [
+      { title: "ZZZVITESTQTY single-unit", categorySlug, quantity: 1 },
+    ]);
+
+    const sold = await markListingSold(listingId);
+    expect(sold).toEqual({ quantity: 0, status: "sold" });
+
+    // Already sold — must not decrement again or go negative.
+    const again = await markListingSold(listingId);
+    expect(again).toBeNull();
+
+    const { rows } = await query<{ quantity: number; status: string }>(
+      `SELECT quantity, status::text FROM listings WHERE id = $1::bigint`,
+      [listingId],
+    );
+    expect(rows[0]).toEqual({ quantity: 0, status: "sold" });
   });
 });
 

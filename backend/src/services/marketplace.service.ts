@@ -153,6 +153,7 @@ export async function getListing(id: string): Promise<ListingDetailDTO | null> {
     },
     viewCount: row.view_count,
     status: row.status,
+    quantity: row.quantity,
   };
 }
 

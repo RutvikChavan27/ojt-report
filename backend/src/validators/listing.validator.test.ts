@@ -43,6 +43,7 @@ const VALID_LISTING = {
   category: "computers",
   condition: "Good",
   price: 45000,
+  quantity: 1,
   city: "Pune",
   phone: "98765 43210",
 };
@@ -64,6 +65,49 @@ describe("parseNewListing phone requirement", () => {
   it("normalises a valid phone number on the way in", () => {
     const result = parseNewListing(VALID_LISTING);
     expect("value" in result && result.value.phone).toBe("9876543210");
+  });
+});
+
+describe("parseNewListing quantity requirement", () => {
+  it("requires a quantity", () => {
+    const { quantity: _quantity, ...withoutQuantity } = VALID_LISTING;
+    const result = parseNewListing(withoutQuantity);
+    expect(result).toEqual({ error: "Enter how many are available (at least 1)." });
+  });
+
+  it("rejects zero, negative, and non-integer quantities", () => {
+    expect(parseNewListing({ ...VALID_LISTING, quantity: 0 })).toEqual({
+      error: "Enter how many are available (at least 1).",
+    });
+    expect(parseNewListing({ ...VALID_LISTING, quantity: -3 })).toEqual({
+      error: "Enter how many are available (at least 1).",
+    });
+    expect(parseNewListing({ ...VALID_LISTING, quantity: 2.5 })).toEqual({
+      error: "Enter how many are available (at least 1).",
+    });
+  });
+
+  it("accepts a positive integer quantity", () => {
+    const result = parseNewListing({ ...VALID_LISTING, quantity: 5 });
+    expect("value" in result && result.value.quantity).toBe(5);
+  });
+});
+
+describe("parseListingPatch quantity is optional but validated when present", () => {
+  it("allows a patch with no quantity at all", () => {
+    const result = parseListingPatch({ title: "New title" });
+    expect("value" in result && result.value.quantity).toBeUndefined();
+  });
+
+  it("rejects a zero or negative quantity in a patch", () => {
+    expect(parseListingPatch({ quantity: 0 })).toEqual({
+      error: "Enter how many are available (at least 1).",
+    });
+  });
+
+  it("accepts a positive integer quantity in a patch", () => {
+    const result = parseListingPatch({ quantity: 3 });
+    expect("value" in result && result.value.quantity).toBe(3);
   });
 });
 

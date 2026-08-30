@@ -109,6 +109,7 @@ function PostAd() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
   const [condition, setCondition] = useState<Condition | "">("");
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
@@ -141,6 +142,7 @@ function PostAd() {
     setCategory(existingListing.category);
     setCondition(existingListing.condition as Condition);
     setPrice(String(existingListing.price));
+    setQuantity(String(existingListing.quantity));
     setCity(existingListing.city);
     setArea(existingListing.location ?? "");
     setPhone(existingListing.seller.phone ?? "");
@@ -267,6 +269,11 @@ function PostAd() {
       setError("Enter a valid 10-digit Indian mobile number.");
       return;
     }
+    const parsedQuantity = Number(quantity);
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+      setError("Enter how many are available (at least 1).");
+      return;
+    }
 
     submittingRef.current = true;
     try {
@@ -311,6 +318,7 @@ function PostAd() {
         category,
         condition,
         price: Number(price),
+        quantity: parsedQuantity,
         city,
         location: area || undefined,
         images,
@@ -377,6 +385,7 @@ function PostAd() {
                   setDescription("");
                   setCategory("");
                   setPrice("");
+                  setQuantity("1");
                   setCondition("");
                   setCity("");
                   setArea("");
@@ -592,6 +601,22 @@ function PostAd() {
                 onChange={(event) => setPrice(event.target.value)}
                 required
                 placeholder="0 for free or negotiable"
+                className={field}
+              />
+            </label>
+
+            <label className="block">
+              <span className={label}>
+                Quantity available <span className="text-cyan-600">*</span>
+              </span>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+                required
+                placeholder="1"
                 className={field}
               />
             </label>

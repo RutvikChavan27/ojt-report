@@ -61,6 +61,8 @@ export type FixtureListing = {
   audience?: "Men" | "Women" | "Unisex";
   condition?: "New with tags" | "Like new" | "Good" | "Fair";
   price?: number;
+  /** Defaults to 1, same as the column default. */
+  quantity?: number;
   city?: string;
   postedAt?: Date;
   status?: "active" | "sold" | "expired";
@@ -78,8 +80,8 @@ export async function seedListings(
     const { rows } = await query<{ id: string }>(
       `INSERT INTO listings
          (seller_id, title, description, category_slug, audience, condition,
-          price, city, status, posted_at, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          price, quantity, city, status, posted_at, expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING id::text`,
       [
         sellerId,
@@ -89,6 +91,7 @@ export async function seedListings(
         listing.audience ?? "Unisex",
         listing.condition ?? "Good",
         listing.price ?? 1000,
+        listing.quantity ?? 1,
         listing.city ?? "TestCity1",
         listing.status ?? "active",
         listing.postedAt ?? new Date(),

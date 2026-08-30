@@ -73,6 +73,8 @@ export type ListingDetailDTO = ListingDTO & {
   seller: ListingSellerDTO;
   viewCount: number;
   status: string;
+  /** How many units remain — see the `quantity` column's comment in marketplace.sql. */
+  quantity: number;
 };
 
 /** One page of listings plus enough context to render paging controls. */

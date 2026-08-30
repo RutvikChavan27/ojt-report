@@ -11,6 +11,7 @@ export const MAX_TITLE = 120;
 export const MAX_DESCRIPTION = 4000;
 export const MAX_PRICE = 100_000_000;
 export const MAX_PHOTOS = 8;
+export const MAX_QUANTITY = 100_000;
 
 const CONDITIONS = ["New with tags", "Like new", "Good", "Fair"];
 
@@ -42,6 +43,8 @@ export type NewListingInput = {
   subcategorySlug: string | null;
   condition: string;
   price: number;
+  /** How many units this listing represents — see the column's comment in marketplace.sql. */
+  quantity: number;
   city: string;
   location: string | null;
   images: string[];
@@ -112,6 +115,15 @@ function parseCore(
     if (!Number.isFinite(price) || price < 0) return { error: "Enter a valid price." };
     if (price > MAX_PRICE) return { error: "That price is too high." };
     out.price = Math.round(price);
+  }
+
+  if (!partial || input.quantity !== undefined) {
+    const quantity = Number(input.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return { error: "Enter how many are available (at least 1)." };
+    }
+    if (quantity > MAX_QUANTITY) return { error: "That quantity is too high." };
+    out.quantity = quantity;
   }
 
   if (!partial || input.city !== undefined) {

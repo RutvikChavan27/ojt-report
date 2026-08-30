@@ -142,13 +142,21 @@ function MyListings() {
 
   const renew = (id: string) => run(id, () => renewListing(id));
 
-  /* Marking sold takes a listing out of the marketplace, so it asks first — but
-     it is reversible from the Renew button, which is why it is not `danger`. */
+  /* Marking sold takes one unit out of stock, so it asks first — but it is
+     reversible from the Renew button (once the listing is fully sold out and
+     expires), which is why it is not `danger`. A multi-unit listing stays
+     active with a lower quantity; only the last unit actually removes it
+     from search, so the confirmation says whichever of those is about to
+     happen rather than always claiming the listing disappears. */
   const markSold = async (id: string) => {
+    const listing = listings.find((entry) => entry.id === id);
+    const remainingAfter = (listing?.quantity ?? 1) - 1;
     const ok = await confirm({
       title: "Mark as sold?",
       message:
-        "This removes the listing from search results. You can put it back later with Renew.",
+        remainingAfter > 0
+          ? `This marks one unit sold. ${remainingAfter} will remain available.`
+          : "This removes the listing from search results. You can put it back later with Renew.",
       confirmLabel: "Mark as sold",
     });
     if (!ok) return;
@@ -317,6 +325,9 @@ function MyListings() {
                   Status
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-bold">
+                  Available
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-bold">
                   Views
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-bold">
@@ -365,6 +376,12 @@ function MyListings() {
                     >
                       {STATUS_LABEL[listing.status as ListingStatus]}
                     </span>
+                  </td>
+
+                  <td className="px-4 py-3 text-right tabular-nums text-charcoal-700">
+                    {listing.status === "sold"
+                      ? "—"
+                      : listing.quantity.toLocaleString("en-IN")}
                   </td>
 
                   <td className="px-4 py-3 text-right tabular-nums text-charcoal-700">
