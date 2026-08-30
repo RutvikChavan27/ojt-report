@@ -53,8 +53,16 @@ export const FUZZY_RELEVANCE_RATIO = 0.8;
  * match is itself only as good as the noise around it (no real match exists
  * for the query at all) — without this, a ratio applied to an already-low
  * best score would still admit everything tied with it.
+ *
+ * 0.35, not the rounder 0.3: measured directly against this dataset,
+ * "clothing" (no listing title uses that word) scored its best fuzzy match
+ * against "Front Load Washing Machine" at 0.333 — a coincidental shared
+ * suffix ("-othing"/"-ashing"), not a typo correction — which the old 0.3
+ * floor let through as if it were one. Every genuine typo correction
+ * checked scored comfortably higher (worst: "labtop" -> "Laptop" at 0.4),
+ * so 0.35 sits in the gap between the two without excluding any of them.
  */
-export const FUZZY_RELEVANCE_FLOOR = 0.3;
+export const FUZZY_RELEVANCE_FLOOR = 0.35;
 
 /**
  * A fuzzy match only counts when it is reasonably close to the best match
