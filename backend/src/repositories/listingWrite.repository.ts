@@ -25,6 +25,18 @@ export type SellerListingRow = ListingRow & {
   description: string;
   status: string;
   view_count: number;
+  /**
+   * Distinct signed-in, non-owner viewers — what "who viewed this listing"
+   * (listingViews.repository.ts) can actually list by name. Deliberately not
+   * `view_count`: that raw counter also includes the seller's own visits and
+   * anonymous ones, neither of which the viewer-history modal shows, so
+   * displaying `view_count` as "N views" while the modal opened by clicking
+   * it can only ever list a subset of N read as a bug (confirmed live — 5
+   * raw views on a listing whose seller had opened it themselves several
+   * times, one genuine outside viewer, and the modal correctly showing only
+   * that one). This is the number the modal can actually back up.
+   */
+  viewer_count: number;
   expires_at: Date;
   subcategory_slug: string | null;
 };
@@ -45,7 +57,8 @@ export async function findListingsBySeller(
        c.label AS category_label, l.audience, l.brand, l.size, l.colour,
        l.condition::text, l.price, l.city, l.location, l.posted_at,
        l.status::text, l.view_count, l.expires_at,
-       COALESCE(photo.thumb_path, photo.path) AS image
+       COALESCE(photo.thumb_path, photo.path) AS image,
+       COALESCE(viewers.count, 0) AS viewer_count
      FROM listings l
      JOIN listing_categories c ON c.slug = l.category_slug
      LEFT JOIN LATERAL (
@@ -54,6 +67,9 @@ export async function findListingsBySeller(
        ORDER BY is_primary DESC, position ASC
        LIMIT 1
      ) AS photo ON true
+     LEFT JOIN LATERAL (
+       SELECT count(*)::int AS count FROM listing_views WHERE listing_id = l.id
+     ) AS viewers ON true
      WHERE l.seller_id = $1
      ORDER BY l.posted_at DESC, l.id DESC`,
     [sellerId],

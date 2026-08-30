@@ -376,7 +376,7 @@ function MyListings() {
                       className="rounded-lg px-1.5 py-0.5 underline decoration-taupe decoration-dotted underline-offset-4 transition hover:text-charcoal-900 hover:decoration-charcoal-400"
                       title="See who viewed this listing"
                     >
-                      {listing.viewCount.toLocaleString("en-IN")}
+                      {listing.viewerCount.toLocaleString("en-IN")}
                     </button>
                   </td>
 

@@ -490,6 +490,14 @@ export type ApiMyListing = ApiListing & {
   expiresAt: string;
   status: string;
   viewCount: number;
+  /**
+   * Distinct signed-in, non-owner viewers — what the "who viewed this
+   * listing" modal can actually list by name. Not the same as viewCount
+   * above, which also counts the seller's own visits and anonymous ones;
+   * this is the number the My Listings table shows and opens the modal
+   * from, so what's clicked always matches what the modal can back up.
+   */
+  viewerCount: number;
 };
 
 export type NewListingBody = {

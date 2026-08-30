@@ -64,6 +64,10 @@ export async function getMyListings(
         expiresAt: row.expires_at.toISOString(),
         status: row.status,
         viewCount: row.view_count,
+        // The number "who viewed this listing" can actually list by name —
+        // see viewer_count's own comment in listingWrite.repository.ts for
+        // why this is not the same as viewCount above.
+        viewerCount: row.viewer_count,
         image: resolveImagePath(row.image ?? PLACEHOLDER),
       })),
     );

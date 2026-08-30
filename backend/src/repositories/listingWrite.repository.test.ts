@@ -7,17 +7,66 @@ import {
   seedListings,
   wipeFixtures,
 } from "../test/fixtures";
-import { sweepExpiredListings } from "./listingWrite.repository";
+import { findListingsBySeller, sweepExpiredListings } from "./listingWrite.repository";
+import { recordListingView } from "./listingViews.repository";
 import { query } from "../config/database";
+
+/** A second fixture account standing in for "someone who viewed the
+ *  listing" — mirrors listingViews.repository.test.ts's own convention. */
+const VIEWER_EMAIL = "vitest-viewer@example.invalid";
+
+async function seedViewerUser(): Promise<number> {
+  const { rows } = await query<{ id: number }>(
+    `INSERT INTO users (email, display_name)
+     VALUES ($1, 'Vitest Viewer')
+     ON CONFLICT (email) DO UPDATE SET display_name = EXCLUDED.display_name
+     RETURNING id`,
+    [VIEWER_EMAIL],
+  );
+  return rows[0].id;
+}
+
+async function wipeViewerUser(): Promise<void> {
+  await query(`DELETE FROM users WHERE email = $1`, [VIEWER_EMAIL]);
+}
 
 beforeAll(async () => {
   await connectTestDatabase();
   await wipeFixtures();
+  await wipeViewerUser();
 });
 
 afterAll(async () => {
   await wipeFixtures();
+  await wipeViewerUser();
   await disconnectTestDatabase();
+});
+
+describe("findListingsBySeller's viewer_count", () => {
+  it("counts distinct viewers, not raw view_count, and never both a repeat visit twice", async () => {
+    const sellerId = await seedFixtureUser();
+    const viewerId = await seedViewerUser();
+    const [categorySlug] = await pickCategorySlugs(1);
+    const [listingId] = await seedListings(sellerId, [
+      { title: "ZZZVITESTVIEWERCOUNT", categorySlug },
+    ]);
+
+    // The raw counter climbs independently of who's viewing (mirrors the
+    // seller opening their own listing, or an anonymous visit) — bumped by
+    // hand here since incrementListingViewCount lives in
+    // marketplace.repository.ts, not this file.
+    await query(
+      `UPDATE listings SET view_count = 5 WHERE id = $1::bigint`,
+      [listingId],
+    );
+    await recordListingView(listingId, viewerId);
+    await recordListingView(listingId, viewerId); // a repeat visit, same viewer
+
+    const rows = await findListingsBySeller(sellerId);
+    const row = rows.find((entry) => entry.id === listingId);
+    expect(row?.view_count).toBe(5);
+    expect(row?.viewer_count).toBe(1);
+  });
 });
 
 describe("sweepExpiredListings", () => {
