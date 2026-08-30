@@ -55,6 +55,18 @@ function Navbar() {
   const iconLink =
     "relative flex h-11 w-11 items-center justify-center rounded-full text-charcoal-600 transition-all duration-150 hover:bg-sand hover:text-charcoal-900 hover:scale-105 active:scale-95 motion-reduce:transform-none";
 
+  /**
+   * The account entry point (signed in or not) — a plain nav link/profile
+   * item, not a control someone picks a value from, so it skips the
+   * `border-cyan-500`/`bg-mist` pill every dropdown/button in the header
+   * otherwise shares. Same height as the other controls for alignment, same
+   * `hover:bg-sand` feedback as the icon-only links beside it (`iconLink`
+   * above) — the only two things that actually change here are dropped:
+   * the border and the fill.
+   */
+  const accountLink =
+    "flex h-11 items-center gap-2 rounded-full px-2.5 text-sm font-semibold text-charcoal-900 transition hover:bg-sand";
+
   const badge = (count: number) =>
     count > 0 ? (
       <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-mist px-1 text-[10px] font-bold text-charcoal-900">
@@ -150,6 +162,7 @@ function Navbar() {
 
             {user ? (
               <DropdownMenu
+                triggerClassName={accountLink}
                 icon={
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-charcoal-900 text-sm font-bold text-white">
                     {user.name.charAt(0).toUpperCase()}
@@ -193,15 +206,12 @@ function Navbar() {
                 )}
               />
             ) : (
-              // Account entry point as a user icon rather than the word
-              // "Login" — labelled for assistive tech and with a tooltip.
               <Link
                 to="/login"
-                aria-label="Login"
-                title="Login"
-                className={`${iconLink} max-sm:hidden`}
+                className={`${accountLink} max-sm:hidden`}
               >
                 <FiUser size={19} />
+                Login
               </Link>
             )}
 

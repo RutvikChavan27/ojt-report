@@ -99,6 +99,15 @@ export type DropdownMenuProps = {
   panel: (state: { close: () => void }) => ReactNode;
   /** Extra classes for the panel itself (width, grid layout, ...) — the border/background/shadow/animation stay fixed. */
   panelClassName?: string;
+  /**
+   * Overrides the trigger's own look — the bordered pill everywhere else
+   * (Categories, Location, the saved-searches menu) marks "this opens a
+   * menu of choices", but the account entry point is closer kin to a plain
+   * nav link (Home, the header's other icons) than to a control someone
+   * picks a value from, so it uses this to drop the border/fill instead.
+   * Defaults to the shared `dropdownTriggerClassName` when not given.
+   */
+  triggerClassName?: string;
   align?: "left" | "right";
   className?: string;
   "aria-label"?: string;
@@ -113,6 +122,7 @@ export function DropdownMenu({
   icon,
   panel,
   panelClassName,
+  triggerClassName,
   align = "right",
   className,
   "aria-label": ariaLabel,
@@ -127,7 +137,7 @@ export function DropdownMenu({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-label={ariaLabel}
-        className={dropdownTriggerClassName}
+        className={triggerClassName ?? dropdownTriggerClassName}
       >
         {icon}
         {label}
