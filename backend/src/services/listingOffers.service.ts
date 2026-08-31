@@ -119,7 +119,7 @@ export async function respondToOfferAsUser(
     return { ok: true, offer: toDTO(offer) };
   }
 
-  return await explainRespondFailure(offerId, userId);
+  return await explainRespondFailure(offerId, userId, action);
 }
 
 /**
@@ -165,6 +165,7 @@ export async function counterOfferAsSeller(
   if (!offer) return { ok: false, reason: "not_found" };
   if (offer.status !== "pending") return { ok: false, reason: "conflict" };
   if (offer.seller_id !== sellerId) return { ok: false, reason: "forbidden" };
+  if (offer.listing_status !== "active") return { ok: false, reason: "inactive" };
   return { ok: false, reason: "conflict" };
 }
 
@@ -176,6 +177,7 @@ export async function counterOfferAsSeller(
 async function explainRespondFailure(
   offerId: string,
   userId: number,
+  action: "accept" | "reject",
 ): Promise<OfferResult> {
   const offer = await findOfferById(offerId);
   if (!offer) return { ok: false, reason: "not_found" };
@@ -187,6 +189,13 @@ async function explainRespondFailure(
   const expectedResponder =
     offer.status === "pending" ? offer.seller_id : offer.buyer_id;
   if (expectedResponder !== userId) return { ok: false, reason: "forbidden" };
+
+  // Right party, offer still looked answerable — the only other thing
+  // `respondToOffer` additionally requires for an accept is the listing
+  // still being active, so that's what's left to blame.
+  if (action === "accept" && offer.listing_status !== "active") {
+    return { ok: false, reason: "inactive" };
+  }
 
   // The caller is the right party and the status still looked answerable a
   // moment ago — a concurrent response beat this one to it.

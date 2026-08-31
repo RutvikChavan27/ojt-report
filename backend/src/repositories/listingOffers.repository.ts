@@ -133,6 +133,13 @@ export async function createOffer(input: {
  * from the wrong side, or one that arrives after the offer was already
  * resolved, simply matches no row rather than needing a separate check first.
  *
+ * Accepting additionally requires the listing to still be `active` — with
+ * quantity>1, a seller can have several offers pending at once, and one of
+ * them selling out the listing (via "Mark as sold", or another offer being
+ * accepted first) must not leave a stale offer acceptable for stock that no
+ * longer exists. Rejecting carries no such requirement: declining an offer
+ * on a listing that has since sold out is still a safe, honest thing to do.
+ *
  * @returns true if a row was updated.
  */
 export async function respondToOffer(
@@ -142,11 +149,18 @@ export async function respondToOffer(
 ): Promise<boolean> {
   const { rows } = await query<{ id: string }>(
     `UPDATE listing_offers
-        SET status = $3, updated_at = now()
+        SET status = $3::offer_status, updated_at = now()
       WHERE id = $1::bigint
         AND (
           (status = 'pending' AND seller_id = $2) OR
           (status = 'countered' AND buyer_id = $2)
+        )
+        AND (
+          $3::text <> 'accepted'
+          OR EXISTS (
+            SELECT 1 FROM listings l
+             WHERE l.id = listing_offers.listing_id AND l.status = 'active'
+          )
         )
       RETURNING id::text`,
     [offerId, userId, newStatus],
@@ -186,7 +200,9 @@ export async function updateOfferPrice(
  * Only valid from `pending` — a counter is the seller's one reply to the
  * buyer's original number; there is no counter-to-a-counter here (see the
  * table comment in marketplace.sql), which is what keeps this a price
- * negotiation and not a message thread.
+ * negotiation and not a message thread. Also requires the listing to still
+ * be `active` — countering proposes a sale, same as accepting, so it makes
+ * no sense once nothing is left to sell (see respondToOffer's own comment).
  *
  * @returns true if a row was updated.
  */
@@ -199,6 +215,10 @@ export async function counterOffer(
     `UPDATE listing_offers
         SET status = 'countered', counter_price = $3, updated_at = now()
       WHERE id = $1::bigint AND seller_id = $2 AND status = 'pending'
+        AND EXISTS (
+          SELECT 1 FROM listings l
+           WHERE l.id = listing_offers.listing_id AND l.status = 'active'
+        )
       RETURNING id::text`,
     [offerId, sellerId, counterPrice],
   );

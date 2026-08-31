@@ -60,6 +60,13 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter,
   const awaitingBuyer = offer.status === "countered" && viewer === "buyer";
   const canRespond = awaitingSeller || awaitingBuyer;
   const canEdit = offer.status === "pending" && viewer === "buyer";
+  /* With quantity>1 a seller can have several offers pending at once — one of
+     them selling out the listing (via "Mark as sold", or another offer being
+     accepted first) must not leave a stale Accept/Counter Offer button that
+     would only fail server-side. Rejecting stays available regardless —
+     declining an offer on a listing that has since sold out is still a
+     safe, honest thing to do. */
+  const listingAvailable = offer.listingStatus === "active";
 
   const submitCounter = () => {
     const price = Number(counterValue);
@@ -140,12 +147,20 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter,
         </p>
       )}
 
+      {canRespond && !listingAvailable && (
+        <p className="mt-3 text-xs font-semibold text-charcoal-500">
+          This listing is no longer available, so this offer can only be rejected.
+        </p>
+      )}
+
       {canRespond && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" disabled={busy} onClick={onAccept}>
-            <FiCheck size={13} />
-            Accept
-          </Button>
+          {listingAvailable && (
+            <Button size="sm" variant="outline" disabled={busy} onClick={onAccept}>
+              <FiCheck size={13} />
+              Accept
+            </Button>
+          )}
           <Button size="sm" variant="outline" disabled={busy} onClick={onReject}>
             <FiX size={13} />
             Reject
@@ -154,7 +169,7 @@ function OfferCard({ offer, viewer, busy = false, onAccept, onReject, onCounter,
           {/* Countering a counter is not offered — only the original, still-pending
               offer can be countered (see the table comment in marketplace.sql) — so
               this button only appears for the seller answering a fresh offer. */}
-          {awaitingSeller && (
+          {awaitingSeller && listingAvailable && (
             <Button
               size="sm"
               variant="outline"
