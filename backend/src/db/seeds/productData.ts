@@ -88,7 +88,7 @@ export function brandFor(rawTitle: string): string | null {
  * already describes the item ("3-Seater Sofa", "Used Cricket Bat") or where no
  * single word fits (mixed accessories).
  */
-const ITEM_TYPE: Record<string, string> = {
+export const ITEM_TYPE: Record<string, string> = {
   // mobiles
   smartphones: "Smartphone",
   "feature-phones": "Phone",
@@ -147,10 +147,17 @@ const ITEM_TYPE: Record<string, string> = {
   wallets: "Wallet",
 };
 
-/** True when `title` already contains `word` as a whole word (case-insensitive). */
+/**
+ * True when `title` already expresses `word`, case-insensitively — as its own
+ * word ("Dell XPS 13 Laptop") or as part of a compound ("Prada Handbag"
+ * already says "bag", "iPhone 6" already says "phone"). A stricter
+ * whole-word check let those compounds slip through undetected and get the
+ * type appended a second time ("Handbag Bag", "iPhone 6 32GB Phone") —
+ * confirmed live against three templates before this was tightened to a
+ * plain substring check.
+ */
 function containsWord(title: string, word: string): boolean {
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\b${escaped}\\b`, "i").test(title);
+  return title.toLowerCase().includes(word.toLowerCase());
 }
 
 /**

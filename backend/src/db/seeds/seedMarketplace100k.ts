@@ -300,7 +300,19 @@ async function seed(): Promise<void> {
         now - SHELF_LIFE_MS - Math.floor(random() * (EIGHTEEN_MONTHS_MS - SHELF_LIFE_MS)),
       );
     }
-    const expiresAt = new Date(postedAt.getTime() + SHELF_LIFE_MS);
+    /* A genuinely-active seed row is the marketplace's stable base catalogue,
+       not a real seller's posting on its own 45-day clock — it must not
+       organically expire and erode the active count on its own (confirmed
+       live: 100% of a seed's active slice used to cross expires_at within
+       45 days of seeding it, decaying the active count by ~2,600/day with
+       nothing replacing it). A far-future date keeps it out of every sweep
+       tick indefinitely; sold/expired rows keep the real 45-day window
+       since their date only needs to look historically plausible, never to
+       stay unexpired. */
+    const expiresAt =
+      status === "active"
+        ? new Date(now + 5 * 365 * 24 * 60 * 60 * 1000)
+        : new Date(postedAt.getTime() + SHELF_LIFE_MS);
 
     /* A realistic classified title that carries the item type ("Dell XPS 13
        Laptop"), and the brand populated from the name. Both are plain listing
