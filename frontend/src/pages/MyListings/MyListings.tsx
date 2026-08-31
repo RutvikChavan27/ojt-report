@@ -194,7 +194,7 @@ function MyListings() {
 
         <Button to="/post-ad" variant="outline" size="sm">
           <FiPlus size={15} />
-          Sell Something
+          Post an Ad
         </Button>
       </div>
 
@@ -295,13 +295,13 @@ function MyListings() {
             title={`No ${STATUS_LABEL[tab].toLowerCase()} ads`}
             description={
               tab === "active"
-                ? "Sell something and it will show up here."
+                ? "Post an ad and it will show up here."
                 : `Nothing here yet.`
             }
           >
             {tab === "active" && (
               <Button to="/post-ad" variant="outline">
-                Sell Something
+                Post an Ad
               </Button>
             )}
           </EmptyState>

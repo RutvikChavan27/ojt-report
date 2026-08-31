@@ -28,7 +28,7 @@ function Footer() {
               BAZAAR MARKETPLACE
             </p>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-charcoal-500">
-              Buy and sell second-hand things near you. Sell something in
+              Buy and sell second-hand things near you. Post an ad in
               minutes, or search thousands of listings from people in your city.
             </p>
 
@@ -55,7 +55,7 @@ function Footer() {
             <ul className="mt-4 space-y-2.5">
               <li>
                 <Link to="/post-ad" className={linkClass}>
-                  Sell something
+                  Post an Ad
                 </Link>
               </li>
               <li>

@@ -223,10 +223,10 @@ function Navbar() {
               <FiPlus size={17} />
               {/* Full label held back to lg: from sm to lg the search box is
                   already fighting the icon row and this button for space
-                  (see the Categories/menu-toggle comment above), and "Sell"
+                  (see the Categories/menu-toggle comment above), and "Post"
                   says the same thing in a third of the width. */}
-              <span className="hidden lg:inline">Sell Something</span>
-              <span className="lg:hidden">Sell</span>
+              <span className="hidden lg:inline">Post an Ad</span>
+              <span className="lg:hidden">Post</span>
             </Button>
 
             <button

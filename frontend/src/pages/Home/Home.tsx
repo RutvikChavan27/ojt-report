@@ -54,7 +54,7 @@ function Home() {
     {
       icon: <FiTag size={18} />,
       title: "Free to post",
-      body: "No listing fees and no commission. Sell something in a couple of minutes.",
+      body: "No listing fees and no commission. Post an ad in a couple of minutes.",
     },
     {
       icon: <FiUsers size={18} />,

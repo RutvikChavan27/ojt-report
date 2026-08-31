@@ -437,7 +437,7 @@ function PostAd() {
       <BackLink className="mb-4" />
 
       <h1 className="text-xl font-black tracking-tight text-charcoal-900 sm:text-2xl">
-        {isEdit ? "Edit Listing" : "Sell Something"}
+        {isEdit ? "Edit Listing" : "Post an Ad"}
       </h1>
       <p className="mt-1 text-sm text-charcoal-500">
         {isEdit
